@@ -1,3 +1,4 @@
+using Microsoft.Data.Sqlite;
 using visualizer.Components;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -5,6 +6,13 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+builder.Services.AddScoped<SqliteConnection>(sp =>
+{
+    var config = sp.GetRequiredService<IConfiguration>();
+    var connString = config.GetConnectionString("Default");
+    return new SqliteConnection(connString);
+});
 
 var app = builder.Build();
 
