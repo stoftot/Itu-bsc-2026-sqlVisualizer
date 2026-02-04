@@ -2,3 +2,4 @@
 obj/
 bin/
 *.user
+sqlVisualizer/visualizer/database.db
