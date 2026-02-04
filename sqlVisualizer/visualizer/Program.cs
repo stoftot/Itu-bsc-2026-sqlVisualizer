@@ -1,4 +1,5 @@
 using Microsoft.Data.Sqlite;
+using visualizer;
 using visualizer.Components;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,6 +17,7 @@ builder.Services.AddScoped<SqliteConnection>(sp =>
 
 var app = builder.Build();
 
+new DbInitializer(app.Configuration).Initialize();
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
