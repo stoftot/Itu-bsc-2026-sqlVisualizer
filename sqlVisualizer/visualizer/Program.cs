@@ -1,6 +1,7 @@
 using Microsoft.Data.Sqlite;
 using visualizer;
 using visualizer.Components;
+using visualizer.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,6 +19,18 @@ builder.Services.AddScoped<SqliteConnection>(sp =>
 var app = builder.Build();
 
 new DbInitializer(app.Configuration).Initialize();
+
+using var scope = app.Services.CreateScope();
+var conn = scope.ServiceProvider.GetRequiredService<SqliteConnection>();
+
+var sqlExecutor = new SQLExecutor(conn);
+var query = "SELECT * FROM shift";
+var table = await sqlExecutor.Execute(query);
+Console.WriteLine($"Query: {query}");
+foreach (var row in table.Entries){
+    Console.WriteLine(string.Join(", ", row));
+}
+
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
@@ -26,12 +39,11 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
 app.UseHttpsRedirection();
 
+app.UseStaticFiles();
 app.UseAntiforgery();
 
-app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
