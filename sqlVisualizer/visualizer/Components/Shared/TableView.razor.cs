@@ -5,5 +5,5 @@ namespace visualizer.Components.Shared;
 
 public class TableViewBase : ComponentBase
 {
-    [Parameter] public required Table Table { get; set; }
+    [Parameter] public required Table Table { get; init; }
 }
