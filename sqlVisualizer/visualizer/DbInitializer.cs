@@ -1,11 +1,13 @@
-﻿namespace visualizer;
+﻿using DuckDB.NET.Data;
+
+namespace visualizer;
 
 public class DbInitializer(IConfiguration config)
 {
     public void Initialize()
     {
         var connString = config.GetConnectionString("Default");
-        using var connection = new Microsoft.Data.Sqlite.SqliteConnection(connString);
+        using var connection = new  DuckDBConnection(connString);
         connection.Open();
 
         var tableCmd = connection.CreateCommand();
