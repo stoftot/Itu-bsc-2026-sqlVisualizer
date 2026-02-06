@@ -12,10 +12,10 @@ public class SQLExecutor(SqliteConnection connection)
         await using var command = new SqliteCommand(sql, connection);
         await using var reader = await command.ExecuteReaderAsync();
         
-        var header = new List<string>();
+        var columnNames = new List<string>();
         for (var i = 0; i < reader.FieldCount; i++)
         {
-            header.Add(reader.GetName(i));
+            columnNames.Add(reader.GetName(i));
         }
         
         while (await reader.ReadAsync())
@@ -27,6 +27,6 @@ public class SQLExecutor(SqliteConnection connection)
             }
             entries.Add(row);
         }
-        return new Table { Entries = entries.Prepend(header).ToList() };
+        return new Table { ColumnNames = columnNames, Entries = entries };
     }
 }
