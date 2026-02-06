@@ -10,7 +10,7 @@ public class SQLExecutor(DuckDBConnection connection)
     {
         try
         {
-            var entries = new List<List<string>>();
+            var entries = new List<TableEntry>();
             await connection.OpenAsync();
             await using var command = new DuckDBCommand(sql, connection);
             await using var reader = await command.ExecuteReaderAsync();
@@ -29,7 +29,7 @@ public class SQLExecutor(DuckDBConnection connection)
                     row.Add(reader.GetValue(i).ToString() ?? "NULL");
                 }
 
-                entries.Add(row);
+                entries.Add(new TableEntry { Values = row });
             }
 
             return new Table { ColumnNames = columnNames, Entries = entries };
