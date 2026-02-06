@@ -20,8 +20,8 @@ else
         <tbody class="table-body-sm fw-bolder">
         @foreach (var entry in Table.Entries)
         {
-            <tr>
-                @foreach (var cell in entry)
+            <tr style="@(entry.IsHighlighted ? entry.GetHighlightStyle() : null)">
+                @foreach (var cell in entry.Values)
                 {
                     <td>@cell</td>
                 }
