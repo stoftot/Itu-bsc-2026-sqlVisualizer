@@ -1,24 +1,32 @@
 ﻿@inherits TableViewBase
-
-<table class="table table-striped table-bordered table-sm">
-    <thead class="table-dark table-header-sm">
-    <tr>
-        @foreach (var columnName in Table.ColumnNames)
-        {
-            <th scope="col">@columnName</th>
-        }
-    </tr>
-    </thead>
-
-    <tbody class="table-body-sm fw-bolder">
-    @foreach (var entry in Table.Entries)
-    {
+@if(Table is null)
+{
+    <div class="alert alert-warning" role="alert">
+        No table to display
+    </div>
+}
+else
+{
+    <table class="table table-striped table-bordered table-sm">
+        <thead class="table-dark table-header-sm">
         <tr>
-            @foreach (var cell in entry)
+            @foreach (var columnName in Table.ColumnNames)
             {
-                <td>@cell</td>
+                <th scope="col">@columnName</th>
             }
         </tr>
-    }
-    </tbody>
-</table>
+        </thead>
+
+        <tbody class="table-body-sm fw-bolder">
+        @foreach (var entry in Table.Entries)
+        {
+            <tr>
+                @foreach (var cell in entry)
+                {
+                    <td>@cell</td>
+                }
+            </tr>
+        }
+        </tbody>
+    </table>
+}
