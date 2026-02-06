@@ -16,6 +16,8 @@ builder.Services.AddScoped<DuckDBConnection>(sp =>
     return new DuckDBConnection(connString ?? throw new ArgumentNullException(nameof(connString)));
 });
 
+builder.Services.AddScoped<SQLExecutor>();
+
 var app = builder.Build();
 
 new DbInitializer(app.Configuration).Initialize();
