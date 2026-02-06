@@ -63,6 +63,27 @@ public class QueryIlustrationViewBase : ComponentBase
         }
 
         ToTable = SQLExecutor.Execute(Steps[..(IndexOfStepToHighlight + 1)].Prepend(IntialStep)).Result;
+        
+        UpdateHighlightedSteps();
+    }
+    
+    private void UpdateHighlightedSteps()
+    {
+        foreach (var table in FromTables)
+        {
+            for(int i = 0; i < table.Entries.Count; i++)
+            {
+                if(i%2 == 0) continue;
+                table.Entries[i].IsHighlighted = !table.Entries[i].IsHighlighted;
+                table.Entries[i].SetHighlightHexColor("4293f5");
+            }
+        }
+        
+        for(int i = 0; i < ToTable.Entries.Count; i++)
+        {
+            if(i%2 == 0) continue;
+            ToTable.Entries[i].IsHighlighted = !ToTable.Entries[i].IsHighlighted;
+        }
     }
 
     protected void OnNextStep()
