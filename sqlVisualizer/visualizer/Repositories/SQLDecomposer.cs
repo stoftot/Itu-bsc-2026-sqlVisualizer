@@ -14,10 +14,12 @@ public class SQLDecomposer
 
     private string SupportedJoinsRegex { get; }
 
-    public SQLDecomposer(IList<SQLKeyword> supportedKeywords)
+    public SQLDecomposer(IList<SQLKeyword>? supportedKeywords = null)
     {
-        SupportedKeywords = supportedKeywords.AsReadOnly();
-        var supportedJoins = supportedKeywords
+        SupportedKeywords = (supportedKeywords ?? Enum.GetValues<SQLKeyword>())
+            .AsReadOnly();
+
+        var supportedJoins = SupportedKeywords
             .Where(k => k.IsJoin())
             .ToList();
         SupportedJoinsRegex = string.Join("|",
@@ -50,7 +52,7 @@ public class SQLDecomposer
         }
 
         result = result
-            .OrderBy(c => c.Keyword.Precedence())
+            .OrderBy(c => c.Keyword.ExecutionPrecedence())
             .ToList();
 
         return result.Count == 0 ? null : result;
@@ -95,6 +97,7 @@ public class SQLDecomposer
         {
             return new SQLDecompositionComponent(kw, match.Groups[2].Value.Trim());
         }
+
         throw new Exception($"Failed to parse \"{keyword}\" keyword: " + match.Groups[1].Value);
     }
 
