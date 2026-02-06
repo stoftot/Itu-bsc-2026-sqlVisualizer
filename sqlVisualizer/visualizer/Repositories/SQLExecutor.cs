@@ -1,15 +1,15 @@
-﻿using Microsoft.Data.Sqlite;
+﻿using DuckDB.NET.Data;
 using visualizer.Models;
 
 namespace visualizer.Repositories;
 
-public class SQLExecutor(SqliteConnection connection)
+public class SQLExecutor(DuckDBConnection connection)
 {
     public async Task<Table> Execute(string sql)
     {
         var entries = new List<List<string>>();
         await connection.OpenAsync();
-        await using var command = new SqliteCommand(sql, connection);
+        await using var command = new DuckDBCommand(sql, connection);
         await using var reader = await command.ExecuteReaderAsync();
         
         var columnNames = new List<string>();
