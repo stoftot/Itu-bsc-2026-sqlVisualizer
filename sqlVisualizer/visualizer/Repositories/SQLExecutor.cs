@@ -40,7 +40,7 @@ public class SQLExecutor(DuckDBConnection connection)
         }
     }
 
-    public async Task<Table> Execute(List<SQLDecompositionComponent> components)
+    public async Task<Table> Execute(IEnumerable<SQLDecompositionComponent> components)
     {
         var containsSelect = components.Any(c => c.Keyword == SQLKeyword.SELECT);
         var queryBuilder = new StringBuilder();
@@ -57,4 +57,7 @@ public class SQLExecutor(DuckDBConnection connection)
 
         return await Execute(queryBuilder.ToString());
     }
+    
+    public async Task<Table> Execute(SQLDecompositionComponent component) 
+        => await Execute([component]);
 }
