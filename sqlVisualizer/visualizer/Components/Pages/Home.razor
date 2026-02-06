@@ -1,7 +1,68 @@
 ﻿@page "/"
+@using visualizer.Components.Shared
+@using visualizer.Models
 
 <PageTitle>Home</PageTitle>
 
 <h1>Hello, world!</h1>
 
 Welcome to your new app.
+
+
+<QueryIlustrationView
+    FromTables="[table, table2]"
+    ToTable="table3"
+    />
+
+
+
+@code
+{
+    private Table table = new()
+    {
+        ColumnNames =
+        [
+            "Name",
+            "Age",
+            "City"
+        ],
+        Entries =
+        [
+            ["Alice", "30", "New York"],
+            ["Bob", "25", "Los Angeles"],
+            ["Charlie", "35", "Chicago"]
+        ]
+    };
+
+    private Table table2 = new()
+    {
+        ColumnNames =
+        [
+            "Product",
+            "Price",
+            "Stock"
+        ],
+        Entries =
+        [
+            ["Laptop", "$999", "In Stock"],
+            ["Smartphone", "$499", "Out of Stock"],
+            ["Headphones", "$199", "In Stock"]
+        ]
+    };
+
+    private Table table3 = new()
+    {
+        ColumnNames =
+        [
+            "Country",
+            "Capital",
+            "Population"
+        ],
+        Entries =
+        [
+            ["USA", "Washington D.C.", "331 million"],
+            ["Japan", "Tokyo", "126 million"],
+            ["Germany", "Berlin", "83 million"]
+        ]
+    };
+}
