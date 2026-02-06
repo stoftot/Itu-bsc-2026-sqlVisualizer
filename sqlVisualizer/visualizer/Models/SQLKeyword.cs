@@ -12,7 +12,7 @@ public enum SQLKeyword
     GROUP_BY,
     HAVING,
     SELECT,
-    DISTINCT,
+    // DISTINCT,
     ORDER_BY,
     LIMIT,
     OFFSET
@@ -35,7 +35,7 @@ public static class SQLKeywordExtensions
             SQLKeyword.GROUP_BY => "GROUP BY",
             SQLKeyword.HAVING => "HAVING",
             SQLKeyword.ORDER_BY => "ORDER BY",
-            SQLKeyword.DISTINCT => "DISTINCT",
+            // SQLKeyword.DISTINCT => "DISTINCT",
             SQLKeyword.LIMIT => "LIMIT",
             SQLKeyword.OFFSET => "OFFSET",
         };
@@ -65,7 +65,7 @@ public static class SQLKeywordExtensions
      * ORDER BY clause
      * LIMIT and/or OFFSET clause
      */
-    public static int Precedence(this SQLKeyword keyword)
+    public static int ExecutionPrecedence(this SQLKeyword keyword)
     {
         return keyword switch
         {
@@ -79,7 +79,28 @@ public static class SQLKeywordExtensions
             SQLKeyword.GROUP_BY => 3,
             SQLKeyword.HAVING => 4,
             SQLKeyword.SELECT => 5,
-            SQLKeyword.DISTINCT => 6,
+            // SQLKeyword.DISTINCT => 6,
+            SQLKeyword.ORDER_BY => 7,
+            SQLKeyword.LIMIT => 8,
+            SQLKeyword.OFFSET => 8
+        };
+    }
+    
+    public static int SyntaxPrecedence(this SQLKeyword keyword)
+    {
+        return keyword switch
+        {
+            SQLKeyword.SELECT => 0,
+            // SQLKeyword.DISTINCT => 0,
+            SQLKeyword.FROM => 1,
+            SQLKeyword.JOIN => 2,
+            SQLKeyword.INNER_JOIN => 2,
+            SQLKeyword.LEFT_JOIN => 2,
+            SQLKeyword.RIGHT_JOIN => 2,
+            SQLKeyword.FULL_JOIN => 2,
+            SQLKeyword.WHERE => 3,
+            SQLKeyword.GROUP_BY => 4,
+            SQLKeyword.HAVING => 5,
             SQLKeyword.ORDER_BY => 7,
             SQLKeyword.LIMIT => 8,
             SQLKeyword.OFFSET => 8
