@@ -3,6 +3,10 @@ html, body {
     height: 100%;
 }
 
+#my-code-editor{
+    height: 100%;
+}
+
 a, .btn-link {
     color: #006bb7;
 }
