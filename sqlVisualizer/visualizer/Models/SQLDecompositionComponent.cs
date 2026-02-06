@@ -14,4 +14,13 @@ public class SQLDecompositionComponent(SQLKeyword keyword, string clause)
     {
         return ToString();
     }
+    
+    public SQLDecompositionComponent GenerateFromClauseFromJoin()
+    {
+        if (!Keyword.IsJoin())
+            throw new InvalidOperationException("Only join components can generate a FROM clause.");
+
+        return new SQLDecompositionComponent
+            (SQLKeyword.FROM, Clause[..Clause.IndexOf(' ')] );
+    }
 }
