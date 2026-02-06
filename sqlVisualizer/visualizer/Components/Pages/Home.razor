@@ -5,14 +5,16 @@
 <PageTitle>Home</PageTitle>
 
 <QueryIlustrationView
-    FromTables="[table, table2]"
-    ToTable="table3"
+    Query="@query"
     />
 
 
 
 @code
 {
+    private string query = "SELECT shift.day, user.email FROM shift " +
+                "JOIN \"user\" ON shift.cashier = \"user\".username";
+    
     private Table table = new()
     {
         ColumnNames =

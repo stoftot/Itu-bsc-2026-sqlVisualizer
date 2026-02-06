@@ -1,4 +1,5 @@
-﻿@inherits QueryIlustrationViewBase
+﻿@rendermode InteractiveServer
+@inherits QueryIlustrationViewBase
 <div class="container">
     <div class="row">
         <div class="col-5">
@@ -13,6 +14,19 @@
             <TableOchestra
                 Tables="[ToTable]"
             />
+        </div>
+    </div>
+</div>
+<div class="container">
+    <div class="row">
+        <div class="col-5">
+            <button @onclick="OnPreviousStep">prev</button>
+        </div>
+        
+        <div class="col-2"></div>
+        
+        <div class="col-5">
+            <button @onclick="OnNextStep">next</button>
         </div>
     </div>
 </div>
