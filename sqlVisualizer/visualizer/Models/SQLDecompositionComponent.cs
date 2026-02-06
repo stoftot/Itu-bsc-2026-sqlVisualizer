@@ -9,4 +9,9 @@ public class SQLDecompositionComponent(SQLKeyword keyword, string clause)
     {
         return $"{Keyword.ToSQLString()} {Clause}";
     }
+    
+    public string ToExecutableClause()
+    {
+        return ToString();
+    }
 }
