@@ -11,7 +11,8 @@ public partial class EditorView : ComponentBase
         {
             AutomaticLayout = true,
             Language = "sql",
-            Value = "SELECT * FROM WEATHER\n"
+            Value = "SELECT * FROM WEATHER\n",
+            Minimap = new EditorMinimapOptions {Enabled =  false}
         };
     }
 
