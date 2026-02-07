@@ -14,6 +14,8 @@ public class TableEntry
         }
         return HighlightStyle;
     }
+    
+    public void ToggleHighlight() => IsHighlighted = !IsHighlighted;
 
     public void SetHighlightStyleDefault() => HighlightStyle = "background-color: #FFF3CD;";
 
