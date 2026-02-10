@@ -1,4 +1,5 @@
-﻿@inherits LayoutComponentBase
+﻿@using visualizer.Components.Shared
+@inherits LayoutComponentBase
 
 <div class="layout">
     <main>
@@ -8,10 +9,10 @@
         Tool Bar
     </div>
     <div class="schema">
-        Scheme
+        <SchemaView />
     </div>
     <div class="editor">
-        Editor
+        <EditorView />
     </div>
 </div>
 
