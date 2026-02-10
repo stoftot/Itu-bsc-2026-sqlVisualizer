@@ -12,16 +12,14 @@ public class TableEntry
         {
             SetHighlightStyleDefault();
         }
+
         return HighlightStyle;
     }
-    
+
     public void ToggleHighlight() => IsHighlighted = !IsHighlighted;
 
     public void SetHighlightStyleDefault() => HighlightStyle = "background-color: #FFF3CD;";
 
-    public void SetHighlightHexColor(string hexColor)
-    {
+    public void SetHighlightHexColor(string hexColor) =>
         HighlightStyle = $"background-color: #{hexColor};";
-        Console.WriteLine(string.Join(",", Values));
-    }
 }
