@@ -60,4 +60,19 @@ public class SQLExecutor(DuckDBConnection connection)
     
     public async Task<Table> Execute(SQLDecompositionComponent component) 
         => await Execute([component]);
+
+    public async Task<Database> GetDatabase()
+    {
+        Database database = new Database(){Name = "Standard", TableNames = new List<string>(), Tables = new List<Table>()};
+        Table tables = await Execute("SHOW TABLES");
+        
+        foreach (var table in tables.Entries)
+        {
+            String tableName = table.Values[0];
+            Table result = await Execute("SHOW TABLE " + tableName);
+            database.TableNames.Add(tableName);
+            database.Tables.Add(result);
+        }
+        return database;
+    }
 }
