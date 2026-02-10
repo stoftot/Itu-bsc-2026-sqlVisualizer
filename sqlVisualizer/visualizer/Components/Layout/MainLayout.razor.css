@@ -18,6 +18,9 @@ main {
 .schema {
     grid-area: schema;
     background: #F1F5F9;
+    overflow-y: scroll;
+    height: 100%;
+    padding: 8px;
 }
 
 .editor {
