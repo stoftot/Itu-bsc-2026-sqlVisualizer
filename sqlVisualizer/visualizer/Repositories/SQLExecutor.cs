@@ -74,16 +74,15 @@ public class SQLExecutor(DuckDBConnection connection)
 
     public async Task<Database> GetDatabase()
     {
-        Database database = new Database()
-            { Name = "Standard", TableNames = new List<string>(), Tables = new List<Table>() };
-        Table tables = await Execute("SHOW TABLES");
+        var database = new Database()
+            { Name = "Standard", Tables = [] };
+        var tables = await Execute("SHOW TABLES");
 
-        foreach (var table in tables.Entries)
+        foreach (var tableName in tables.Entries.Select(table => table.Values[0].Value))
         {
-            String tableName = table.Values[0].Value;
-            Table result = await Execute("SHOW TABLE " + tableName);
-            database.TableNames.Add(tableName);
-            database.Tables.Add(result);
+            var table = await Execute("SHOW TABLE " + tableName);
+            table.Name = tableName;
+            database.Tables.Add(table);
         }
 
         return database;
