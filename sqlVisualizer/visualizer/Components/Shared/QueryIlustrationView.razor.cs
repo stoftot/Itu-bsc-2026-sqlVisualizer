@@ -64,11 +64,11 @@ public class QueryIlustrationViewBase : ComponentBase
 
         ToTable = SQLExecutor.Execute(Steps[..(IndexOfStepToHighlight + 1)].Prepend(IntialStep)).Result;
 
-        // UpdateHighlightedSteps();
+        // HighligthingAndVisiblityDemo();
     }
 
     //this is purley for illustration purposes 
-    private void UpdateHighlightedSteps()
+    private void HighligthingAndVisiblityDemo()
     {
         foreach (var table in FromTables)
         {
