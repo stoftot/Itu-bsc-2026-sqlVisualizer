@@ -3,7 +3,7 @@
 public class TableEntry
 {
     public bool IsHighlighted { get; set; } = false;
-    public required List<string> Values { get; set; }
+    public required List<TableValue> Values { get; set; }
     private string HighlightStyle { get; set; } = "";
 
     public string GetHighlightStyle()

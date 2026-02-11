@@ -23,7 +23,7 @@ else
             <tr style="@(entry.IsHighlighted ? entry.GetHighlightStyle() : null)">
                 @foreach (var cell in entry.Values)
                 {
-                    <td>@cell</td>
+                    <td>@cell.Value</td>
                 }
             </tr>
         }
