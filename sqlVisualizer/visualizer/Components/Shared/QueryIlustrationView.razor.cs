@@ -67,22 +67,35 @@ public class QueryIlustrationViewBase : ComponentBase
         // UpdateHighlightedSteps();
     }
 
+    //this is purley for illustration purposes 
     private void UpdateHighlightedSteps()
     {
-        // foreach (var table in FromTables)
-        // {
-        //     for(int i = 0; i < table.Entries.Count; i++)
-        //     {
-        //         if(i%2 == 0) continue;
-        //         table.Entries[i].IsHighlighted = !table.Entries[i].IsHighlighted;
-        //         table.Entries[i].SetHighlightHexColor("4293f5");
-        //     }
-        // }
+        foreach (var table in FromTables)
+        {
+            for(int i = 0; i < table.Entries.Count; i++)
+            {
+                for (int k = 0; k < table.Entries[i].Values.Count; k++)
+                {
+                    if (k % 2 == 0)
+                    {
+                        if(i%2 != 0) continue;
+                        table.Entries[i].Values[k].ToggleVisible();
+                    }
+                    else
+                    {
+                        if(i%2 == 0) continue;
+                        table.Entries[i].Values[k].SetHighlightHexColor("4293f5");
+                        table.Entries[i].Values[k].ToggleHighlight();
+                    }
+                        
+                }
+            }
+        }
 
         for (int i = 0; i < ToTable.Entries.Count; i++)
         {
             if (i % 2 == 0) continue;
-            ToTable.Entries[i].IsHighlighted = !ToTable.Entries[i].IsHighlighted;
+            ToTable.Entries[i].ToggleHighlight();
         }
     }
 
@@ -93,7 +106,7 @@ public class QueryIlustrationViewBase : ComponentBase
         while (animation.NextStep())
         {
             StateHasChanged();
-            await Task.Delay(1500);
+            await Task.Delay(1100);
         }
     }
     
