@@ -7,42 +7,28 @@ public static class AnimationGenerator
 {
     public static Animation Generate(List<Table> fromTables, Table toTable, SQLDecompositionComponent action)
     {
-        switch (action.Keyword)
+        return action.Keyword switch
         {
-            case SQLKeyword.FROM:
-                throw new NotImplementedException();
-            case SQLKeyword.JOIN:
-            case SQLKeyword.INNER_JOIN:
-                return GenerateJoinAnimation(fromTables, toTable, action);
-            case SQLKeyword.LEFT_JOIN:
-                throw new NotImplementedException();
-            case SQLKeyword.RIGHT_JOIN:
-                throw new NotImplementedException();
-            case SQLKeyword.FULL_JOIN:
-                throw new NotImplementedException();
-            case SQLKeyword.WHERE:
-                throw new NotImplementedException();
-            case SQLKeyword.GROUP_BY:
-                throw new NotImplementedException();
-            case SQLKeyword.HAVING:
-                throw new NotImplementedException();
-            case SQLKeyword.SELECT:
-                throw new NotImplementedException();
-            case SQLKeyword.ORDER_BY:
-                throw new NotImplementedException();
-            case SQLKeyword.LIMIT:
-                throw new NotImplementedException();
-            case SQLKeyword.OFFSET:
-                throw new NotImplementedException();
-            default:
-                throw new ArgumentOutOfRangeException();
-        }
+            SQLKeyword.FROM => throw new NotImplementedException(),
+            SQLKeyword.JOIN or SQLKeyword.INNER_JOIN => GenerateJoinAnimation(fromTables, toTable, action),
+            SQLKeyword.LEFT_JOIN => throw new NotImplementedException(),
+            SQLKeyword.RIGHT_JOIN => throw new NotImplementedException(),
+            SQLKeyword.FULL_JOIN => throw new NotImplementedException(),
+            SQLKeyword.WHERE => throw new NotImplementedException(),
+            SQLKeyword.GROUP_BY => throw new NotImplementedException(),
+            SQLKeyword.HAVING => throw new NotImplementedException(),
+            SQLKeyword.SELECT => throw new NotImplementedException(),
+            SQLKeyword.ORDER_BY => throw new NotImplementedException(),
+            SQLKeyword.LIMIT => throw new NotImplementedException(),
+            SQLKeyword.OFFSET => throw new NotImplementedException(),
+            _ => throw new ArgumentOutOfRangeException()
+        };
     }
 
     private static Animation GenerateJoinAnimation(List<Table> fromTables, Table toTable,
         SQLDecompositionComponent action)
     {
-        if (fromTables.Count != 2) throw new ArgumentException("Join animations can only be generated for two tables.");
+        if (fromTables.Count != 2) throw new ArgumentException("Join animations can only be generated from two tables to one");
 
         var steps = new List<Action>();
 
