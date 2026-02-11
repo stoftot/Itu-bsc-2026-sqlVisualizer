@@ -64,7 +64,7 @@ public class QueryIlustrationViewBase : ComponentBase
 
         ToTable = SQLExecutor.Execute(Steps[..(IndexOfStepToHighlight + 1)].Prepend(IntialStep)).Result;
 
-        UpdateHighlightedSteps();
+        // UpdateHighlightedSteps();
     }
 
     private void UpdateHighlightedSteps()
@@ -88,14 +88,12 @@ public class QueryIlustrationViewBase : ComponentBase
 
     private async Task AnimateSteps()
     {
-        foreach (var t in FromTables.SelectMany(table => table.Entries))
+        var animation = AnimationGenerator.Generate(FromTables, ToTable, Steps[IndexOfStepToHighlight]);
+
+        while (animation.NextStep())
         {
-            t.ToggleHighlight();
-            t.SetHighlightHexColor("4293f5");
             StateHasChanged();
-            await Task.Delay(1000);
-            t.ToggleHighlight();
-            StateHasChanged();
+            await Task.Delay(1500);
         }
     }
     
