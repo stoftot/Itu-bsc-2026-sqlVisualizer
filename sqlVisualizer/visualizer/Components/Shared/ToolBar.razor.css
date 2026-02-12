@@ -1,1 +1,34 @@
-﻿
+﻿.toolbar {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    padding: 8px;
+    align-items: center;
+}
+
+.editor-part {
+    width: 320px;
+    justify-content: center;
+    align-items: center;
+}
+
+.sql-statements {
+    
+}
+
+button {
+    border: none;
+    border-radius: 5px;
+}
+
+.stepper {
+    
+}
+
+.bi {
+    font-size: 1.6em;
+}
+
+.bi-play-fill {
+    color: green;
+}
