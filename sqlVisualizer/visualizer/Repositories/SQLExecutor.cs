@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Drawing;
+using System.Text;
 using DuckDB.NET.Data;
 using visualizer.Models;
 
@@ -23,16 +24,16 @@ public class SQLExecutor(DuckDBConnection connection)
 
             while (await reader.ReadAsync())
             {
-                var row = new List<string>();
+                var row = new List<TableValue>();
                 for (var i = 0; i < reader.FieldCount; i++)
                 {
-                    row.Add(reader.GetValue(i).ToString() ?? "NULL");
+                    row.Add(new TableValue{Value = reader.GetValue(i).ToString() ?? "NULL"});
                 }
 
                 entries.Add(new TableEntry { Values = row });
             }
 
-            return new Table { ColumnNames = columnNames, Entries = entries };
+            return new Table {ColumnNames = columnNames, Entries = entries };
         }
         finally
         {
@@ -40,8 +41,9 @@ public class SQLExecutor(DuckDBConnection connection)
         }
     }
 
-    public async Task<Table> Execute(IEnumerable<SQLDecompositionComponent> components)
+    public async Task<Table> Execute(IEnumerable<SQLDecompositionComponent> sqlDecompositionComponents)
     {
+        var components = sqlDecompositionComponents.ToList();
         var containsSelect = components.Any(c => c.Keyword == SQLKeyword.SELECT);
         var queryBuilder = new StringBuilder();
         if (!containsSelect)
@@ -57,22 +59,32 @@ public class SQLExecutor(DuckDBConnection connection)
 
         return await Execute(queryBuilder.ToString());
     }
-    
-    public async Task<Table> Execute(SQLDecompositionComponent component) 
-        => await Execute([component]);
+
+    public async Task<Table> Execute(SQLDecompositionComponent component)
+    {
+        var table = await Execute([component]);
+
+        if (component.Keyword == SQLKeyword.FROM)
+        {
+            table.Name = component.Clause.Split(' ')[0];
+        }
+
+        return table;
+    }
 
     public async Task<Database> GetDatabase()
     {
-        Database database = new Database(){Name = "Standard", TableNames = new List<string>(), Tables = new List<Table>()};
-        Table tables = await Execute("SHOW TABLES");
-        
-        foreach (var table in tables.Entries)
+        var database = new Database()
+            { Name = "Standard", Tables = [] };
+        var tables = await Execute("SHOW TABLES");
+
+        foreach (var tableName in tables.Entries.Select(table => table.Values[0].Value))
         {
-            String tableName = table.Values[0];
-            Table result = await Execute("SHOW TABLE " + tableName);
-            database.TableNames.Add(tableName);
-            database.Tables.Add(result);
+            var table = await Execute("SHOW TABLE " + tableName);
+            table.Name = tableName;
+            database.Tables.Add(table);
         }
+
         return database;
     }
 }

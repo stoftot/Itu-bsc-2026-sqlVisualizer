@@ -1,10 +1,9 @@
-﻿@using visualizer.Models
-<h4>Database Schema</h4>
-@for (int i = 0; i < Database.TableNames.Count; i++)
+﻿<h4>Database Schema</h4>
+@foreach(var table in Database.Tables)
 {
-    <h5>@Database.TableNames[i]</h5>
-    @foreach (TableEntry tableEntry in Database.Tables[i].Entries)
+    <h5>@table.Name</h5>
+    @foreach (var tableEntry in table.Entries)
     {
-        <h6>@tableEntry.Values[0]</h6>
+        <h6>@tableEntry.Values[0].Value</h6>
     }
 }
