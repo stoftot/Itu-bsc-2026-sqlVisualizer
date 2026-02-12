@@ -1,7 +1,29 @@
-﻿
-<i class="bi bi-play-fill"></i>
+﻿@using visualizer.Models
+@rendermode InteractiveServer
 
+<div class="toolbar">
+    <div class="editor-part">
+        <select name="sql-statements" @onchange="SelectChanged">
+            @for (int i = 0; i < queries.Count; i++)
+            {
+                <option value="@i">@queries[i].Type</option>
+            }
+        </select>
 
-@code {
-    
-}
+        <button @onclick="RunQuery">
+            <i class="bi bi-play-fill"></i>
+        </button>
+    </div>
+
+    <div class="stepper">
+        <button @onclick="StepPrevious">
+            <i class="bi bi-chevron-left"></i>
+        </button>
+        2
+        3
+        4
+        <button @onclick="StepNext">
+            <i class="bi bi-chevron-right"></i>
+        </button>
+    </div>
+</div>
