@@ -1,7 +1,6 @@
 using DuckDB.NET.Data;
 using visualizer;
 using visualizer.Components;
-using visualizer.Models;
 using visualizer.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,6 +17,7 @@ builder.Services.AddScoped<DuckDBConnection>(sp =>
 });
 
 builder.Services.AddScoped<SQLExecutor>();
+builder.Services.AddScoped<State>();
 
 var app = builder.Build();
 

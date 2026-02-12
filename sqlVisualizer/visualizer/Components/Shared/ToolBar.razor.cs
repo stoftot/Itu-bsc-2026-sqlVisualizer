@@ -1,10 +1,12 @@
 ﻿using Microsoft.AspNetCore.Components;
 using visualizer.Models;
+using visualizer.Repositories;
 
 namespace visualizer.Components.Shared;
 
 public partial class ToolBar : ComponentBase
 {
+    [Inject] public required State State { get; init; }
     string current = "Custom";
     List<Query> queries = [
         new()
@@ -32,8 +34,7 @@ public partial class ToolBar : ComponentBase
                   "GROUP BY productname",
         }
     ];
-    string selected = "SELECT shift.day, user.email FROM shift " +
-                      "JOIN user ON shift.cashier = user.username";
+
     void SelectChanged(ChangeEventArgs e)
     {
         current = e.Value!.ToString()!;
@@ -42,7 +43,8 @@ public partial class ToolBar : ComponentBase
 
     void RunQuery()
     {
-        
+        Console.WriteLine("run query:");
+        Console.WriteLine(State.EditorContent);
     }
     
     void StepPrevious()

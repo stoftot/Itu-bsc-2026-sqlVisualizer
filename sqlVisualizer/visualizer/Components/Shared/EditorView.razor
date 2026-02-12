@@ -1,2 +1,5 @@
 ﻿@rendermode InteractiveServer
-<StandaloneCodeEditor Id="my-code-editor" ConstructionOptions="EditorConstructionOptions" />
+<StandaloneCodeEditor @ref="_editor" 
+                      Id="my-code-editor" 
+                      ConstructionOptions="EditorConstructionOptions" 
+                      OnDidChangeModelContent="EditorChangedModelContent" />
