@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Components;
-using visualizer.Models;
 using visualizer.Repositories;
 
 namespace visualizer.Components.Shared;

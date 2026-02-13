@@ -3,7 +3,6 @@ using visualizer.Repositories;
 
 namespace visualizer.Components.Pages;
 
-
 public partial class Home : ComponentBase
 {
     [Inject] public required State State { get; init; }
