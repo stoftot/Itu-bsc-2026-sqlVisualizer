@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components;
+using visualizer.Components.Shared;
 using visualizer.Repositories;
 
 namespace visualizer.Components.Pages;
@@ -6,22 +7,18 @@ namespace visualizer.Components.Pages;
 public partial class Home : ComponentBase
 {
     [Inject] public required State State { get; init; }
+    public QueryIlustrationView QueryView; 
     private string query = "";
     
     protected override void OnInitialized()
     {
         base.OnInitialized();
         query = State.Queries[0].SQL;
-        /*State.RunSQL = sql =>
+        State.RunSQL = sql =>
         {
             query = sql;
             StateHasChanged();
-        }; */
-        Console.WriteLine("HERE ____________");
-        State.RunSQL = delegate(string sql)
-        {
-            query = sql;
+            QueryView.Init();
         };
-        Console.WriteLine("THERE ____________");
     }
 }

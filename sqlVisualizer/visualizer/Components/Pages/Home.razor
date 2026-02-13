@@ -1,10 +1,12 @@
 ﻿@page "/"
 @using visualizer.Components.Shared
+@rendermode InteractiveServer
 
 <PageTitle>Home</PageTitle>
+<CascadingValue Value="State">
 <div class="layout">
     <main>
-        <QueryIlustrationView Query="@query" />
+        <QueryIlustrationView @ref="QueryView" Query="@query" />
     </main>
     
     <div class="toolbar">
@@ -19,3 +21,4 @@
         <EditorView />
     </div>
 </div>
+</CascadingValue>

@@ -39,6 +39,16 @@ public class QueryIlustrationViewBase : ComponentBase
         StateHasChanged();
     }
 
+    public void Init()
+    {
+        Steps = Decomposer.Decompose(Query);
+        IntialStep = Steps.First();
+        Steps.Remove(IntialStep);
+
+        UpdateStepShown();
+        StateHasChanged();
+    }
+
     private void UpdateStepShown()
     {
         FromTables.Clear();
