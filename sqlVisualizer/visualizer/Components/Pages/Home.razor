@@ -12,6 +12,7 @@
 
 @code
 {
-    private string query = "SELECT shift.day, user.email FROM shift " +
+    
+    private string query = "SELECT shift.day, email FROM shift " +
                 "JOIN user ON shift.cashier = user.username";
 }

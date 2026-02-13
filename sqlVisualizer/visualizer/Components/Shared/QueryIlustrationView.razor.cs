@@ -10,10 +10,14 @@ public class QueryIlustrationViewBase : ComponentBase
     [Inject] SQLExecutor SQLExecutor { get; init; }
     [Inject] private MetricsConfig MetricsConfig { get; init; } = null!;
     public required List<Table> FromTables { get; init; } = [];
+    [Inject] VisualisationsGenerator VisualisationsGenerator { get; init; }
+    public required List<Table> FromTables { get; set; }
     public required Table ToTable { get; set; }
 
+    private List<Visualisation> Steps { get; set; }
+    
     private int _indexOfStepToHighlight = 0;
-
+    
     private int IndexOfStepToHighlight
     {
         get => _indexOfStepToHighlight;
@@ -25,16 +29,12 @@ public class QueryIlustrationViewBase : ComponentBase
             UpdateStepShown();
         }
     }
-
-    private List<SQLDecompositionComponent> Steps { get; set; }
-    private SQLDecompositionComponent IntialStep { get; set; }
-    private SQLDecomposer Decomposer { get; } = new();
-
+    
+    private Visualisation CurrStep => Steps[IndexOfStepToHighlight];
+    
     protected override void OnInitialized()
     {
-        Steps = Decomposer.Decompose(Query);
-        IntialStep = Steps.First();
-        Steps.Remove(IntialStep);
+        Steps = VisualisationsGenerator.Generate(Query);
 
         UpdateStepShown();
         StateHasChanged();
@@ -42,28 +42,8 @@ public class QueryIlustrationViewBase : ComponentBase
 
     private void UpdateStepShown()
     {
-        FromTables.Clear();
-
-        if (IndexOfStepToHighlight == 0)
-        {
-            FromTables.Add(SQLExecutor.Execute(IntialStep).Result);
-        }
-        else
-        {
-            FromTables.Add(
-                SQLExecutor.Execute(
-                    Steps[..IndexOfStepToHighlight].Prepend(IntialStep)
-                ).Result);
-        }
-
-        var currentStep = Steps[IndexOfStepToHighlight];
-
-        if (currentStep.Keyword.IsJoin())
-        {
-            FromTables.Add(SQLExecutor.Execute(currentStep.GenerateFromClauseFromJoin()).Result);
-        }
-
-        ToTable = SQLExecutor.Execute(Steps[..(IndexOfStepToHighlight + 1)].Prepend(IntialStep)).Result;
+        FromTables = CurrStep.FromTables;
+        ToTable = CurrStep.ToTable;
 
         // HighligthingAndVisiblityDemo();
     }
@@ -102,7 +82,7 @@ public class QueryIlustrationViewBase : ComponentBase
 
     private async Task AnimateSteps()
     {
-        var animation = AnimationGenerator.Generate(FromTables, ToTable, Steps[IndexOfStepToHighlight]);
+        var animation = CurrStep.Animation;
 
         while (animation.NextStep())
         {
