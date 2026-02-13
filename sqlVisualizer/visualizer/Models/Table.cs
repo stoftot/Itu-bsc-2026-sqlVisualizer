@@ -8,6 +8,7 @@ public class Table
     /// </summary>
     public string Name { get; set; } = string.Empty;
     public bool IsResultTable => Name == string.Empty;
-    public required List<string> ColumnNames { get; init; }
-    public required List<TableEntry> Entries { get; init; }
+    public List<string> OrginalTableNames { get; } = [];
+    public required IReadOnlyList<string> ColumnNames { get; init; }
+    public required IReadOnlyList<TableEntry> Entries { get; init; }
 }

@@ -17,6 +17,8 @@ builder.Services.AddScoped<DuckDBConnection>(sp =>
 });
 
 builder.Services.AddScoped<SQLExecutor>();
+builder.Services.AddScoped<SQLDecomposer>();
+builder.Services.AddScoped<VisualisationsGenerator>();
 builder.Services.AddScoped<State>();
 
 var app = builder.Build();
