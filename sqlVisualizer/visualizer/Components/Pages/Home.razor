@@ -1,17 +1,21 @@
 ﻿@page "/"
 @using visualizer.Components.Shared
-@using visualizer.Models
 
 <PageTitle>Home</PageTitle>
+<div class="layout">
+    <main>
+        <QueryIlustrationView Query="@query" />
+    </main>
+    
+    <div class="toolbar">
+        <ToolBar />
+    </div>
 
-<QueryIlustrationView
-    Query="@query"
-    />
+    <div class="schema">
+        <SchemaView />
+    </div>
 
-
-
-@code
-{
-    private string query = "SELECT shift.day, user.email FROM shift " +
-                "JOIN user ON shift.cashier = user.username";
-}
+    <div class="editor">
+        <EditorView />
+    </div>
+</div>

@@ -1,0 +1,28 @@
+.layout {
+    height: 100%;
+    display: grid;
+    grid: 1fr 60px 260px / 320px 1fr;
+    grid-template-areas: "main main" "toolbar toolbar" "schema editor";
+}
+
+main {
+    grid-area: main;
+    padding: 20px;
+}
+
+.toolbar {
+    grid-area: toolbar;
+    background: #E5E7EB;
+}
+
+.schema {
+    grid-area: schema;
+    background: #F1F5F9;
+    overflow-y: scroll;
+    height: 100%;
+    padding: 8px;
+}
+
+.editor {
+    grid-area: editor;
+}
