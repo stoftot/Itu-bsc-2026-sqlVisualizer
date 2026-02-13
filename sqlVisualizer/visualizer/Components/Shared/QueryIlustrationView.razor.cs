@@ -9,7 +9,7 @@ public class QueryIlustrationViewBase : ComponentBase
     [Parameter] public required string Query { get; init; }
     [Inject] VisualisationsGenerator VisualisationsGenerator { get; init; }
     public required List<Table> FromTables { get; set; }
-    public required Table ToTable { get; set; }
+    public required List<Table> ToTables { get; set; }
 
     private List<Visualisation> Steps { get; set; }
     
@@ -40,7 +40,7 @@ public class QueryIlustrationViewBase : ComponentBase
     private void UpdateStepShown()
     {
         FromTables = CurrStep.FromTables;
-        ToTable = CurrStep.ToTable;
+        ToTables = CurrStep.ToTables;
 
         // HighligthingAndVisiblityDemo();
     }
@@ -70,11 +70,11 @@ public class QueryIlustrationViewBase : ComponentBase
             }
         }
 
-        for (int i = 0; i < ToTable.Entries.Count; i++)
-        {
-            if (i % 2 == 0) continue;
-            ToTable.Entries[i].ToggleHighlight();
-        }
+        // for (int i = 0; i < ToTables.Entries.Count; i++)
+        // {
+        //     if (i % 2 == 0) continue;
+        //     ToTables.Entries[i].ToggleHighlight();
+        // }
     }
 
     private async Task AnimateSteps()

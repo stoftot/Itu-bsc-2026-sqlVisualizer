@@ -5,12 +5,12 @@ namespace visualizer.Repositories;
 
 public static class AnimationGenerator
 {
-    public static Animation Generate(List<Table> fromTables, Table toTable, SQLDecompositionComponent action)
+    public static Animation Generate(List<Table> fromTables, List<Table> toTables, SQLDecompositionComponent action)
     {
         return action.Keyword switch
         {
             SQLKeyword.FROM => throw new NotImplementedException(),
-            SQLKeyword.JOIN or SQLKeyword.INNER_JOIN => GenerateJoinAnimation(fromTables, toTable, action),
+            SQLKeyword.JOIN or SQLKeyword.INNER_JOIN => GenerateJoinAnimation(fromTables, toTables[0], action),
             SQLKeyword.LEFT_JOIN => throw new NotImplementedException(),
             SQLKeyword.RIGHT_JOIN => throw new NotImplementedException(),
             SQLKeyword.FULL_JOIN => throw new NotImplementedException(),
@@ -20,7 +20,7 @@ public static class AnimationGenerator
             SQLKeyword.SELECT =>
                 fromTables.Count > 1
                     ? throw new ArgumentException("select animation can only be generated from one table to another")
-                    : GenerateSelectAnimation(fromTables[0], toTable, action),
+                    : GenerateSelectAnimation(fromTables[0], toTables[0], action),
             SQLKeyword.ORDER_BY => throw new NotImplementedException(),
             SQLKeyword.LIMIT => throw new NotImplementedException(),
             SQLKeyword.OFFSET => throw new NotImplementedException(),
