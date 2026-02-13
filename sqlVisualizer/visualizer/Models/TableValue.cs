@@ -1,7 +1,27 @@
-﻿namespace visualizer.Models;
+﻿using System.Text;
+
+namespace visualizer.Models;
 
 public class TableValue : TableObjectBase
 {
-    public string OriginalTableName { get; set; } = string.Empty;
     public required string Value  { get; set; }
+
+    public string GetStyle()
+    {
+        var styleBuilder = new StringBuilder();
+
+        if (IsHighlighted)
+        {
+            styleBuilder.Append(GetHighlightStyle());
+            styleBuilder.Append(';');
+        }
+
+        if (!IsVisible)
+        {
+            styleBuilder.Append("visibility:hidden");
+            styleBuilder.Append(';');
+        }
+        
+        return styleBuilder.ToString();
+    }
 }
