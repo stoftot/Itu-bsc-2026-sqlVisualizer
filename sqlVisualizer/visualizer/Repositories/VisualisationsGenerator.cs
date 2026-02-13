@@ -73,10 +73,18 @@ public class VisualisationsGenerator(SQLDecomposer decomposer, SQLExecutor sqlEx
         {
             vis = visualisations[i];
 
-            //this is to just to copy the previous result tables origin columns over into the next steps from table
+            //this is just to copy the previous result tables origin columns over into the next steps from table
             if (i > 0)
             {
-                DuplicateOriginOnColumnsSingle([visualisations[i - 1].ToTables[0]], vis.FromTables[0]);
+                var prevToTables = visualisations[i - 1].ToTables;
+                if (prevToTables.Count == 1)
+                {
+                    DuplicateOriginOnColumnsSingle([prevToTables[0]], vis.FromTables[0]);
+                }
+                else
+                {
+                    throw new NotImplementedException();
+                }
             }
             
             switch (vis.Component.Keyword)
