@@ -10,5 +10,5 @@ public class Table
     public bool IsResultTable => Name == string.Empty;
     public List<string> OrginalTableNames { get; } = [];
     public required IReadOnlyList<string> ColumnNames { get; init; }
-    public required List<TableEntry> Entries { get; init; }
+    public required IReadOnlyList<TableEntry> Entries { get; init; }
 }
