@@ -8,6 +8,7 @@ public class QueryIlustrationViewBase : ComponentBase
 {
     [Parameter] public required string Query { get; init; }
     [Inject] SQLExecutor SQLExecutor { get; init; }
+    [Inject] private MetricsConfig MetricsConfig { get; init; } = null!;
     public required List<Table> FromTables { get; init; } = [];
     public required Table ToTable { get; set; }
 
@@ -112,16 +113,19 @@ public class QueryIlustrationViewBase : ComponentBase
     
     protected void OnAnimateSteps()
     {
+        MetricsConfig.AnimateButtonClicks.Add(1);
         AnimateSteps();
     }
 
     protected void OnNextStep()
     {
+        MetricsConfig.NextButtonClicks.Add(1);
         IndexOfStepToHighlight++;
     }
 
     protected void OnPreviousStep()
     {
+        MetricsConfig.PrevButtonClicks.Add(1);
         IndexOfStepToHighlight--;
     }
 }
