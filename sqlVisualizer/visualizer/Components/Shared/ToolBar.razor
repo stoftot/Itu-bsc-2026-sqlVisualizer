@@ -4,9 +4,9 @@
 <div class="toolbar">
     <div class="editor-part">
         <select name="sql-statements" @onchange="SelectChanged">
-            @for (int i = 0; i < queries.Count; i++)
+            @for (int i = 0; i < State.Queries.Count; i++)
             {
-                <option value="@i">@queries[i].Type</option>
+                <option value="@i">@State.Queries[i].Type</option>
             }
         </select>
 
