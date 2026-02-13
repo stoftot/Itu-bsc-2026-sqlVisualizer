@@ -33,7 +33,7 @@ public class SQLExecutor(DuckDBConnection connection)
                 entries.Add(new TableEntry { Values = row });
             }
 
-            return new Table {ColumnNames = columnNames, Entries = entries };
+            return new Table{ColumnNames = columnNames.AsReadOnly(), Entries = entries.AsReadOnly()};
         }
         finally
         {

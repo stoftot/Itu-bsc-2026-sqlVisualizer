@@ -17,7 +17,10 @@ public static class AnimationGenerator
             SQLKeyword.WHERE => throw new NotImplementedException(),
             SQLKeyword.GROUP_BY => throw new NotImplementedException(),
             SQLKeyword.HAVING => throw new NotImplementedException(),
-            SQLKeyword.SELECT => throw new NotImplementedException(),
+            SQLKeyword.SELECT =>
+                fromTables.Count > 1
+                    ? throw new ArgumentException("select animation can only be generated from one table to another")
+                    : GenerateSelectAnimation(fromTables[0], toTable, action),
             SQLKeyword.ORDER_BY => throw new NotImplementedException(),
             SQLKeyword.LIMIT => throw new NotImplementedException(),
             SQLKeyword.OFFSET => throw new NotImplementedException(),
@@ -28,7 +31,8 @@ public static class AnimationGenerator
     private static Animation GenerateJoinAnimation(List<Table> fromTables, Table toTable,
         SQLDecompositionComponent action)
     {
-        if (fromTables.Count != 2) throw new ArgumentException("Join animations can only be generated from two tables to one");
+        if (fromTables.Count != 2)
+            throw new ArgumentException("Join animations can only be generated from two tables to one");
 
         var steps = new List<Action>();
 
@@ -68,6 +72,51 @@ public static class AnimationGenerator
         return new Animation(steps);
     }
 
+    private static Animation GenerateSelectAnimation(Table fromTable, Table toTable, SQLDecompositionComponent action)
+    {
+        var steps = new List<Action>();
+
+        var hideResultTable = new List<Action>();
+        for (int i = 0; i < toTable.ColumnNames.Count; i++)
+            hideResultTable.Add(GenerateToggleVisibleColumn(toTable, i));
+
+        steps.Add(CombineActions(hideResultTable));
+
+        var columns = action.Clause.Split(',').Select(c => c.Trim()).ToList();
+
+        var columnIndex = 0;
+        foreach (var column in columns)
+        {
+            var parts = column.Split('.', 2);
+            var tableName  = parts.Length == 2 ? parts[0] : null;
+            var columnName = parts.Length == 2 ? parts[1] : parts[0];
+
+            for (int i = 0; i < fromTable.ColumnNames.Count; i++)
+            {
+                var fromAnimation = GenerateToggleHighlightColumn(fromTable, i);
+
+                if (fromTable.ColumnNames[i].Equals(columnName, StringComparison.InvariantCultureIgnoreCase) &&
+                    (tableName == null ||
+                     fromTable.OrginalTableNames[i].Equals(tableName, StringComparison.InvariantCultureIgnoreCase)))
+                {
+                    steps.Add(CombineActions([
+                        fromAnimation,
+                        GenerateToggleVisibleColumn(toTable, columnIndex)
+                    ]));
+
+                    columnIndex++;
+                    steps.Add(fromAnimation);
+                    break;
+                }
+
+                steps.Add(fromAnimation);
+                steps.Add(fromAnimation);
+            }
+        }
+
+        return new Animation(steps);
+    }
+
     private static Action GenerateToggle(List<TableEntry> entries)
     {
         //capture the list, so when its changed it doesn't apply to all functions
@@ -75,6 +124,38 @@ public static class AnimationGenerator
         return () =>
         {
             foreach (var t in snapshot) t.ToggleHighlight();
+        };
+    }
+
+    private static Action GenerateToggleHighlightColumn(Table table, int index)
+    {
+        return () =>
+        {
+            foreach (var te in table.Entries)
+            {
+                te.Values[index].ToggleHighlight();
+            }
+        };
+    }
+
+    private static Action GenerateToggleVisibleColumn(Table table, int index)
+    {
+        return () =>
+        {
+            foreach (var te in table.Entries)
+            {
+                te.Values[index].ToggleVisible();
+            }
+        };
+    }
+
+    private static Action CombineActions(List<Action> actions)
+    {
+        //capture the list, so when its changed it doesn't apply to all functions
+        var snapshot = actions.ToList();
+        return () =>
+        {
+            foreach (var action in snapshot) action();
         };
     }
 
