@@ -31,17 +31,12 @@ public class QueryIlustrationViewBase : ComponentBase
     
     protected override void OnInitialized()
     {
-        Steps = VisualisationsGenerator.Generate(Query);
-
-        UpdateStepShown();
-        StateHasChanged();
+        Init();
     }
 
     public void Init()
     {
-        Steps = Decomposer.Decompose(Query);
-        IntialStep = Steps.First();
-        Steps.Remove(IntialStep);
+        Steps = VisualisationsGenerator.Generate(Query);
 
         UpdateStepShown();
         StateHasChanged();
