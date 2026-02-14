@@ -1,4 +1,6 @@
 using DuckDB.NET.Data;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
 using visualizer;
 using visualizer.Components;
 using visualizer.Repositories;
@@ -8,6 +10,23 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+builder.Services.AddSingleton<MetricsConfig>();
+
+var resourceBuilder = ResourceBuilder.CreateDefault()
+    .AddService(MetricsConfig.ServiceName, serviceVersion: MetricsConfig.ServiceVersion);
+
+builder.Services.AddOpenTelemetry().WithMetrics(metrics =>
+{
+    metrics.SetResourceBuilder(resourceBuilder)
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation()
+        .AddMeter(
+            "Microsoft.AspNetCore.Hosting",
+            "Microsoft.AspNetCore.Server.Kestrel",
+            MetricsConfig.ServiceName
+        ).AddPrometheusExporter();
+});
 
 builder.Services.AddScoped<DuckDBConnection>(sp =>
 {
@@ -22,6 +41,8 @@ builder.Services.AddScoped<VisualisationsGenerator>();
 builder.Services.AddScoped<State>();
 
 var app = builder.Build();
+
+app.MapPrometheusScrapingEndpoint();
 
 new DbInitializer(app.Configuration).Initialize();
 
