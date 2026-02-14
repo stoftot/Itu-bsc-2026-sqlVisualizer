@@ -11,4 +11,16 @@ public class Table
     public List<string> OrginalTableNames { get; } = [];
     public required IReadOnlyList<string> ColumnNames { get; init; }
     public required IReadOnlyList<TableEntry> Entries { get; init; }
+
+    public Table DeepClone()
+    {
+        return new Table
+        {
+            Name = Name,
+            ColumnNames = ColumnNames.ToList(),
+            Entries = Entries
+                .Select(e => e.DeepClone()) // you must implement this
+                .ToList()
+        };
+    }
 }

@@ -23,18 +23,18 @@ public class VisualisationsGenerator(SQLDecomposer decomposer, SQLExecutor sqlEx
         steps.Remove(intialStep);
 
         var fromTables = new List<Table>();
-        Table toTable;
-
+        var toTables = new List<Table>();
+        var prevToTables = new List<Table>();
+        
         fromTables.Add(sqlExecutor.Execute(intialStep).Result);
         fromTables[0].Name = intialStep.Clause.Split(',')[0].Trim();
         
         for (int i = 0; i < steps.Count; i++)
         {
             if (i != 0)
-                fromTables.Add(
-                    sqlExecutor.Execute(
-                        steps[..i].Prepend(intialStep)
-                    ).Result);
+                fromTables.AddRange(prevToTables.Select(t => (Table) t.DeepClone()).ToList());
+                // fromTables.Add(
+                //     sqlExecutor.Execute(steps[..i].Prepend(intialStep)).Result);
 
             var currentStep = steps[i];
 
@@ -45,16 +45,26 @@ public class VisualisationsGenerator(SQLDecomposer decomposer, SQLExecutor sqlEx
                 fromTables.Add(joiningTable);
             }
 
-            toTable = sqlExecutor.Execute(steps[..(i + 1)].Prepend(intialStep)).Result;
+            if (currentStep.Keyword == SQLKeyword.GROUP_BY)
+            {
+                
+            }
+            else
+            {
+                toTables.Add(
+                    sqlExecutor.Execute(steps[..(i + 1)].Prepend(intialStep)).Result);
+            }
 
             visualisations.Add(new Visualisation()
             {
                 Component = currentStep,
                 FromTables = fromTables.ToList(),
-                ToTables = [toTable]
+                ToTables = toTables.ToList()
             });
 
+            prevToTables = toTables.ToList();
             fromTables.Clear();
+            toTables.Clear();
         }
     }
 
@@ -79,7 +89,7 @@ public class VisualisationsGenerator(SQLDecomposer decomposer, SQLExecutor sqlEx
                 var prevToTables = visualisations[i - 1].ToTables;
                 if (prevToTables.Count == 1)
                 {
-                    DuplicateOriginOnColumnsSingle([prevToTables[0]], vis.FromTables[0]);
+                    DuplicateOriginOnColumnsSingle(prevToTables[0], vis.FromTables[0]);
                 }
                 else
                 {
@@ -113,6 +123,11 @@ public class VisualisationsGenerator(SQLDecomposer decomposer, SQLExecutor sqlEx
         }
     }
     
+    private void DuplicateOriginOnColumnsSingle(Table fromTable, Table toTable)
+    {
+        DuplicateOriginOnColumnsSingle([fromTable], toTable);
+    }
+    
     private void DuplicateOriginOnColumnsSingle(List<Table> fromTables, Table toTable)
     {
         foreach (var table in fromTables)
@@ -123,7 +138,11 @@ public class VisualisationsGenerator(SQLDecomposer decomposer, SQLExecutor sqlEx
     
     private void DuplicateOriginOnColumnsMulti(List<Table> fromTables, List<Table> toTables)
     {
-        throw new NotImplementedException();
+        if(fromTables.Count != toTables.Count) throw new ArgumentException("count of from tables and to tables are supposed to match");
+        for (int i = 0; i < fromTables.Count; i++)
+        {
+            DuplicateOriginOnColumnsSingle(fromTables[i], toTables[i]);
+        }
     }
 
     private void GenerateTableOriginOnColumnsForSelect(Visualisation vis)

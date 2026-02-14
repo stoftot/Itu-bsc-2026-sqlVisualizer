@@ -24,4 +24,9 @@ public class TableValue : TableObjectBase
         
         return styleBuilder.ToString();
     }
+
+    public TableValue DeepClone()
+    {
+        return new TableValue{ Value = Value };
+    }
 }
