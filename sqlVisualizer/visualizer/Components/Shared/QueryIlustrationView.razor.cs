@@ -80,6 +80,7 @@ public class QueryIlustrationViewBase : ComponentBase
     private async Task AnimateSteps()
     {
         var animation = CurrStep.Animation;
+        animation.Reset();
 
         while (animation.NextStep())
         {
