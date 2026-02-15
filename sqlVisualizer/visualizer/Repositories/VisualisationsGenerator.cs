@@ -12,7 +12,7 @@ public class VisualisationsGenerator(SQLDecomposer decomposer, SQLExecutor sqlEx
 
         GenerateTables(query, visualisations);
         GenerateTableOriginOnColumns(visualisations);
-        // GenerateAnimations(visualisations);
+        GenerateAnimations(visualisations);
 
         return visualisations;
     }

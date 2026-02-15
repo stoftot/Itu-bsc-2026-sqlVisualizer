@@ -29,4 +29,10 @@ public class TableValue : TableObjectBase
     {
         return new TableValue{ Value = Value };
     }
+
+    public override bool Equals(object? obj)
+    { 
+        var compare = (obj as TableValue);
+        return string.Equals(Value, compare.Value);
+    }
 }
