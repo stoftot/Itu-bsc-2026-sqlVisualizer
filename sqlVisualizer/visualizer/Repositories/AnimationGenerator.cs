@@ -1,4 +1,5 @@
 ﻿using System.Text.RegularExpressions;
+using Microsoft.VisualBasic;
 using visualizer.Models;
 
 namespace visualizer.Repositories;
@@ -72,15 +73,12 @@ public static class AnimationGenerator
         return new Animation(steps);
     }
 
-    private static Animation GenerateSelectAnimation(Table fromTable, Table toTable, SQLDecompositionComponent action)
+    private static Animation GenerateSelectAnimation(Table fromTable, Table toTable, 
+        SQLDecompositionComponent action)
     {
         var steps = new List<Action>();
 
-        var hideResultTable = new List<Action>();
-        for (int i = 0; i < toTable.ColumnNames.Count; i++)
-            hideResultTable.Add(GenerateToggleVisibleColumn(toTable, i));
-
-        steps.Add(CombineActions(hideResultTable));
+        steps.Add(HideTables([toTable]));
 
         var columns = action.Clause.Split(',').Select(c => c.Trim()).ToList();
 
@@ -149,6 +147,16 @@ public static class AnimationGenerator
         };
     }
 
+    private static Action HideTables(List<Table> tables)
+    {
+        var hide = new List<Action>();
+        foreach (var table in tables)
+        for (int i = 0; i < table.ColumnNames.Count; i++)
+            hide.Add(GenerateToggleVisibleColumn(table, i));
+
+        return CombineActions(hide);
+    }
+    
     private static Action CombineActions(List<Action> actions)
     {
         //capture the list, so when its changed it doesn't apply to all functions
