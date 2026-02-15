@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using visualizer.Components.Exstension_methods;
 using visualizer.Models;
 
 namespace visualizer.Repositories;
@@ -49,11 +50,7 @@ public class VisualisationsGenerator(SQLDecomposer decomposer, SQLExecutor sqlEx
                     throw new ArgumentException("Group by can only be generated when there is only one from table");
                 var tabel = fromTables[0].DeepClone();
                 var columnNameToGroupBy = currentStep.Clause.Trim();
-                var indexToGroupBy = 0;
-                while (!tabel.ColumnNames[indexToGroupBy]
-                           .Equals(columnNameToGroupBy, StringComparison.InvariantCultureIgnoreCase))
-                    indexToGroupBy++;
-
+                var indexToGroupBy = tabel.ColumnNames.IndexOf(columnNameToGroupBy);
 
                 var groupedTabels = tabel.Entries
                     .GroupBy(e => e.Values[indexToGroupBy].Value)
