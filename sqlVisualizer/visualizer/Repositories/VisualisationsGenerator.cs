@@ -10,8 +10,8 @@ public class VisualisationsGenerator(SQLDecomposer decomposer, SQLExecutor sqlEx
         var visualisations = new List<Visualisation>();
 
         GenerateTables(query, visualisations);
-        GenerateTableOriginOnColumns(visualisations);
-        GenerateAnimations(visualisations);
+        // GenerateTableOriginOnColumns(visualisations);
+        // GenerateAnimations(visualisations);
         
         return visualisations;
     }
@@ -32,9 +32,7 @@ public class VisualisationsGenerator(SQLDecomposer decomposer, SQLExecutor sqlEx
         for (int i = 0; i < steps.Count; i++)
         {
             if (i != 0)
-                fromTables.AddRange(prevToTables.Select(t => (Table) t.DeepClone()).ToList());
-                // fromTables.Add(
-                //     sqlExecutor.Execute(steps[..i].Prepend(intialStep)).Result);
+                fromTables.AddRange(prevToTables.Select(t => t.DeepClone()).ToList());
 
             var currentStep = steps[i];
 
@@ -47,7 +45,26 @@ public class VisualisationsGenerator(SQLDecomposer decomposer, SQLExecutor sqlEx
 
             if (currentStep.Keyword == SQLKeyword.GROUP_BY)
             {
+                if(fromTables.Count > 1) throw new ArgumentException("Group by can only be generated when there is only one from table");
+                var tabel = fromTables[0].DeepClone();
+                var columnNameToGroupBy = currentStep.Clause.Trim();
+                var indexToGroupBy = 0;
+                while (!tabel.ColumnNames[indexToGroupBy]
+                       .Equals(columnNameToGroupBy,  StringComparison.InvariantCultureIgnoreCase))
+                    indexToGroupBy++;
+
                 
+                var groupedTabels = tabel.Entries
+                    .GroupBy(e => e.Values[indexToGroupBy].Value)
+                    .Select(g => new Table
+                    {
+                        ColumnNames = tabel.ColumnNames.ToList(),
+                        Entries = g.ToList()
+                    })
+                    .Reverse()
+                    .ToList();
+                
+                toTables.AddRange(groupedTabels);
             }
             else
             {
