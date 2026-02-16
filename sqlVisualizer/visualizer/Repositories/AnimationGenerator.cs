@@ -23,9 +23,9 @@ public static class AnimationGenerator
                     : GenerateGroupByAnimation(fromTables[0], toTables, action),
             SQLKeyword.HAVING => throw new NotImplementedException(),
             SQLKeyword.SELECT =>
-                fromTables.Count > 1
-                    ? throw new ArgumentException("select animation can only be generated from one table to another")
-                    : GenerateSelectAnimation(fromTables[0], toTables[0], action),
+                toTables.Count > 1
+                    ? throw new ArgumentException("select animations can only be generated to one table")
+                    : GenerateSelectAnimation(fromTables, toTables[0], action),
             SQLKeyword.ORDER_BY => throw new NotImplementedException(),
             SQLKeyword.LIMIT => throw new NotImplementedException(),
             SQLKeyword.OFFSET => throw new NotImplementedException(),
@@ -63,7 +63,7 @@ public static class AnimationGenerator
                     currentResultIndex++;
                 }
 
-                steps.Add(GenerateToggleHighlightRow(toToggle));
+                steps.Add(GenerateToggleHighlightRows(toToggle));
                 toToggle.Clear();
                 toToggle.AddRange(deToggle);
                 deToggle.Clear();
@@ -72,12 +72,12 @@ public static class AnimationGenerator
             toToggle.Add(p);
         }
 
-        steps.Add(GenerateToggleHighlightRow(toToggle));
+        steps.Add(GenerateToggleHighlightRows(toToggle));
 
         return new Animation(steps);
     }
 
-    private static Animation GenerateSelectAnimation(Table fromTable, Table toTable,
+    private static Animation GenerateSelectAnimation(List<Table> fromTables, Table toTable,
         SQLDecompositionComponent action)
     {
         var steps = new List<Action>();
@@ -89,34 +89,141 @@ public static class AnimationGenerator
         var columnIndex = 0;
         foreach (var column in columns)
         {
-            var parts = column.Split('.', 2);
-            var tableName = parts.Length == 2 ? parts[0] : null;
-            var columnName = parts.Length == 2 ? parts[1] : parts[0];
-
-            for (int i = 0; i < fromTable.ColumnNames.Count; i++)
+            if (column.Contains('('))
             {
-                var fromAnimation = GenerateToggleHighlightColumn(fromTable, i);
-
-                if (fromTable.ColumnNames[i].Equals(columnName, StringComparison.InvariantCultureIgnoreCase) &&
-                    (tableName == null ||
-                     fromTable.OrginalTableNames[i].Equals(tableName, StringComparison.InvariantCultureIgnoreCase)))
-                {
-                    steps.Add(CombineActions([
-                        fromAnimation,
-                        GenerateToggleVisibleColumn(toTable, columnIndex)
-                    ]));
-
-                    columnIndex++;
-                    steps.Add(fromAnimation);
-                    break;
-                }
-
-                steps.Add(fromAnimation);
-                steps.Add(fromAnimation);
+                if (fromTables.Count == 1)
+                    throw new NotImplementedException();
+                else
+                    HandleAggregateColumnMultiTables(fromTables, toTable, column, columnIndex, steps);
             }
+            else
+            {
+                if (fromTables.Count == 1)
+                    HandelNormalSelectionSingleTable(fromTables[0], toTable, column, columnIndex, steps);
+                else
+                    HandelNormalSelectionMultiTables(fromTables, toTable, column, columnIndex, steps);
+            }
+
+            columnIndex++;
         }
 
         return new Animation(steps);
+    }
+
+    private static void HandleAggregateColumnMultiTables(List<Table> fromTables, Table toTable,
+        string column, int columnIndex, List<Action> steps)
+    {
+        var parts = column.Split('(', 2);
+        SQLAggregateFunctionsKeyword keyword;
+
+        if (!Enum.TryParse(parts[0].Trim(), out keyword))
+        {
+            throw new ArgumentException($"the aggregate function \"{parts[0].Trim()}\" is not supported");
+        }
+
+        switch (keyword)
+        {
+            case SQLAggregateFunctionsKeyword.COUNT:
+                HandleCountAggregateMultipleTables(fromTables, toTable, parts[1].Replace(')', ' ').Trim(), columnIndex,
+                    steps);
+                break;
+        }
+    }
+
+    private static void HandleCountAggregateMultipleTables(List<Table> fromTables, Table toTable,
+        string parameter, int columnIndex, List<Action> steps)
+    {
+        if (string.IsNullOrEmpty(parameter))
+        {
+            int i = 0;
+            foreach (var table in fromTables)
+            {
+                steps.Add(CombineActions(
+                [
+                    GenerateToggleHighlightRows(table.Entries),
+                    GenerateToggleVisibleCell(toTable, i, columnIndex),
+                    GenerateToggleHighlightCell(toTable, i, columnIndex)
+                ]));
+                
+                steps.Add(CombineActions(
+                [
+                    GenerateToggleHighlightRows(table.Entries),
+                    GenerateToggleHighlightCell(toTable, i++, columnIndex)
+                ]));
+            }
+        }
+        else
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    private static void HandelNormalSelectionSingleTable(Table fromTable, Table toTable,
+        string column, int columnIndex, List<Action> steps)
+    {
+        var parts = column.Split('.', 2);
+        var tableName = parts.Length == 2 ? parts[0] : null;
+        var columnName = parts.Length == 2 ? parts[1] : parts[0];
+
+        for (int i = 0; i < fromTable.ColumnNames.Count; i++)
+        {
+            var fromAnimation = GenerateToggleHighlightColumn(fromTable, i);
+
+            if (fromTable.ColumnNames[i].Equals(columnName, StringComparison.InvariantCultureIgnoreCase) &&
+                (tableName == null ||
+                 fromTable.OrginalTableNames[i].Equals(tableName, StringComparison.InvariantCultureIgnoreCase)))
+            {
+                steps.Add(CombineActions([
+                    fromAnimation,
+                    GenerateToggleVisibleColumn(toTable, columnIndex)
+                ]));
+
+                steps.Add(fromAnimation);
+                return;
+            }
+
+            steps.Add(fromAnimation);
+            steps.Add(fromAnimation);
+        }
+    }
+
+    private static void HandelNormalSelectionMultiTables(List<Table> fromTables, Table toTable,
+        string column, int columnIndex, List<Action> steps)
+    {
+        var parts = column.Split('.', 2);
+        var tableName = parts.Length == 2 ? parts[0] : null;
+        var columnName = parts.Length == 2 ? parts[1] : parts[0];
+
+        for (int i = 0; i < fromTables[0].ColumnNames.Count; i++)
+        {
+            var fromAnimation = fromTables.Select(table
+                    => GenerateToggleHighlightCell(table, 0, i))
+                .ToList()
+                .ToOneAction();
+
+
+            if (fromTables[0].ColumnNames[i].Equals(columnName, StringComparison.InvariantCultureIgnoreCase) &&
+                (tableName == null ||
+                 fromTables[0].OrginalTableNames[i].Equals(tableName, StringComparison.InvariantCultureIgnoreCase)))
+            {
+                steps.Add(CombineActions(
+                [
+                    fromAnimation,
+                    GenerateToggleVisibleColumn(toTable, columnIndex),
+                    GenerateToggleHighlightColumn(toTable, columnIndex)
+                ]));
+
+                steps.Add(CombineActions(
+                    [
+                        fromAnimation,
+                        GenerateToggleHighlightColumn(toTable, columnIndex)
+                    ]));
+                return;
+            }
+
+            steps.Add(fromAnimation);
+            steps.Add(fromAnimation);
+        }
     }
 
     private static Animation GenerateGroupByAnimation(Table fromTable, List<Table> toTables,
@@ -162,7 +269,7 @@ public static class AnimationGenerator
         return new Animation(steps);
     }
 
-    private static Action GenerateToggleHighlightRow(IReadOnlyList<TableEntry> entries)
+    private static Action GenerateToggleHighlightRows(IReadOnlyList<TableEntry> entries)
     {
         //capture the list, so when its changed it doesn't apply to all functions
         var snapshot = entries.ToList();
@@ -220,10 +327,9 @@ public static class AnimationGenerator
         return CombineActions(hide);
     }
 
-    private static Action GenerateToggleVisibleCellsInRow(IReadOnlyList<TableEntry> rows)
+    private static Action GenerateToggleVisibleCell(Table table, int row, int column)
     {
-        var hide = rows.Select(GenerateToggleVisibleCellsInRow).ToList();
-        return CombineActions(hide);
+        return table.Entries[row].Values[column].ToggleVisible;
     }
 
     private static Action HideTablesCellBased(List<Table> tables)
@@ -255,6 +361,11 @@ public static class AnimationGenerator
         {
             foreach (var action in snapshot) action();
         };
+    }
+
+    private static Action ToOneAction(this List<Action> actions)
+    {
+        return CombineActions(actions);
     }
 
     private static bool AreEquivalent(List<TableValue> from1, List<TableValue> from2, List<TableValue> to)
