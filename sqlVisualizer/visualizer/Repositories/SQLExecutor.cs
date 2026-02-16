@@ -27,13 +27,13 @@ public class SQLExecutor(DuckDBConnection connection)
                 var row = new List<TableValue>();
                 for (var i = 0; i < reader.FieldCount; i++)
                 {
-                    row.Add(new TableValue{Value = reader.GetValue(i).ToString() ?? "NULL"});
+                    row.Add(new TableValue { Value = reader.GetValue(i).ToString() ?? "NULL" });
                 }
 
                 entries.Add(new TableEntry { Values = row });
             }
 
-            return new Table{ColumnNames = columnNames.AsReadOnly(), Entries = entries.AsReadOnly()};
+            return new Table { ColumnNames = columnNames.AsReadOnly(), Entries = entries.AsReadOnly() };
         }
         finally
         {
@@ -45,10 +45,20 @@ public class SQLExecutor(DuckDBConnection connection)
     {
         var components = sqlDecompositionComponents.ToList();
         var containsSelect = components.Any(c => c.Keyword == SQLKeyword.SELECT);
+        var containsGroupByAndNotOrderBy = components.Any(c =>
+                                               c.Keyword == SQLKeyword.GROUP_BY) &&
+                                           components.All(c =>
+                                               c.Keyword != SQLKeyword.ORDER_BY);
         var queryBuilder = new StringBuilder();
         if (!containsSelect)
         {
             queryBuilder.Append("SELECT * ");
+        }
+
+        if (containsGroupByAndNotOrderBy)
+        {
+            var groupBy = components.First(c => c.Keyword == SQLKeyword.GROUP_BY);
+            components.Add(new SQLDecompositionComponent(SQLKeyword.ORDER_BY, groupBy.Clause));
         }
 
         foreach (var component in components.OrderBy(c => c.Keyword.SyntaxPrecedence()))
@@ -56,6 +66,8 @@ public class SQLExecutor(DuckDBConnection connection)
             queryBuilder.Append(component.ToExecutableClause());
             queryBuilder.Append(' ');
         }
+        
+        
 
         return await Execute(queryBuilder.ToString());
     }

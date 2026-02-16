@@ -93,7 +93,7 @@ public class SQLDecomposer
 
         if (!match.Success) return null;
 
-        if (Enum.TryParse<SQLKeyword>(match.Groups[1].Value.Trim(), true, out var kw))
+        if (Enum.TryParse<SQLKeyword>(match.Groups[1].Value.Trim().Replace(' ', '_'), true, out var kw))
         {
             return new SQLDecompositionComponent(kw, match.Groups[2].Value.Trim());
         }
