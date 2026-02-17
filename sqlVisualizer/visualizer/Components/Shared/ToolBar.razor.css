@@ -22,7 +22,17 @@ button {
 }
 
 .stepper {
-    
+    display: flex;
+    align-items: center;
+}
+
+.stepper__step {
+    margin-bottom: 0;
+    margin-inline: 4px;
+}
+
+.stepper__step--selected {
+    color: orange;
 }
 
 .bi {

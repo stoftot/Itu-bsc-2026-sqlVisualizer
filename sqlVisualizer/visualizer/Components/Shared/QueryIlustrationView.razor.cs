@@ -8,6 +8,7 @@ public class QueryIllustrationViewBase : ComponentBase
 {
     [Parameter] public required string Query { get; init; }
     [Inject] SQLExecutor SQLExecutor { get; init; }
+    [Inject] State State { get; init; }
     [Inject] private MetricsConfig MetricsConfig { get; init; } = null!;
     [Inject] VisualisationsGenerator VisualisationsGenerator { get; init; }
     public required List<Table> FromTables { get; set; }
@@ -22,6 +23,7 @@ public class QueryIllustrationViewBase : ComponentBase
         {
             if (value < 0 || value >= Steps.Count) return;
             _indexOfStepToHighlight = value;
+            State.CurrentStepIndex = value;
             UpdateStepShown();
         }
     }
@@ -30,12 +32,15 @@ public class QueryIllustrationViewBase : ComponentBase
     
     protected override void OnInitialized()
     {
+        State.NextStep = OnNextStep;
+        State.PreviousStep = OnPreviousStep;
         Init();
     }
 
     public void Init()
     {
         Steps = VisualisationsGenerator.Generate(Query);
+        State.Steps = Steps;
 
         UpdateStepShown();
         StateHasChanged();
@@ -45,7 +50,7 @@ public class QueryIllustrationViewBase : ComponentBase
     {
         FromTables = CurrStep.FromTables;
         ToTables = CurrStep.ToTables;
-
+        StateHasChanged();
         // HighligthingAndVisiblityDemo();
     }
 
