@@ -9,15 +9,11 @@ public class QueryIlustrationViewBase : ComponentBase
     [Parameter] public required string Query { get; init; }
     [Inject] SQLExecutor SQLExecutor { get; init; }
     [Inject] private MetricsConfig MetricsConfig { get; init; } = null!;
-    public required List<Table> FromTables { get; init; } = [];
     [Inject] VisualisationsGenerator VisualisationsGenerator { get; init; }
     public required List<Table> FromTables { get; set; }
     public required List<Table> ToTables { get; set; }
-
     private List<Visualisation> Steps { get; set; }
-    
     private int _indexOfStepToHighlight = 0;
-    
     private int IndexOfStepToHighlight
     {
         get => _indexOfStepToHighlight;
