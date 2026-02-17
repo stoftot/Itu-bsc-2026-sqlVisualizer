@@ -14,12 +14,14 @@ public static class AnimationGenerator
             SQLKeyword.LEFT_JOIN => throw new NotImplementedException(),
             SQLKeyword.RIGHT_JOIN => throw new NotImplementedException(),
             SQLKeyword.FULL_JOIN => throw new NotImplementedException(),
-            SQLKeyword.WHERE => throw new NotImplementedException(),
+            SQLKeyword.WHERE => fromTables.Count > 1
+                ? throw new ArgumentException("where animation can only be generated from one table to another")
+                : GenerateWhereAnimation(fromTables[0], toTable, action),
             SQLKeyword.GROUP_BY => throw new NotImplementedException(),
             SQLKeyword.HAVING => throw new NotImplementedException(),
             SQLKeyword.SELECT =>
                 fromTables.Count > 1
-                    ? throw new ArgumentException("select animation can only be generated from one table to another")
+                    ? throw new ArgumentException("\\select animation can only be generated from one table to another")
                     : GenerateSelectAnimation(fromTables[0], toTable, action),
             SQLKeyword.ORDER_BY => throw new NotImplementedException(),
             SQLKeyword.LIMIT => throw new NotImplementedException(),
@@ -115,6 +117,45 @@ public static class AnimationGenerator
         }
 
         return new Animation(steps);
+    }
+
+    private static Animation GenerateWhereAnimation(Table fromTable, Table toTable, SQLDecompositionComponent action)
+    {
+        var steps = new List<Action>();
+        
+        var remainingResultRows = toTable.Entries.ToList();
+
+        foreach (var fromEntry in fromTable.Entries)
+        {
+            var highlightSource = GenerateToggle([fromEntry]);
+
+            var matchingResult = remainingResultRows.FirstOrDefault(r =>
+                r.Values.Select(v => v.Value)
+                    .SequenceEqual(fromEntry.Values.Select(v => v.Value)));
+
+            if (matchingResult != null)
+            {
+                steps.Add(CombineActions([
+                    highlightSource,
+                    GenerateToggle([matchingResult])
+                ]));
+
+                steps.Add(CombineActions([
+                    highlightSource,
+                    GenerateToggle([matchingResult])
+                ]));
+
+                remainingResultRows.Remove(matchingResult);
+            }
+            else
+            {
+                steps.Add(highlightSource);
+                steps.Add(highlightSource);
+            }
+        }
+        
+        return new Animation(steps);
+
     }
 
     private static Action GenerateToggle(List<TableEntry> entries)
