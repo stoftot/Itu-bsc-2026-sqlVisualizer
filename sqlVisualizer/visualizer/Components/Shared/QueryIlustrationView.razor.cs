@@ -4,7 +4,7 @@ using visualizer.Repositories;
 
 namespace visualizer.Components.Shared;
 
-public class QueryIlustrationViewBase : ComponentBase
+public class QueryIllustrationViewBase : ComponentBase
 {
     [Parameter] public required string Query { get; init; }
     [Inject] SQLExecutor SQLExecutor { get; init; }
