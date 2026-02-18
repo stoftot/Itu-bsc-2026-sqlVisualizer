@@ -80,6 +80,7 @@ public class VisualisationsGenerator(SQLDecomposer decomposer, SQLExecutor sqlEx
 
     private void GenerateTablesGroupBy(List<Table> fromTables, List<Table> toTables, SQLDecompositionComponent currentStep)
     {
+        //TODO: Add support for tableName.Coulmname goup by
         if (fromTables.Count > 1)
             throw new ArgumentException("Group by can only be generated when there is only one from table");
         var tabel = fromTables[0].DeepClone();
