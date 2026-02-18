@@ -85,6 +85,10 @@ public static class AnimationGenerator
     {
         var steps = new List<Action>();
 
+        //TODO: Figuure out how we want to handle select *
+        if (action.Clause.Trim().Equals("*"))
+            return new Animation(steps);
+        
         steps.Add(HideTablesCellBased([toTable]));
 
         var columns = action.Clause.Split(',').Select(c => c.Trim()).ToList();

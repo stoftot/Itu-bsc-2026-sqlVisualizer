@@ -198,9 +198,13 @@ public class VisualisationsGenerator(SQLDecomposer decomposer, SQLExecutor sqlEx
 
         var toTable = vis.ToTables[0];
         var fromTable = vis.FromTables[0];
-
+        
+        if(vis.Component.Clause.Trim().Equals("*"))
+            DuplicateOriginOnColumnsToSingle(fromTable, toTable);
+        
+        
         var columnsSelected = vis.Component.Clause.Split(',').Select(c => c.Trim()).ToList();
-
+        
         foreach (var column in columnsSelected)
         {
             //check if agregate founction
