@@ -16,7 +16,7 @@ public static class AnimationGenerator
             SQLKeyword.LEFT_JOIN => throw new NotImplementedException(),
             SQLKeyword.RIGHT_JOIN => throw new NotImplementedException(),
             SQLKeyword.FULL_JOIN => throw new NotImplementedException(),
-            SQLKeyword.WHERE => fromTables.Count > 1
+            SQLKeyword.WHERE => fromTables.Count > 1 &&  toTables.Count > 1
                 ? throw new ArgumentException("where animation can only be generated from one table to another")
                 : GenerateWhereAnimation(fromTables[0], toTables[0], action),
             SQLKeyword.GROUP_BY =>
@@ -49,16 +49,17 @@ public static class AnimationGenerator
         var currentResultIndex = 0;
         List<TableEntry> toToggle = [];
         List<TableEntry> deToggle = [];
-        foreach (var p in primaryTable.Entries)
+        foreach (var primaryEntry in primaryTable.Entries)
         {
-            toToggle.Add(p);
-            foreach (var j in joiningTable.Entries)
+            toToggle.Add(primaryEntry);
+            foreach (var joiningEntry in joiningTable.Entries)
             {
-                toToggle.Add(j);
-                deToggle.Add(j);
-                if (currentResultIndex < toTable.Entries.Count && AreEquivalent(
-                        p.Values, j.Values,
-                        toTable.Entries[currentResultIndex].Values))
+                toToggle.Add(joiningEntry);
+                deToggle.Add(joiningEntry);
+                if (currentResultIndex < toTable.Entries.Count 
+                    && AreJoinEquivalentToResult(
+                        primaryEntry, joiningEntry, toTable.Entries[currentResultIndex]
+                    ))
                 {
                     toToggle.Add(toTable.Entries[currentResultIndex]);
                     deToggle.Add(toTable.Entries[currentResultIndex]);
@@ -71,7 +72,7 @@ public static class AnimationGenerator
                 deToggle.Clear();
             }
 
-            toToggle.Add(p);
+            toToggle.Add(primaryEntry);
         }
 
         steps.Add(GenerateToggleHighlightRows(toToggle));
@@ -119,9 +120,7 @@ public static class AnimationGenerator
         SQLAggregateFunctionsKeyword keyword;
 
         if (!Enum.TryParse(parts[0].Trim().ToUpperInvariant(), out keyword))
-        {
             throw new ArgumentException($"the aggregate function \"{parts[0].Trim()}\" is not supported");
-        }
 
         switch (keyword)
         {
@@ -409,14 +408,14 @@ public static class AnimationGenerator
         return CombineActions(actions);
     }
 
-    private static bool AreEquivalent(List<TableValue> from1, List<TableValue> from2, List<TableValue> to)
+    private static bool AreJoinEquivalentToResult(TableEntry primary, TableEntry joining, TableEntry result)
     {
-        var f1 = from1.Select(tv => tv.Value).ToList();
-        var f2 = from2.Select(tv => tv.Value).ToList();
-        var t = to.Select(tv => tv.Value).ToList();
+        var p = primary.Values.Select(tv => tv.Value).ToList();
+        var j = joining.Values.Select(tv => tv.Value).ToList();
+        var r = result.Values.Select(tv => tv.Value).ToList();
 
-        return f1.Concat(f2)
+        return p.Concat(j)
             .OrderBy(x => x)
-            .SequenceEqual(t.OrderBy(x => x));
+            .SequenceEqual(r.OrderBy(x => x));
     }
 }
