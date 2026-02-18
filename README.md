@@ -9,3 +9,8 @@ We have analysed exam results from the database course at IT university at Copen
 
 ## How do I get started?
 Currently you can clone the project and run it localy with an IDEA suited for .NET projects
+
+## Want to contribute?
+If you want to contribute through code or documentation, the [Contributing
+guide](https://github.com/stoftot/Itu-bsc-2026-sqlVisualizer/blob/main/CONTRIBUTING.md) is the best place to start. If you have questions, feel free
+to ask.
