@@ -4,19 +4,17 @@ using visualizer.Repositories;
 
 namespace visualizer.Components.Shared;
 
-public class QueryIlustrationViewBase : ComponentBase
+public class QueryIllustrationViewBase : ComponentBase
 {
     [Parameter] public required string Query { get; init; }
     [Inject] SQLExecutor SQLExecutor { get; init; }
+    [Inject] State State { get; init; }
     [Inject] private MetricsConfig MetricsConfig { get; init; } = null!;
-    public required List<Table> FromTables { get; set; } = [];
     [Inject] VisualisationsGenerator VisualisationsGenerator { get; init; }
-    public required Table ToTable { get; set; }
-
+    public required List<Table> FromTables { get; set; }
+    public required List<Table> ToTables { get; set; }
     private List<Visualisation> Steps { get; set; }
-    
     private int _indexOfStepToHighlight = 0;
-    
     private int IndexOfStepToHighlight
     {
         get => _indexOfStepToHighlight;
@@ -25,6 +23,7 @@ public class QueryIlustrationViewBase : ComponentBase
         {
             if (value < 0 || value >= Steps.Count) return;
             _indexOfStepToHighlight = value;
+            State.CurrentStepIndex = value;
             UpdateStepShown();
         }
     }
@@ -33,12 +32,15 @@ public class QueryIlustrationViewBase : ComponentBase
     
     protected override void OnInitialized()
     {
+        State.NextStep = OnNextStep;
+        State.PreviousStep = OnPreviousStep;
         Init();
     }
 
     public void Init()
     {
         Steps = VisualisationsGenerator.Generate(Query);
+        State.Steps = Steps;
 
         UpdateStepShown();
         StateHasChanged();
@@ -47,8 +49,8 @@ public class QueryIlustrationViewBase : ComponentBase
     private void UpdateStepShown()
     {
         FromTables = CurrStep.FromTables;
-        ToTable = CurrStep.ToTable;
-
+        ToTables = CurrStep.ToTables;
+        StateHasChanged();
         // HighligthingAndVisiblityDemo();
     }
 
@@ -77,16 +79,17 @@ public class QueryIlustrationViewBase : ComponentBase
             }
         }
 
-        for (int i = 0; i < ToTable.Entries.Count; i++)
-        {
-            if (i % 2 == 0) continue;
-            ToTable.Entries[i].ToggleHighlight();
-        }
+        // for (int i = 0; i < ToTables.Entries.Count; i++)
+        // {
+        //     if (i % 2 == 0) continue;
+        //     ToTables.Entries[i].ToggleHighlight();
+        // }
     }
 
     private async Task AnimateSteps()
     {
         var animation = CurrStep.Animation;
+        animation.Reset();
 
         while (animation.NextStep())
         {

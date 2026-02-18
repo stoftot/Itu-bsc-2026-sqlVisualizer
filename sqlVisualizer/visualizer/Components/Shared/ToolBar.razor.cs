@@ -27,11 +27,13 @@ public partial class ToolBar : ComponentBase
     
     void StepPrevious()
     {
-        
+        State.PreviousStep();
+        StateHasChanged();
     }
     
     void StepNext()
     {
-        
+        State.NextStep();
+        StateHasChanged();
     }
 }

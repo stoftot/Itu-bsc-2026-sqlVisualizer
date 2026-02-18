@@ -8,6 +8,10 @@ public class State
 {
     public required StandaloneCodeEditor Editor { get; set; }
     public Action<string> RunSQL { get; set; }
+    public Action NextStep { get; set; }
+    public Action PreviousStep { get; set; }
+    public List<Visualisation> Steps { get; set; }
+    public int CurrentStepIndex { get; set; } = 0;
     public List<Query> Queries = [
         new()
         {

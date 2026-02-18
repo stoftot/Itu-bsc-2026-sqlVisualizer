@@ -1,4 +1,5 @@
-﻿@rendermode InteractiveServer
+﻿@using visualizer.Models
+@rendermode InteractiveServer
 
 <div class="toolbar">
     <div class="editor-part">
@@ -18,9 +19,17 @@
         <button @onclick="StepPrevious">
             <i class="bi bi-chevron-left"></i>
         </button>
-        2
-        3
-        4
+        @for (int i = 0; i < State.Steps.Count; i++)
+        {
+            @if (i == State.CurrentStepIndex)
+            {
+                <p class="stepper__step stepper__step--selected">@State.Steps[i].Component.Keyword.ToSQLString()</p>
+            }
+            else
+            {
+                <p class="stepper__step">@State.Steps[i].Component.Keyword.ToSQLString()</p>
+            }
+        }
         <button @onclick="StepNext">
             <i class="bi bi-chevron-right"></i>
         </button>
