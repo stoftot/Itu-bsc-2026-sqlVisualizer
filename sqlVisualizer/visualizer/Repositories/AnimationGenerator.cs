@@ -18,7 +18,7 @@ public static class AnimationGenerator
             SQLKeyword.FULL_JOIN => throw new NotImplementedException(),
             SQLKeyword.WHERE => fromTables.Count > 1
                 ? throw new ArgumentException("where animation can only be generated from one table to another")
-                : GenerateWhereAnimation(fromTables[0], toTable, action),
+                : GenerateWhereAnimation(fromTables[0], toTables[0], action),
             SQLKeyword.GROUP_BY =>
                 fromTables.Count > 1
                     ? throw new ArgumentException("group by animations can only be generated from one tables")
@@ -279,7 +279,7 @@ public static class AnimationGenerator
 
         foreach (var fromEntry in fromTable.Entries)
         {
-            var highlightSource = GenerateToggle([fromEntry]);
+            var highlightSource = GenerateToggleHighlightRow(fromEntry);
 
             var matchingResult = remainingResultRows.FirstOrDefault(r =>
                 r.Values.Select(v => v.Value)
@@ -289,12 +289,12 @@ public static class AnimationGenerator
             {
                 steps.Add(CombineActions([
                     highlightSource,
-                    GenerateToggle([matchingResult])
+                    GenerateToggleHighlightRow(matchingResult)
                 ]));
 
                 steps.Add(CombineActions([
                     highlightSource,
-                    GenerateToggle([matchingResult])
+                    GenerateToggleHighlightRow(matchingResult)
                 ]));
 
                 remainingResultRows.Remove(matchingResult);
@@ -309,8 +309,7 @@ public static class AnimationGenerator
         return new Animation(steps);
 
     }
-
-    private static Action GenerateToggle(List<TableEntry> entries)
+    
     private static Action GenerateToggleHighlightRows(IReadOnlyList<TableEntry> entries)
     {
         //capture the list, so when its changed it doesn't apply to all functions
