@@ -119,9 +119,7 @@ public static class AnimationGenerator
         SQLAggregateFunctionsKeyword keyword;
 
         if (!Enum.TryParse(parts[0].Trim().ToUpperInvariant(), out keyword))
-        {
             throw new ArgumentException($"the aggregate function \"{parts[0].Trim()}\" is not supported");
-        }
 
         switch (keyword)
         {
