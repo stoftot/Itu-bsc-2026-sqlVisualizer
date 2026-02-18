@@ -118,7 +118,7 @@ public static class AnimationGenerator
         var parts = column.Split('(', 2);
         SQLAggregateFunctionsKeyword keyword;
 
-        if (!Enum.TryParse(parts[0].Trim(), out keyword))
+        if (!Enum.TryParse(parts[0].Trim().ToUpperInvariant(), out keyword))
         {
             throw new ArgumentException($"the aggregate function \"{parts[0].Trim()}\" is not supported");
         }
