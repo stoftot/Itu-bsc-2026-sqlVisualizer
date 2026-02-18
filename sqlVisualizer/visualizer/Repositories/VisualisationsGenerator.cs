@@ -128,6 +128,9 @@ public class VisualisationsGenerator(SQLDecomposer decomposer, SQLExecutor sqlEx
                 case SQLKeyword.RIGHT_JOIN:
                 case SQLKeyword.FULL_JOIN:
                 case SQLKeyword.WHERE:
+                    DuplicateOriginOnColumns(vis.FromTables, vis.ToTable);
+                    break;
+                case SQLKeyword.GROUP_BY:
                 case SQLKeyword.HAVING:
                 case SQLKeyword.ORDER_BY:
                 case SQLKeyword.LIMIT:
