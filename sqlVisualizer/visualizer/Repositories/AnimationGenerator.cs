@@ -16,7 +16,7 @@ public static class AnimationGenerator
             SQLKeyword.LEFT_JOIN => throw new NotImplementedException(),
             SQLKeyword.RIGHT_JOIN => throw new NotImplementedException(),
             SQLKeyword.FULL_JOIN => throw new NotImplementedException(),
-            SQLKeyword.WHERE => fromTables.Count > 1
+            SQLKeyword.WHERE => fromTables.Count > 1 &&  toTables.Count > 1
                 ? throw new ArgumentException("where animation can only be generated from one table to another")
                 : GenerateWhereAnimation(fromTables[0], toTables[0], action),
             SQLKeyword.GROUP_BY =>
