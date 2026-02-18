@@ -80,6 +80,7 @@ public class VisualisationsGenerator(SQLDecomposer decomposer, SQLExecutor sqlEx
 
     private void GenerateTablesGroupBy(List<Table> fromTables, List<Table> toTables, SQLDecompositionComponent currentStep)
     {
+        //TODO: Add support for tableName.Coulmname goup by
         if (fromTables.Count > 1)
             throw new ArgumentException("Group by can only be generated when there is only one from table");
         var tabel = fromTables[0].DeepClone();
@@ -198,9 +199,13 @@ public class VisualisationsGenerator(SQLDecomposer decomposer, SQLExecutor sqlEx
 
         var toTable = vis.ToTables[0];
         var fromTable = vis.FromTables[0];
-
+        
+        if(vis.Component.Clause.Trim().Equals("*"))
+            DuplicateOriginOnColumnsToSingle(fromTable, toTable);
+        
+        
         var columnsSelected = vis.Component.Clause.Split(',').Select(c => c.Trim()).ToList();
-
+        
         foreach (var column in columnsSelected)
         {
             //check if agregate founction
