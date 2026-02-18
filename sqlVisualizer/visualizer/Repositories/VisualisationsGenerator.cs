@@ -27,11 +27,11 @@ public class VisualisationsGenerator(SQLDecomposer decomposer, SQLExecutor sqlEx
         var toTables = new List<Table>();
         var prevToTables = new List<Table>();
 
-        fromTables.Add(sqlExecutor.Execute(intialStep).Result);
-        fromTables[0].Name = intialStep.Clause.Split(',')[0].Trim();
+        GenerateTablesIntialStep(fromTables, intialStep);
 
         for (int i = 0; i < steps.Count; i++)
         {
+            //copy previous to tables to new from tables
             if (i != 0)
                 fromTables.AddRange(prevToTables.Select(t => t.DeepClone()).ToList());
 
@@ -39,30 +39,12 @@ public class VisualisationsGenerator(SQLDecomposer decomposer, SQLExecutor sqlEx
 
             if (currentStep.Keyword.IsJoin())
             {
-                var joiningTable = sqlExecutor.Execute(currentStep.GenerateFromClauseFromJoin()).Result;
-                joiningTable.Name = currentStep.Clause.Split(' ')[0].Trim();
-                fromTables.Add(joiningTable);
+                GenerateTablesJoin(fromTables, currentStep);
             }
 
             if (currentStep.Keyword == SQLKeyword.GROUP_BY)
             {
-                if (fromTables.Count > 1)
-                    throw new ArgumentException("Group by can only be generated when there is only one from table");
-                var tabel = fromTables[0].DeepClone();
-                var columnNameToGroupBy = currentStep.Clause.Trim();
-                var indexToGroupBy = tabel.ColumnNames.IndexOf(columnNameToGroupBy);
-
-                var groupedTabels = tabel.Entries
-                    .GroupBy(e => e.Values[indexToGroupBy].Value)
-                    .Select(g => new Table
-                    {
-                        ColumnNames = tabel.ColumnNames.ToList(),
-                        Entries = g.ToList()
-                    })
-                    .Reverse()
-                    .ToList();
-
-                toTables.AddRange(groupedTabels);
+                GenerateTablesGroupBy(fromTables, toTables, currentStep);
             }
             else
             {
@@ -81,6 +63,40 @@ public class VisualisationsGenerator(SQLDecomposer decomposer, SQLExecutor sqlEx
             fromTables.Clear();
             toTables.Clear();
         }
+    }
+
+    private void GenerateTablesIntialStep(List<Table> fromTables, SQLDecompositionComponent intialStep)
+    {
+        fromTables.Add(sqlExecutor.Execute(intialStep).Result);
+        fromTables[0].Name = intialStep.Clause.Split(',')[0].Trim();
+    }
+
+    private void GenerateTablesJoin(List<Table> fromTables, SQLDecompositionComponent currentStep)
+    {
+        var joiningTable = sqlExecutor.Execute(currentStep.GenerateFromClauseFromJoin()).Result;
+        joiningTable.Name = currentStep.Clause.Split(' ')[0].Trim();
+        fromTables.Add(joiningTable);
+    }
+
+    private void GenerateTablesGroupBy(List<Table> fromTables, List<Table> toTables, SQLDecompositionComponent currentStep)
+    {
+        if (fromTables.Count > 1)
+            throw new ArgumentException("Group by can only be generated when there is only one from table");
+        var tabel = fromTables[0].DeepClone();
+        var columnNameToGroupBy = currentStep.Clause.Trim();
+        var indexToGroupBy = tabel.ColumnNames.IndexOf(columnNameToGroupBy);
+
+        var groupedTabels = tabel.Entries
+            .GroupBy(e => e.Values[indexToGroupBy].Value)
+            .Select(g => new Table
+            {
+                ColumnNames = tabel.ColumnNames.ToList(),
+                Entries = g.ToList()
+            })
+            .Reverse()
+            .ToList();
+
+        toTables.AddRange(groupedTabels);
     }
 
     private void GenerateTableOriginOnColumns(List<Visualisation> visualisations)
