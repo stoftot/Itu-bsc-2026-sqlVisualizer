@@ -40,7 +40,30 @@ builder.Services.AddScoped<SQLDecomposer>();
 builder.Services.AddScoped<VisualisationsGenerator>();
 builder.Services.AddScoped<State>();
 
+builder.Services.AddHttpContextAccessor();
+
 var app = builder.Build();
+
+app.Use(async (context, next) =>
+{
+    const string cookieName = "session_id";
+
+    if (!context.Request.Cookies.ContainsKey(cookieName))
+    {
+        var id = Guid.NewGuid().ToString("N");
+
+        context.Response.Cookies.Append(cookieName, id, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = context.Request.IsHttps,
+            SameSite = SameSiteMode.Lax,
+            IsEssential = true,
+            Expires = DateTimeOffset.UtcNow.AddMonths(6)
+        });
+    }
+
+    await next();
+});
 
 app.MapPrometheusScrapingEndpoint();
 

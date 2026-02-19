@@ -6,6 +6,7 @@ namespace visualizer.Repositories;
 
 public class State
 {
+    public required string SessionId;
     public required StandaloneCodeEditor Editor { get; set; }
     public Action<string> RunSQL { get; set; }
     public Action NextStep { get; set; }

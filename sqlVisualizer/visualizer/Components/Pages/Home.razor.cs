@@ -6,9 +6,11 @@ namespace visualizer.Components.Pages;
 
 public partial class Home : ComponentBase
 {
+    [Inject] public required IHttpContextAccessor Http { get; init; }
     [Inject] public required State State { get; init; }
-    public QueryIlustrationView QueryView; 
+    private QueryIlustrationView QueryView; 
     private string query = "";
+    
     
     protected override void OnInitialized()
     {
@@ -20,5 +22,7 @@ public partial class Home : ComponentBase
             StateHasChanged();
             QueryView.Init();
         };
+        State.SessionId = Http.HttpContext?.Request.Cookies["session_id"];
+        Console.WriteLine("_metricsId: " + State.SessionId);
     }
 }
