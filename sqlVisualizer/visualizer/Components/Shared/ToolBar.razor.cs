@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components;
+using visualizer.Models;
 using visualizer.Repositories;
 
 namespace visualizer.Components.Shared;
@@ -6,6 +7,7 @@ namespace visualizer.Components.Shared;
 public partial class ToolBar : ComponentBase
 {
     [Inject] public required State State { get; init; }
+    [Inject] public required MetricsHandler MetricsHandler { get; init; }
     string _current = "Custom";
 
     async Task SelectChanged(ChangeEventArgs e)
