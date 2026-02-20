@@ -12,6 +12,14 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddSingleton<MetricsConfig>();
+builder.Services.AddSingleton<MetricsHandler>(sp =>
+{
+    var configuration = sp.GetRequiredService<IConfiguration>();
+    var connectionString = configuration.GetConnectionString("Metrics");
+
+    return new MetricsHandler(connectionString!);
+});
+
 
 var resourceBuilder = ResourceBuilder.CreateDefault()
     .AddService(MetricsConfig.ServiceName, serviceVersion: MetricsConfig.ServiceVersion);
