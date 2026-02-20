@@ -12,6 +12,14 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddSingleton<MetricsConfig>();
+builder.Services.AddSingleton<MetricsHandler>(sp =>
+{
+    var configuration = sp.GetRequiredService<IConfiguration>();
+    var connectionString = configuration.GetConnectionString("Metrics");
+
+    return new MetricsHandler(connectionString!);
+});
+
 
 var resourceBuilder = ResourceBuilder.CreateDefault()
     .AddService(MetricsConfig.ServiceName, serviceVersion: MetricsConfig.ServiceVersion);
@@ -68,6 +76,7 @@ app.Use(async (context, next) =>
 app.MapPrometheusScrapingEndpoint();
 
 new DbInitializer(app.Configuration).Initialize();
+new DbInitializer(app.Configuration).InitializeMetrics();
 
 
 // Configure the HTTP request pipeline.
