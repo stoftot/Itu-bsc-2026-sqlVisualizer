@@ -17,6 +17,7 @@ public partial class ToolBar : ComponentBase
             State.Queries[0].SQL = await State.Editor.GetValue();
         }
         _current = e.Value!.ToString()!;
+        MetricsHandler.IncrementAction(State.SessionId, State.Queries[Int32.Parse((String)e.Value)].Type);
         var newSQL = State.Queries[Int32.Parse((String)e.Value)].SQL;
         await State.Editor.SetValue(newSQL);
     }
@@ -24,17 +25,20 @@ public partial class ToolBar : ComponentBase
     async Task RunQuery()
     {
         var editorContent = await State.Editor.GetValue();
+        MetricsHandler.RecordQuery(State.SessionId, editorContent);
         State.RunSQL(editorContent ?? "");
     }
     
     void StepPrevious()
     {
+        MetricsHandler.IncrementAction(State.SessionId, ActionType.Previous);
         State.PreviousStep();
         StateHasChanged();
     }
     
     void StepNext()
     {
+        MetricsHandler.IncrementAction(State.SessionId, ActionType.Next);
         State.NextStep();
         StateHasChanged();
     }
