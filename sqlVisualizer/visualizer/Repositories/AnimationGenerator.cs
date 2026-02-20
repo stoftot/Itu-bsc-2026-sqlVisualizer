@@ -16,7 +16,7 @@ public static class AnimationGenerator
             SQLKeyword.LEFT_JOIN => throw new NotImplementedException(),
             SQLKeyword.RIGHT_JOIN => throw new NotImplementedException(),
             SQLKeyword.FULL_JOIN => throw new NotImplementedException(),
-            SQLKeyword.WHERE => fromTables.Count > 1 &&  toTables.Count > 1
+            SQLKeyword.WHERE => fromTables.Count > 1 && toTables.Count > 1
                 ? throw new ArgumentException("where animation can only be generated from one table to another")
                 : GenerateWhereAnimation(fromTables[0], toTables[0], action),
             SQLKeyword.GROUP_BY =>
@@ -56,7 +56,7 @@ public static class AnimationGenerator
             {
                 toToggle.Add(joiningEntry);
                 deToggle.Add(joiningEntry);
-                if (currentResultIndex < toTable.Entries.Count 
+                if (currentResultIndex < toTable.Entries.Count
                     && AreJoinEquivalentToResult(
                         primaryEntry, joiningEntry, toTable.Entries[currentResultIndex]
                     ))
@@ -88,7 +88,7 @@ public static class AnimationGenerator
         //TODO: Figuure out how we want to handle select *
         if (action.Clause.Trim().Equals("*"))
             return new Animation(steps);
-        
+
         steps.Add(HideTablesCellBased([toTable]));
 
         var columns = action.Clause.Split(',').Select(c => c.Trim()).ToList();
@@ -106,9 +106,20 @@ public static class AnimationGenerator
             else
             {
                 if (fromTables.Count == 1)
-                    HandelNormalSelectionSingleTable(fromTables[0], toTable, column, columnIndex, steps);
+                {
+                    Action FromAnimationGenerator(int i) => GenerateToggleHighlightColumn(fromTables[0], i);
+
+                    HandleNormalSelect(fromTables, toTable, column, columnIndex, steps, FromAnimationGenerator);
+                }
                 else
-                    HandelNormalSelectionMultiTables(fromTables, toTable, column, columnIndex, steps);
+                {
+                    Action FromAnimationGenerator(int i) =>
+                        fromTables.Select(table => GenerateToggleHighlightCell(table, 0, i))
+                            .ToList()
+                            .ToOneAction();
+
+                    HandleNormalSelect(fromTables, toTable, column, columnIndex, steps, FromAnimationGenerator);
+                }
             }
 
             columnIndex++;
@@ -149,7 +160,7 @@ public static class AnimationGenerator
                     GenerateToggleVisibleCell(toTable, i, columnIndex),
                     GenerateToggleHighlightCell(toTable, i, columnIndex)
                 ]));
-                
+
                 steps.Add(CombineActions(
                 [
                     GenerateToggleHighlightRows(table.Entries),
@@ -163,37 +174,9 @@ public static class AnimationGenerator
         }
     }
 
-    private static void HandelNormalSelectionSingleTable(Table fromTable, Table toTable,
-        string column, int columnIndex, List<Action> steps)
-    {
-        var parts = column.Split('.', 2);
-        var tableName = parts.Length == 2 ? parts[0] : null;
-        var columnName = parts.Length == 2 ? parts[1] : parts[0];
-
-        for (int i = 0; i < fromTable.ColumnNames.Count; i++)
-        {
-            var fromAnimation = GenerateToggleHighlightColumn(fromTable, i);
-
-            if (fromTable.ColumnNames[i].Equals(columnName, StringComparison.InvariantCultureIgnoreCase) &&
-                (tableName == null ||
-                 fromTable.ColumnsOriginalTableNames[i].Equals(tableName, StringComparison.InvariantCultureIgnoreCase)))
-            {
-                steps.Add(CombineActions([
-                    fromAnimation,
-                    GenerateToggleVisibleColumn(toTable, columnIndex)
-                ]));
-
-                steps.Add(fromAnimation);
-                return;
-            }
-
-            steps.Add(fromAnimation);
-            steps.Add(fromAnimation);
-        }
-    }
-
-    private static void HandelNormalSelectionMultiTables(List<Table> fromTables, Table toTable,
-        string column, int columnIndex, List<Action> steps)
+    private static void HandleNormalSelect(List<Table> fromTables, Table toTable,
+        string column, int columnIndex, List<Action> steps,
+        Func<int, Action> generateFromAnimation)
     {
         var parts = column.Split('.', 2);
         var tableName = parts.Length == 2 ? parts[0] : null;
@@ -201,15 +184,12 @@ public static class AnimationGenerator
 
         for (int i = 0; i < fromTables[0].ColumnNames.Count; i++)
         {
-            var fromAnimation = fromTables.Select(table
-                    => GenerateToggleHighlightCell(table, 0, i))
-                .ToList()
-                .ToOneAction();
-
+            var fromAnimation = generateFromAnimation(i);
 
             if (fromTables[0].ColumnNames[i].Equals(columnName, StringComparison.InvariantCultureIgnoreCase) &&
                 (tableName == null ||
-                 fromTables[0].ColumnsOriginalTableNames[i].Equals(tableName, StringComparison.InvariantCultureIgnoreCase)))
+                 fromTables[0].ColumnsOriginalTableNames[i]
+                     .Equals(tableName, StringComparison.InvariantCultureIgnoreCase)))
             {
                 steps.Add(CombineActions(
                 [
@@ -219,10 +199,10 @@ public static class AnimationGenerator
                 ]));
 
                 steps.Add(CombineActions(
-                    [
-                        fromAnimation,
-                        GenerateToggleHighlightColumn(toTable, columnIndex)
-                    ]));
+                [
+                    fromAnimation,
+                    GenerateToggleHighlightColumn(toTable, columnIndex)
+                ]));
                 return;
             }
 
@@ -277,7 +257,7 @@ public static class AnimationGenerator
     private static Animation GenerateWhereAnimation(Table fromTable, Table toTable, SQLDecompositionComponent action)
     {
         var steps = new List<Action>();
-        
+
         var remainingResultRows = toTable.Entries.ToList();
 
         foreach (var fromEntry in fromTable.Entries)
@@ -308,11 +288,10 @@ public static class AnimationGenerator
                 steps.Add(highlightSource);
             }
         }
-        
-        return new Animation(steps);
 
+        return new Animation(steps);
     }
-    
+
     private static Action GenerateToggleHighlightRows(IReadOnlyList<TableEntry> entries)
     {
         //capture the list, so when its changed it doesn't apply to all functions
