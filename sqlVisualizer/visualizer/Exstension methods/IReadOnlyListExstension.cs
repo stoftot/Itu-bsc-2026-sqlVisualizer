@@ -1,4 +1,4 @@
-﻿namespace visualizer.Components.Exstension_methods;
+﻿namespace visualizer.Exstension_methods;
 
 public static class IReadOnlyListExstension
 {

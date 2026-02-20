@@ -1,6 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 using Microsoft.VisualBasic;
-using visualizer.Components.Exstension_methods;
+using visualizer.Exstension_methods;
 using visualizer.Models;
 
 namespace visualizer.Repositories;

@@ -1,5 +1,5 @@
 ﻿using System.ComponentModel;
-using visualizer.Components.Exstension_methods;
+using visualizer.Exstension_methods;
 using visualizer.Models;
 
 namespace visualizer.Repositories;
