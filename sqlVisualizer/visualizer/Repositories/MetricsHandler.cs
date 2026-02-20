@@ -6,6 +6,7 @@ namespace visualizer.Repositories;
 public class MetricsHandler
 {
     private readonly string _connectionString;
+    private readonly ConcurrentDictionary<string, SessionTimingState> _sessions = new();
     public MetricsHandler(string connectionString)
     {
         _connectionString = connectionString;
@@ -49,7 +50,6 @@ public class MetricsHandler
 
         command.ExecuteNonQuery();
     }
-
     public void PrintQueries(string sessionId)
     {
         using var connection = new DuckDBConnection(_connectionString);
@@ -106,4 +106,155 @@ public class MetricsHandler
             Console.WriteLine($"{actionName}: {count}");
         }
     }
+    
+    public void EnterStep(string sessionId, SQLKeyword step)
+    {
+        var state = _sessions.GetOrAdd(sessionId, _ => new SessionTimingState());
+
+        lock (state.LockObj)
+        {
+            var now = DateTime.UtcNow;
+            
+            if (state.CurrentStep is not null && !string.Equals(state.CurrentStep, step.ToString(), StringComparison.Ordinal))
+            {
+                SaveTimings(sessionId, state, now);
+            }
+
+            if (state.CurrentStep is null)
+            {
+                state.CurrentStep = step.ToString();
+                state.StepStartUtc = now;
+                state.AnimationAccumulatedMs = 0;
+                state.AnimationRunning = false;
+                state.AnimationStartUtc = null;
+            }
+        }
+    }
+    
+    public void StartAnimation(string sessionId)
+    {
+        if (!_sessions.TryGetValue(sessionId, out var state))
+            return;
+
+        lock (state.LockObj)
+        {
+            if (state.CurrentStep is null) return;
+            if (state.AnimationRunning) return;
+
+            state.AnimationRunning = true;
+            state.AnimationStartUtc = DateTime.UtcNow;
+        }
+    }
+    
+    public void StopAnimation(string sessionId)
+    {
+        if (!_sessions.TryGetValue(sessionId, out var state))
+            return;
+
+        lock (state.LockObj)
+        {
+            if (!state.AnimationRunning) return;
+
+            var now = DateTime.UtcNow;
+            if (state.AnimationStartUtc.HasValue)
+            {
+                state.AnimationAccumulatedMs += (long)(now - state.AnimationStartUtc.Value).TotalMilliseconds;
+            }
+
+            state.AnimationRunning = false;
+            state.AnimationStartUtc = null;
+        }
+    }
+
+    // Writes one row for the current step segment and advances to "no active step"
+    private void SaveTimings(string sessionId, SessionTimingState state, DateTime nowUtc)
+    {
+        if (state.AnimationRunning && state.AnimationStartUtc.HasValue)
+        {
+            state.AnimationAccumulatedMs += (long)(nowUtc - state.AnimationStartUtc.Value).TotalMilliseconds;
+            state.AnimationRunning = false;
+            state.AnimationStartUtc = null;
+        }
+
+        if (state.CurrentStep is null || state.StepStartUtc is null)
+            return;
+
+        var timeSpentMs = (long)(nowUtc - state.StepStartUtc.Value).TotalMilliseconds;
+        var animationMs = state.AnimationAccumulatedMs;
+
+        InsertTimeSpentRow(sessionId, state.CurrentStep, timeSpentMs, animationMs, nowUtc);
+
+        state.CurrentStep = null;
+        state.StepStartUtc = null;
+        state.AnimationAccumulatedMs = 0;
+    }
+
+    private void InsertTimeSpentRow(string sessionId, string step, long timeSpentMs, long animationMs, DateTime nowUtc)
+    {
+        using var connection = new DuckDBConnection(_connectionString);
+        connection.Open();
+
+        using var command = connection.CreateCommand();
+        command.CommandText = @"
+            INSERT INTO time_spent (session_id, step, time_spent_ms, animation_ms, event_ts)
+            VALUES ($sessionId, $step, $timeSpentMs, $animationMs, $eventTs);
+        ";
+
+        command.Parameters.Add(new DuckDBParameter("sessionId", sessionId));
+        command.Parameters.Add(new DuckDBParameter("step", step));
+        command.Parameters.Add(new DuckDBParameter("timeSpentMs", timeSpentMs));
+        command.Parameters.Add(new DuckDBParameter("animationMs", animationMs));
+        command.Parameters.Add(new DuckDBParameter("eventTs", nowUtc));
+
+        command.ExecuteNonQuery();
+    }
+    
+    public void PrintSessionTimings(string sessionId)
+    {
+        using var connection = new DuckDBConnection(_connectionString);
+        connection.Open();
+
+        using var command = connection.CreateCommand();
+        command.CommandText = @"
+        SELECT
+            step,
+            SUM(time_spent_ms) AS total_time,
+            SUM(animation_ms)  AS total_animation
+        FROM time_spent
+        WHERE session_id = $sessionId
+        GROUP BY step
+        ORDER BY step;
+    ";
+
+        command.Parameters.Add(new DuckDBParameter("sessionId", sessionId));
+
+        using var reader = command.ExecuteReader();
+
+        Console.WriteLine($"=== Timings for Session: {sessionId} ===");
+
+        while (reader.Read())
+        {
+            var step = reader.GetString(0);
+            var totalTime = reader.GetInt64(1);
+            var animationTime = reader.GetInt64(2);
+
+            Console.WriteLine($"Step {step}");
+            Console.WriteLine($"  Viewing Time  : {totalTime} ms");
+            Console.WriteLine($"  Animation Time: {animationTime} ms");
+        }
+    }
+
+    private sealed class SessionTimingState
+    {
+        public object LockObj { get; } = new();
+
+        public string? CurrentStep { get; set; }
+        public DateTime? StepStartUtc { get; set; }
+
+        public bool AnimationRunning { get; set; }
+        public DateTime? AnimationStartUtc { get; set; }
+        public long AnimationAccumulatedMs { get; set; }
+    }
+    
+    
 }
