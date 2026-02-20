@@ -28,4 +28,24 @@ public class Table
                 .ToList()
         };
     }
+
+    public int IndexOfColumn(string column)
+    {
+        var parts = column.Split('.', 2);
+        var tableName = parts.Length == 2 ? parts[0] : null;
+        var columnName = parts.Length == 2 ? parts[1] : parts[0];
+
+        for (int i = 0; i < ColumnNames.Count; i++)
+        {
+            if (ColumnNames[i].Equals(columnName, StringComparison.InvariantCultureIgnoreCase) &&
+                (tableName == null ||
+                 ColumnsOriginalTableNames[i]
+                     .Equals(tableName, StringComparison.InvariantCultureIgnoreCase)))
+            {
+                return i;
+            }
+        }
+        
+        throw new ArgumentException($"Column {column} not found in table {tableName}");
+    }
 }
