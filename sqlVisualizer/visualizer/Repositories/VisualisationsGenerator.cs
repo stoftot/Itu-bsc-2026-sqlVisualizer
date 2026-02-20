@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel;
-using visualizer.Exstension_methods;
 using visualizer.Models;
 
 namespace visualizer.Repositories;
@@ -84,11 +83,17 @@ public class VisualisationsGenerator(SQLDecomposer decomposer, SQLExecutor sqlEx
         if (fromTables.Count > 1)
             throw new ArgumentException("Group by can only be generated when there is only one from table");
         var tabel = fromTables[0].DeepClone();
-        var columnNameToGroupBy = currentStep.Clause.Trim();
-        var indexToGroupBy = tabel.ColumnNames.IndexOf(columnNameToGroupBy);
+        var columnNamesToGroupBy = currentStep.Clause.Split(',');
 
-        var groupedTabels = tabel.Entries
-            .GroupBy(e => e.Values[indexToGroupBy].Value)
+        var groupByIndexes = new List<int>();
+        
+        foreach (var columName in columnNamesToGroupBy)
+        {
+            groupByIndexes.Add(tabel.IndexOfColumn(columName.Trim()));
+        }
+
+        var groupedTables = tabel.Entries
+            .GroupBy(e => new CompositeKey(groupByIndexes.Select(i => e.Values[i].Value)))
             .Select(g => new Table
             {
                 ColumnNames = tabel.ColumnNames.ToList(),
@@ -97,7 +102,26 @@ public class VisualisationsGenerator(SQLDecomposer decomposer, SQLExecutor sqlEx
             .Reverse()
             .ToList();
 
-        toTables.AddRange(groupedTabels);
+        toTables.AddRange(groupedTables);
+    }
+    
+    public sealed class CompositeKey : IEquatable<CompositeKey>
+    {
+        private readonly object?[] _values;
+
+        public CompositeKey(IEnumerable<object?> values) => _values = values.ToArray();
+
+        public bool Equals(CompositeKey? other)
+            => other is not null && _values.SequenceEqual(other._values);
+
+        public override bool Equals(object? obj) => obj is CompositeKey other && Equals(other);
+
+        public override int GetHashCode()
+        {
+            var hc = new HashCode();
+            foreach (var v in _values) hc.Add(v);
+            return hc.ToHashCode();
+        }
     }
 
     private void GenerateTableOriginOnColumns(List<Visualisation> visualisations)
@@ -239,7 +263,7 @@ public class VisualisationsGenerator(SQLDecomposer decomposer, SQLExecutor sqlEx
     {
         foreach (var vis in visualisations)
         {
-            vis.Animation = AnimationGenerator.Generate(vis.FromTables, vis.ToTables, vis.Component);
+            // vis.Animation = AnimationGenerator.Generate(vis.FromTables, vis.ToTables, vis.Component);
         }
     }
 }

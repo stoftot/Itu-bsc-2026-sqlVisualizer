@@ -1,6 +1,5 @@
 ﻿using System.Text.RegularExpressions;
 using Microsoft.VisualBasic;
-using visualizer.Exstension_methods;
 using visualizer.Models;
 
 namespace visualizer.Repositories;
@@ -219,7 +218,7 @@ public static class AnimationGenerator
         steps.Add(HideTablesCellBased(toTables));
 
         var columnNameGroupingBy = action.Clause.Trim();
-        var columnIndexGroupingBy = fromTable.ColumnNames.IndexOf(columnNameGroupingBy);
+        var columnIndexGroupingBy = fromTable.IndexOfColumn(columnNameGroupingBy);
         var toTableEntryValueMap =
             toTables.ToDictionary(table => table.Entries[0].Values[columnIndexGroupingBy], _ => 0);
 
