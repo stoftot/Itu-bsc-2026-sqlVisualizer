@@ -104,19 +104,19 @@ public class QueryIllustrationViewBase : ComponentBase
         }
     }
     
-    protected void OnAnimateSteps()
+    private void OnAnimateSteps()
     {
         MetricsConfig.AnimateButtonClicks.Add(1);
         AnimateSteps();
     }
 
-    protected void OnNextStep()
+    private void OnNextStep()
     {
         MetricsConfig.NextButtonClicks.Add(1);
         IndexOfStepToHighlight++;
     }
 
-    protected void OnPreviousStep()
+    private void OnPreviousStep()
     {
         MetricsConfig.PrevButtonClicks.Add(1);
         IndexOfStepToHighlight--;
