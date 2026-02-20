@@ -35,6 +35,11 @@ public class QueryIllustrationViewBase : ComponentBase
         State.NextStep = OnNextStep;
         State.PreviousStep = OnPreviousStep;
         State.AnimatePlay = OnAnimateSteps;
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if(!firstRender) return;
         Init();
     }
 
