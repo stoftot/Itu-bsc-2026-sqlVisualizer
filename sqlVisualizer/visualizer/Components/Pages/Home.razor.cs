@@ -22,7 +22,6 @@ public partial class Home : ComponentBase
             StateHasChanged();
             QueryView.Init();
         };
-        State.SessionId = Http.HttpContext?.Request.Cookies["session_id"];
-        Console.WriteLine("_metricsId: " + State.SessionId);
+        State.SessionId = Http.HttpContext?.Request.Cookies["session_id"] ?? "unknown";
     }
 }
