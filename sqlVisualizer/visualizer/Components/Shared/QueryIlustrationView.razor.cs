@@ -22,15 +22,13 @@ public class QueryIllustrationViewBase : ComponentBase
 
         set
         {
-            if (value < 0 || value >= Steps.Count)
-                _indexOfStepToHighlight = 0;
+            if (value < 0 || value >= Steps.Count) return;
                     
             _indexOfStepToHighlight = value;
             State.CurrentStepIndex = value;
             
-            if (_indexOfStepToHighlight >= 0)
-                MetricsHandler.EnterStep(State.SessionId, CurrStep.Component.Keyword);
-            
+            MetricsHandler.EnterStep(State.SessionId, CurrStep.Component.Keyword);
+            MetricsHandler.PrintSessionTimings(State.SessionId);
             UpdateStepShown();
         }
     }
@@ -55,7 +53,8 @@ public class QueryIllustrationViewBase : ComponentBase
     {
         Steps = VisualisationsGenerator.Generate(Query);
         State.Steps = Steps;
-
+        IndexOfStepToHighlight = 0;
+        
         UpdateStepShown();
         StateHasChanged();
     }
