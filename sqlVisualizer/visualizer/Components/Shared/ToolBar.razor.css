@@ -6,19 +6,37 @@
     align-items: center;
 }
 
-.editor-part {
+.schema-part {
     width: 320px;
-    justify-content: center;
     align-items: center;
+    display: flex;
+}
+
+.editor-part {
+    flex-grow: 1;
+    align-items: center;
+    display: flex;
 }
 
 .sql-statements {
-    
+    margin-right: 16px;
 }
 
 button {
     border: none;
     border-radius: 5px;
+}
+
+.text-button {
+    display: flex;
+    align-items: center;
+    padding-inline: 4px;
+    margin-left: 4px;
+}
+
+.text-button__text {
+    display: inline;
+    margin-bottom: 0;
 }
 
 .stepper {
@@ -41,4 +59,13 @@ button {
 
 .bi-play-fill {
     color: green;
+}
+
+.animation-stepper {
+    margin-left: 40px;
+}
+
+.info-button {
+    margin-left: auto;
+    justify-self: end;
 }

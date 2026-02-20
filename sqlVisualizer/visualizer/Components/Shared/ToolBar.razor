@@ -2,36 +2,60 @@
 @rendermode InteractiveServer
 
 <div class="toolbar">
-    <div class="editor-part">
-        <select name="sql-statements" @onchange="SelectChanged">
+    <div class="schema-part">
+        <select class="sql-statements" @onchange="SelectChanged">
             @for (int i = 0; i < State.Queries.Count; i++)
             {
                 <option value="@i">@State.Queries[i].Type</option>
             }
         </select>
 
-        <button @onclick="RunQuery">
+        <button @onclick="RunQuery" class="text-button">
+            <p class="text-button__text">Run Query</p>
             <i class="bi bi-play-fill"></i>
         </button>
     </div>
-
-    <div class="stepper">
-        <button @onclick="StepPrevious">
-            <i class="bi bi-chevron-left"></i>
-        </button>
-        @for (int i = 0; i < State.Steps.Count; i++)
-        {
-            @if (i == State.CurrentStepIndex)
+    
+    <div class="editor-part">
+        <div class="stepper">
+            <button @onclick="StepPrevious">
+                <i class="bi bi-chevron-left"></i>
+            </button>
+            @for (int i = 0; i < State.Steps.Count; i++)
             {
-                <p class="stepper__step stepper__step--selected">@State.Steps[i].Component.Keyword.ToSQLString()</p>
+                @if (i == State.CurrentStepIndex)
+                {
+                    <p class="stepper__step stepper__step--selected">@State.Steps[i].Component.Keyword.ToSQLString()</p>
+                }
+                else
+                {
+                    <p class="stepper__step">@State.Steps[i].Component.Keyword.ToSQLString()</p>
+                }
             }
-            else
-            {
-                <p class="stepper__step">@State.Steps[i].Component.Keyword.ToSQLString()</p>
-            }
-        }
-        <button @onclick="StepNext">
-            <i class="bi bi-chevron-right"></i>
+            <button @onclick="StepNext">
+                <i class="bi bi-chevron-right"></i>
+            </button>
+        </div>
+        
+        <div class="stepper animation-stepper">
+            <button>
+                <i class="bi bi-chevron-left"></i>
+            </button>
+            
+            <button @onclick="State.AnimatePlay" class="text-button">
+                <p class="text-button__text">Animation</p> 
+                <i class="bi bi-play-fill"></i>
+            </button>
+            
+            <button>
+                <i class="bi bi-chevron-right"></i>
+            </button>
+        </div>
+        
+       
+        
+        <button class="info-button">
+            <i class="bi bi-question-circle"></i>
         </button>
     </div>
 </div>

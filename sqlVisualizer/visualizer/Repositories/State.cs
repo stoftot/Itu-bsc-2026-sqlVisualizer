@@ -11,6 +11,10 @@ public class State
     public Action<string> RunSQL { get; set; }
     public Action NextStep { get; set; }
     public Action PreviousStep { get; set; }
+    public Action AnimatePlay { get; set; }
+    public Action AnimatePause { get; set; }
+    public Action AnimateStepNext { get; set; }
+    public Action AnimateStepPrivious { get; set; }
     public List<Visualisation> Steps { get; set; }
     public int CurrentStepIndex { get; set; } = 0;
     public List<Query> Queries = [

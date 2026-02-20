@@ -34,6 +34,7 @@ public class QueryIllustrationViewBase : ComponentBase
     {
         State.NextStep = OnNextStep;
         State.PreviousStep = OnPreviousStep;
+        State.AnimatePlay = OnAnimateSteps;
         Init();
     }
 
