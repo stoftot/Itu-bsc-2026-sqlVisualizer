@@ -176,7 +176,7 @@ public static class AnimationGenerator
 
             if (fromTable.ColumnNames[i].Equals(columnName, StringComparison.InvariantCultureIgnoreCase) &&
                 (tableName == null ||
-                 fromTable.OrginalTableNames[i].Equals(tableName, StringComparison.InvariantCultureIgnoreCase)))
+                 fromTable.ColumnsOriginalTableNames[i].Equals(tableName, StringComparison.InvariantCultureIgnoreCase)))
             {
                 steps.Add(CombineActions([
                     fromAnimation,
@@ -209,7 +209,7 @@ public static class AnimationGenerator
 
             if (fromTables[0].ColumnNames[i].Equals(columnName, StringComparison.InvariantCultureIgnoreCase) &&
                 (tableName == null ||
-                 fromTables[0].OrginalTableNames[i].Equals(tableName, StringComparison.InvariantCultureIgnoreCase)))
+                 fromTables[0].ColumnsOriginalTableNames[i].Equals(tableName, StringComparison.InvariantCultureIgnoreCase)))
             {
                 steps.Add(CombineActions(
                 [

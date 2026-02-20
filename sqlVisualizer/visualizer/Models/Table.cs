@@ -13,7 +13,7 @@ public class Table
     /// can be handled.
     /// If a name is "()" it means it's an aggregate function and it therefore dost have an original table
     /// </summary>
-    public List<string> OrginalTableNames { get; } = [];
+    public List<string> ColumnsOriginalTableNames { get; } = [];
     public required IReadOnlyList<string> ColumnNames { get; init; }
     public required IReadOnlyList<TableEntry> Entries { get; init; }
 

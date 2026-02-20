@@ -106,7 +106,7 @@ public class VisualisationsGenerator(SQLDecomposer decomposer, SQLExecutor sqlEx
 
         foreach (var table in vis.FromTables)
         {
-            table.OrginalTableNames.AddRange(
+            table.ColumnsOriginalTableNames.AddRange(
                 Enumerable.Repeat(table.Name, table.ColumnNames.Count)
             );
         }
@@ -167,7 +167,7 @@ public class VisualisationsGenerator(SQLDecomposer decomposer, SQLExecutor sqlEx
     {
         foreach (var table in fromTables)
         {
-            toTable.OrginalTableNames.AddRange(table.OrginalTableNames);
+            toTable.ColumnsOriginalTableNames.AddRange(table.ColumnsOriginalTableNames);
         }
     }
 
@@ -211,7 +211,7 @@ public class VisualisationsGenerator(SQLDecomposer decomposer, SQLExecutor sqlEx
             //check if agregate founction
             if (column.Contains('('))
             {
-                toTable.OrginalTableNames.Add("()");
+                toTable.ColumnsOriginalTableNames.Add("()");
                 continue;
             }
 
@@ -223,16 +223,16 @@ public class VisualisationsGenerator(SQLDecomposer decomposer, SQLExecutor sqlEx
             {
                 if (fromTable.ColumnNames[i].Equals(columnName, StringComparison.InvariantCultureIgnoreCase) &&
                     (tableName == null ||
-                     fromTable.OrginalTableNames[i].Equals(tableName, StringComparison.InvariantCultureIgnoreCase)))
+                     fromTable.ColumnsOriginalTableNames[i].Equals(tableName, StringComparison.InvariantCultureIgnoreCase)))
                 {
-                    toTable.OrginalTableNames.Add(fromTable.OrginalTableNames[i]);
+                    toTable.ColumnsOriginalTableNames.Add(fromTable.ColumnsOriginalTableNames[i]);
                 }
             }
         }
 
-        if (toTable.OrginalTableNames.Count != toTable.ColumnNames.Count)
+        if (toTable.ColumnsOriginalTableNames.Count != toTable.ColumnNames.Count)
             throw new Exception("count of original table names are supposed to match with the count of columns" +
-                                $"\n{toTable.OrginalTableNames.Count} :  {toTable.ColumnNames.Count}");
+                                $"\n{toTable.ColumnsOriginalTableNames.Count} :  {toTable.ColumnNames.Count}");
     }
 
     private void GenerateAnimations(List<Visualisation> visualisations)
