@@ -1,7 +1,7 @@
 .layout {
     height: 100%;
     display: grid;
-    grid: 1fr 60px 260px / 320px 1fr;
+    grid: 1fr 56px 260px / 320px 1fr;
     grid-template-areas: "main main" "toolbar toolbar" "schema editor";
 }
 
