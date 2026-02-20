@@ -3,3 +3,4 @@ obj/
 bin/
 *.user
 sqlVisualizer/visualizer/database.db
+sqlVisualizer/visualizer/metrics.db
