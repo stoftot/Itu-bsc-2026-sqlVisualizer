@@ -1,11 +1,11 @@
-﻿using visualizer.Models;
+﻿using System.Collections.Concurrent;
+using visualizer.Models;
 using DuckDB.NET.Data;
 
 namespace visualizer.Repositories;
 public class MetricsHandler
 {
     private readonly string _connectionString;
-
     public MetricsHandler(string connectionString)
     {
         _connectionString = connectionString;
@@ -29,6 +29,55 @@ public class MetricsHandler
         command.Parameters.Add(new DuckDBParameter("actionName", actionType.ToString()));
 
         command.ExecuteNonQuery();
+    }
+    
+    public void RecordQuery(string sessionId, string query)
+    {
+        using var connection = new DuckDBConnection(_connectionString);
+        connection.Open();
+
+        using var command = connection.CreateCommand();
+
+        command.CommandText = @"
+        INSERT INTO queries_written (session_id, query_string, event_ts)
+        VALUES ($sessionId, $queryString, $eventTs);
+    ";
+
+        command.Parameters.Add(new DuckDBParameter("sessionId", sessionId));
+        command.Parameters.Add(new DuckDBParameter("queryString", query));
+        command.Parameters.Add(new DuckDBParameter("eventTs", DateTime.Now));
+
+        command.ExecuteNonQuery();
+    }
+
+    public void PrintQueries(string sessionId)
+    {
+        using var connection = new DuckDBConnection(_connectionString);
+        connection.Open();
+
+        using var command = connection.CreateCommand();
+
+        command.CommandText = @"
+        SELECT id, query_string, event_ts
+        FROM queries_written
+        WHERE session_id = $sessionId
+        ORDER BY event_ts;
+         ";
+
+        command.Parameters.Add(new DuckDBParameter("sessionId", sessionId));
+
+        using var reader = command.ExecuteReader();
+
+        Console.WriteLine($"Queries for session: {sessionId}");
+
+        while (reader.Read())
+        {
+            var id = reader.GetInt64(0);
+            var query = reader.GetString(1);
+            var timestamp = reader.GetDateTime(2);
+
+            Console.WriteLine($"[{id}] {timestamp}: {query}");
+        }
     }
 
     public void PrintActions(string sessionId)
