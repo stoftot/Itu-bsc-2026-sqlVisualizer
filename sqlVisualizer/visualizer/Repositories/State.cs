@@ -16,25 +16,25 @@ public class State
     public List<Query> Queries = [
         new()
         {
-            Type = "Custom",
+            Type = ActionType.Custom,
             SQL = "SELECT shift.day FROM shift"
                   
         },
         new()
         {
-            Type = "Select",
+            Type = ActionType.Select,
             SQL = "SELECT shift.day FROM shift"
                   
         },
         new()
         {
-            Type = "Join",
+            Type = ActionType.Join,
             SQL = "SELECT shift.day, user.email FROM shift " +
                   "JOIN user ON shift.cashier = user.username",
         },
         new()
         {
-            Type = "Group By",
+            Type = ActionType.GroupBy,
             SQL = "SELECT productname, count(purchasetime) FROM purchase " +
                   "GROUP BY productname",
         }

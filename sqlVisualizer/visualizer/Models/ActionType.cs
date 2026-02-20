@@ -7,5 +7,6 @@ public enum ActionType
     Animate,
     Select,
     GroupBy,
+    Custom,
     Join
 }
