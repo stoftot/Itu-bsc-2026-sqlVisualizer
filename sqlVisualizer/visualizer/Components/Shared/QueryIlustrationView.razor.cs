@@ -48,6 +48,7 @@ public class QueryIllustrationViewBase : ComponentBase
     {
         if(!firstRender) return;
         Init();
+        MetricsHandler.EnterStep(State.SessionId, CurrStep.Component.Keyword);
     }
 
     public void Init()
