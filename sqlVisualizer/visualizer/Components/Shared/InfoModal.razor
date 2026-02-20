@@ -1,0 +1,25 @@
+﻿<!-- Trigger/Open The Modal -->
+<button class="info-button" @onclick="ToggleModal">
+    <i class="bi bi-question-circle"></i>
+</button>
+
+@if (ShowModal)
+{
+    <!-- The Modal -->
+    <div id="infoModal" class="modal" @onclick="ToggleModal">
+
+        <!-- Modal content -->
+        <div class="modal-content" @onclick:stopPropagation="true">
+            <header>
+                <h1>SQL Visualizer</h1>
+                <span class="close" @onclick="ToggleModal">&times;</span>
+            </header>
+            <h3>How to use</h3>
+            <p>Some text in the Modal..</p>
+            
+            <h3>Supported SQL keywords</h3>
+            <p>SELECT, FROM, WHERE, GROUP BY</p>
+        </div>
+
+    </div>
+}
