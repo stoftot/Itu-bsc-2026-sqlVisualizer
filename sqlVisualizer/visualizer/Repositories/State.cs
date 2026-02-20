@@ -15,7 +15,7 @@ public class State
     public Action AnimatePause { get; set; }
     public Action AnimateStepNext { get; set; }
     public Action AnimateStepPrivious { get; set; }
-    public List<Visualisation> Steps { get; set; }
+    public List<Visualisation> Steps { get; set; } = [];
     public int CurrentStepIndex { get; set; } = 0;
     public List<Query> Queries = [
         new()

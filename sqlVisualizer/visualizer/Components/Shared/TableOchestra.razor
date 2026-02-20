@@ -1,8 +1,13 @@
 ﻿@inherits TableOchestraBase
-
-@foreach (var table in Tables)
+@if (Tables != null)
 {
-    <TableView
-        Table="table"
-    />
+    @foreach (var table in Tables)
+    {
+        <TableView
+            Table="table"/>
+    }
+}
+else
+{
+    <p>Loading tables...</p>
 }
