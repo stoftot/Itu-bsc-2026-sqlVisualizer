@@ -17,6 +17,7 @@ public partial class ToolBar : ComponentBase
         _current = e.Value!.ToString()!;
         var newSQL = State.Queries[Int32.Parse((String)e.Value)].SQL;
         await State.Editor.SetValue(newSQL);
+        await RunQuery();
     }
 
     async Task RunQuery()
