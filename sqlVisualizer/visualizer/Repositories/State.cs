@@ -39,7 +39,7 @@ public class State
         new()
         {
             Type = ActionType.GroupBy,
-            SQL = "SELECT productname, count(purchasetime) FROM purchase " +
+            SQL = "SELECT productname, count() FROM purchase " +
                   "GROUP BY productname",
         }
     ];

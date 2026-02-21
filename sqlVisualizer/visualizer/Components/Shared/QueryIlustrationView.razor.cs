@@ -11,6 +11,7 @@ public class QueryIllustrationViewBase : ComponentBase
     [Inject] State State { get; init; }
     [Inject] private MetricsConfig MetricsConfig { get; init; } = null!;
     [Inject] VisualisationsGenerator VisualisationsGenerator { get; init; }
+    [Inject] public required MetricsHandler MetricsHandler { get; init; }
     public required List<Table> FromTables { get; set; }
     public required List<Table> ToTables { get; set; }
     private List<Visualisation> Steps { get; set; }
@@ -22,8 +23,12 @@ public class QueryIllustrationViewBase : ComponentBase
         set
         {
             if (value < 0 || value >= Steps.Count) return;
+                    
             _indexOfStepToHighlight = value;
             State.CurrentStepIndex = value;
+            
+            MetricsHandler.EnterStep(State.SessionId, CurrStep.Component.Keyword);
+            MetricsHandler.PrintSessionTimings(State.SessionId);
             UpdateStepShown();
         }
     }
@@ -41,13 +46,15 @@ public class QueryIllustrationViewBase : ComponentBase
     {
         if(!firstRender) return;
         Init();
+        MetricsHandler.EnterStep(State.SessionId, CurrStep.Component.Keyword);
     }
 
     public void Init()
     {
         Steps = VisualisationsGenerator.Generate(Query);
         State.Steps = Steps;
-
+        IndexOfStepToHighlight = 0;
+        
         UpdateStepShown();
         StateHasChanged();
     }
@@ -94,6 +101,7 @@ public class QueryIllustrationViewBase : ComponentBase
 
     private async Task AnimateSteps()
     {
+        MetricsHandler.StartAnimation(State.SessionId);
         var animation = CurrStep.Animation;
         animation.Reset();
 
@@ -102,6 +110,7 @@ public class QueryIllustrationViewBase : ComponentBase
             StateHasChanged();
             await Task.Delay(1100);
         }
+        MetricsHandler.StopAnimation(State.SessionId);
     }
     
     private void OnAnimateSteps()
