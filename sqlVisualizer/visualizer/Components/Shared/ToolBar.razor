@@ -18,9 +18,11 @@
     
     <div class="editor-part">
         <div class="stepper">
-            <button @onclick="StepPrevious">
+            <button @onclick="StepPrevious"
+                    disabled="@(State.CurrentStepIndex <= 0)">
                 <i class="bi bi-chevron-left"></i>
             </button>
+            
             @for (int i = 0; i < State.Steps.Count; i++)
             {
                 @if (i == State.CurrentStepIndex)
@@ -32,7 +34,8 @@
                     <p class="stepper__step">@State.Steps[i].Component.Keyword.ToSQLString()</p>
                 }
             }
-            <button @onclick="StepNext">
+            <button @onclick="StepNext"
+                    disabled="@(State.CurrentStepIndex >= State.Steps.Count - 1)">
                 <i class="bi bi-chevron-right"></i>
             </button>
         </div>
@@ -52,10 +55,8 @@
             </button>
         </div>
         
-       
-        
-        <button class="info-button">
-            <i class="bi bi-question-circle"></i>
-        </button>
+        <div class="info-button">
+            <InfoModal  />
+        </div>
     </div>
 </div>
