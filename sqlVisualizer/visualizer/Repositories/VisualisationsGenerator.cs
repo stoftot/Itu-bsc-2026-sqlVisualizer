@@ -8,60 +8,113 @@ public class VisualisationsGenerator(SQLDecomposer decomposer, SQLExecutor sqlEx
     public List<Visualisation> Generate(string query)
     {
         var visualisations = new List<Visualisation>();
+        var steps = decomposer.Decompose(query);
 
-        GenerateTables(query, visualisations);
-        GenerateTableOriginOnColumns(visualisations);
+        GenerateTablesWithOriginOnColumns(steps, visualisations);
         GenerateAnimations(visualisations);
 
         return visualisations;
     }
 
-    private void GenerateTables(string query, List<Visualisation> visualisations)
+    private void GenerateTablesWithOriginOnColumns(List<SQLDecompositionComponent> steps, List<Visualisation> visualisations)
     {
-        var steps = decomposer.Decompose(query);
         var intialStep = steps.First();
         steps.Remove(intialStep);
 
         var fromTables = new List<Table>();
         var toTables = new List<Table>();
         var prevToTables = new List<Table>();
+        List<SQLDecompositionComponent> currSteps = [intialStep];
 
         GenerateTablesIntialStep(fromTables, intialStep);
 
         for (int i = 0; i < steps.Count; i++)
         {
-            //copy previous to tables to new from tables
-            if (i != 0)
-                fromTables.AddRange(prevToTables.Select(t => t.DeepClone()).ToList());
-
-            var currentStep = steps[i];
-
-            if (currentStep.Keyword.IsJoin())
+            var currStep = steps[i];
+            currSteps.Add(currStep);
+            //Generate from tables
+            GenerateFromTables(currStep, fromTables, prevToTables);
+            
+            //Generate origin on from tables
+            if (i > 0)
             {
-                GenerateTablesJoin(fromTables, currentStep);
-            }
-
-            if (currentStep.Keyword == SQLKeyword.GROUP_BY)
-            {
-                GenerateTablesGroupBy(fromTables, toTables, currentStep);
+                var prevVis = visualisations[i - 1];
+                //this is just to copy the previous result tables origin columns over into the next steps from table
+                if (prevVis.ToTables.Count == 1)
+                {
+                    // DuplicateOriginOnColumnsToSingle(prevVis.ToTables[0], currVis.FromTables[0]);
+                    DuplicateOriginOnColumnsToSingle(prevVis.ToTables[0], fromTables[0]);
+                }
+                else
+                {
+                    // DuplicateOriginOnColumnsToMulti(prevVis.ToTables, currVis.FromTables);
+                    DuplicateOriginOnColumnsToMulti(prevVis.ToTables, fromTables);
+                }
             }
             else
             {
-                toTables.Add(
-                    sqlExecutor.Execute(steps[..(i + 1)].Prepend(intialStep)).Result);
+                GenerateTableOriginOnColumnsFirstVisualisation(fromTables);
             }
-
-            visualisations.Add(new Visualisation()
-            {
-                Component = currentStep,
-                FromTables = fromTables.ToList(),
-                ToTables = toTables.ToList()
-            });
+            
+            //Generate to tables
+            var currVis = GenerateToTable(steps[i], currSteps, fromTables, toTables);
 
             prevToTables = toTables.ToList();
             fromTables.Clear();
             toTables.Clear();
+            
+            //Generate origin on to tables
+            GenerateTableOriginOnColumns(currVis);
+            
+            visualisations.Add(currVis);
         }
+    }
+
+    private void GenerateFromTables(SQLDecompositionComponent currStep, 
+        List<Table> fromTables, List<Table> prevToTables)
+    {
+        fromTables.AddRange(prevToTables.Select(t => t.DeepClone()).ToList());
+
+        switch (currStep.Keyword)
+        {
+            case SQLKeyword.JOIN:
+            case SQLKeyword.INNER_JOIN:
+            case SQLKeyword.LEFT_JOIN:
+            case SQLKeyword.RIGHT_JOIN:
+            case SQLKeyword.FULL_JOIN:
+                GenerateFromTablesJoin(fromTables, currStep);
+                break;
+        }
+    }
+    
+    private void GenerateFromTablesJoin(List<Table> fromTables, SQLDecompositionComponent currentStep)
+    {
+        var joiningTable = sqlExecutor.Execute(currentStep.GenerateFromClauseFromJoin()).Result;
+        joiningTable.Name = currentStep.Clause.Split(' ')[0].Trim();
+        fromTables.Add(joiningTable);
+    }
+
+    private Visualisation GenerateToTable(SQLDecompositionComponent currStep,
+        List<SQLDecompositionComponent> currSteps,
+        List<Table> fromTables, List<Table> toTables)
+    {
+        switch (currStep.Keyword)
+        {
+            case SQLKeyword.GROUP_BY:
+                GenerateToTablesGroupBy(fromTables, toTables, currStep);
+                break;
+            default:
+                toTables.Add(
+                    sqlExecutor.Execute(currSteps).Result);
+                break;
+        }
+
+        return new Visualisation
+        {
+            Component = currStep,
+            FromTables = fromTables.ToList(),
+            ToTables = toTables.ToList()
+        };
     }
 
     private void GenerateTablesIntialStep(List<Table> fromTables, SQLDecompositionComponent intialStep)
@@ -70,14 +123,8 @@ public class VisualisationsGenerator(SQLDecomposer decomposer, SQLExecutor sqlEx
         fromTables[0].Name = intialStep.Clause.Split(',')[0].Trim();
     }
 
-    private void GenerateTablesJoin(List<Table> fromTables, SQLDecompositionComponent currentStep)
-    {
-        var joiningTable = sqlExecutor.Execute(currentStep.GenerateFromClauseFromJoin()).Result;
-        joiningTable.Name = currentStep.Clause.Split(' ')[0].Trim();
-        fromTables.Add(joiningTable);
-    }
-
-    private void GenerateTablesGroupBy(List<Table> fromTables, List<Table> toTables, SQLDecompositionComponent currentStep)
+    private void GenerateToTablesGroupBy(List<Table> fromTables, List<Table> toTables,
+        SQLDecompositionComponent currentStep)
     {
         //TODO: Add support for tableName.Coulmname goup by
         if (fromTables.Count > 1)
@@ -86,7 +133,7 @@ public class VisualisationsGenerator(SQLDecomposer decomposer, SQLExecutor sqlEx
         var columnNamesToGroupBy = currentStep.Clause.Split(',');
 
         var groupByIndexes = new List<int>();
-        
+
         foreach (var columName in columnNamesToGroupBy)
         {
             groupByIndexes.Add(tabel.IndexOfColumn(columName.Trim()));
@@ -104,7 +151,7 @@ public class VisualisationsGenerator(SQLDecomposer decomposer, SQLExecutor sqlEx
 
         toTables.AddRange(groupedTables);
     }
-    
+
     public sealed class CompositeKey : IEquatable<CompositeKey>
     {
         private readonly object?[] _values;
@@ -124,61 +171,43 @@ public class VisualisationsGenerator(SQLDecomposer decomposer, SQLExecutor sqlEx
         }
     }
 
-    private void GenerateTableOriginOnColumns(List<Visualisation> visualisations)
+    private void GenerateTableOriginOnColumns(Visualisation vis)
     {
-        var vis = visualisations[0];
+        switch (vis.Component.Keyword)
+        {
+            case SQLKeyword.JOIN:
+            case SQLKeyword.INNER_JOIN:
+            case SQLKeyword.LEFT_JOIN:
+            case SQLKeyword.RIGHT_JOIN:
+            case SQLKeyword.FULL_JOIN:
+                DuplicateOriginOnColumnsToSingle(vis.FromTables, vis.ToTables[0]);
+                break;
+            case SQLKeyword.SELECT:
+                GenerateTableOriginOnColumnsForSelect(vis);
+                break;
+            case SQLKeyword.GROUP_BY:
+                DuplicateOriginOnColumnsToMulti(vis.FromTables[0], vis.ToTables);
+                break;
+            case SQLKeyword.WHERE:
+                DuplicateOriginOnColumnsToSingle(vis.FromTables, vis.ToTables[0]);
+                break;
+            case SQLKeyword.HAVING:
+            case SQLKeyword.ORDER_BY:
+            case SQLKeyword.LIMIT:
+            case SQLKeyword.OFFSET:
+                throw new NotImplementedException();
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
+    }
 
-        foreach (var table in vis.FromTables)
+    private void GenerateTableOriginOnColumnsFirstVisualisation(List<Table> fromTables)
+    {
+        foreach (var table in fromTables)
         {
             table.ColumnsOriginalTableNames.AddRange(
                 Enumerable.Repeat(table.Name, table.ColumnNames.Count)
             );
-        }
-
-        for (int i = 0; i < visualisations.Count; i++)
-        {
-            vis = visualisations[i];
-
-            //this is just to copy the previous result tables origin columns over into the next steps from table
-            if (i > 0)
-            {
-                var prevToTables = visualisations[i - 1].ToTables;
-                if (prevToTables.Count == 1)
-                {
-                    DuplicateOriginOnColumnsToSingle(prevToTables[0], vis.FromTables[0]);
-                }
-                else
-                {
-                    DuplicateOriginOnColumnsToMulti(prevToTables, vis.FromTables);
-                }
-            }
-
-            switch (vis.Component.Keyword)
-            {
-                case SQLKeyword.JOIN:
-                case SQLKeyword.INNER_JOIN:
-                    DuplicateOriginOnColumnsToSingle(vis.FromTables, vis.ToTables[0]);
-                    break;
-                case SQLKeyword.SELECT:
-                    GenerateTableOriginOnColumnsForSelect(vis);
-                    break;
-                case SQLKeyword.GROUP_BY:
-                    DuplicateOriginOnColumnsToMulti(vis.FromTables[0], vis.ToTables);
-                    break;
-                case SQLKeyword.LEFT_JOIN:
-                case SQLKeyword.RIGHT_JOIN:
-                case SQLKeyword.FULL_JOIN:
-                case SQLKeyword.WHERE:
-                    DuplicateOriginOnColumnsToSingle(vis.FromTables, vis.ToTables[0]);
-                    break;
-                case SQLKeyword.HAVING:
-                case SQLKeyword.ORDER_BY:
-                case SQLKeyword.LIMIT:
-                case SQLKeyword.OFFSET:
-                    throw new NotImplementedException();
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
         }
     }
 
@@ -223,13 +252,13 @@ public class VisualisationsGenerator(SQLDecomposer decomposer, SQLExecutor sqlEx
 
         var toTable = vis.ToTables[0];
         var fromTable = vis.FromTables[0];
-        
-        if(vis.Component.Clause.Trim().Equals("*"))
+
+        if (vis.Component.Clause.Trim().Equals("*"))
             DuplicateOriginOnColumnsToSingle(fromTable, toTable);
-        
-        
+
+
         var columnsSelected = vis.Component.Clause.Split(',').Select(c => c.Trim()).ToList();
-        
+
         foreach (var column in columnsSelected)
         {
             //check if agregate founction
@@ -247,7 +276,8 @@ public class VisualisationsGenerator(SQLDecomposer decomposer, SQLExecutor sqlEx
             {
                 if (fromTable.ColumnNames[i].Equals(columnName, StringComparison.InvariantCultureIgnoreCase) &&
                     (tableName == null ||
-                     fromTable.ColumnsOriginalTableNames[i].Equals(tableName, StringComparison.InvariantCultureIgnoreCase)))
+                     fromTable.ColumnsOriginalTableNames[i]
+                         .Equals(tableName, StringComparison.InvariantCultureIgnoreCase)))
                 {
                     toTable.ColumnsOriginalTableNames.Add(fromTable.ColumnsOriginalTableNames[i]);
                 }
