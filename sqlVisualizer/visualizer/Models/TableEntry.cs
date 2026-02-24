@@ -1,4 +1,6 @@
-﻿namespace visualizer.Models;
+﻿using System.Collections.Immutable;
+
+namespace visualizer.Models;
 
 public class TableEntry : TableObjectBase
 {
@@ -12,5 +14,12 @@ public class TableEntry : TableObjectBase
                 .Select(v => v.DeepClone())
                 .ToList()
         };
+    }
+
+    public ImmutableArray<TableValue> ValuesAsImmutableArray(ICollection<int> columnIndexes)
+    {
+        return columnIndexes
+            .Select(columnIndex => Values[columnIndex])
+            .ToImmutableArray();
     }
 }
