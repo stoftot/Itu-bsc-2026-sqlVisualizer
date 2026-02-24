@@ -4,7 +4,7 @@ namespace visualizer.Components.Shared;
 
 public partial class InfoModal : ComponentBase
 {
-    public required bool ShowModal = true;
+    public required bool ShowModal = false;
     public void ToggleModal()
     {
         ShowModal = !ShowModal;
