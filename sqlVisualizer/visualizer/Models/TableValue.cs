@@ -27,7 +27,7 @@ public class TableValue : TableObjectBase
 
     public TableValue DeepClone()
     {
-        return new TableValue{ Value = Value };
+        return (TableValue)this.MemberwiseClone();
     }
 
     public override bool Equals(object? obj)
