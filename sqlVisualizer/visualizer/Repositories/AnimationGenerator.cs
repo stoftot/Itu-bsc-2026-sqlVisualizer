@@ -1,12 +1,14 @@
 ﻿using System.Collections.Immutable;
 using System.Text.RegularExpressions;
 using Microsoft.VisualBasic;
+using visualizer.Exstensions;
 using visualizer.Models;
 
 namespace visualizer.Repositories;
 
 public static class AnimationGenerator
 {
+    private static TableVisualModifier tvm = new();
     public static Animation Generate(List<Table> fromTables, List<Table> toTables, SQLDecompositionComponent action)
     {
         return action.Keyword switch
@@ -66,7 +68,7 @@ public static class AnimationGenerator
                     currentResultIndex++;
                 }
 
-                steps.Add(GenerateToggleHighlightRows(toToggle));
+                steps.Add(tvm.GenerateToggleHighlightRows(toToggle));
                 toToggle.Clear();
                 toToggle.AddRange(deToggle);
                 deToggle.Clear();
@@ -75,7 +77,7 @@ public static class AnimationGenerator
             toToggle.Add(primaryEntry);
         }
 
-        steps.Add(GenerateToggleHighlightRows(toToggle));
+        steps.Add(tvm.GenerateToggleHighlightRows(toToggle));
 
         return new Animation(steps);
     }
@@ -89,7 +91,7 @@ public static class AnimationGenerator
         if (action.Clause.Trim().Equals("*"))
             return new Animation(steps);
 
-        steps.Add(HideTablesCellBased([toTable]));
+        steps.Add(tvm.HideTablesCellBased([toTable]));
 
         var columns = action.Clause.Split(',').Select(c => c.Trim()).ToList();
 
@@ -107,14 +109,14 @@ public static class AnimationGenerator
             {
                 if (fromTables.Count == 1)
                 {
-                    Action FromAnimationGenerator(int i) => GenerateToggleHighlightColumn(fromTables[0], i);
+                    Action FromAnimationGenerator(int i) => tvm.GenerateToggleHighlightColumn(fromTables[0], i);
 
                     HandleNormalSelect(fromTables, toTable, column, columnIndex, steps, FromAnimationGenerator);
                 }
                 else
                 {
                     Action FromAnimationGenerator(int i) =>
-                        fromTables.Select(table => GenerateToggleHighlightCell(table, 0, i))
+                        fromTables.Select(table => tvm.GenerateToggleHighlightCell(table, 0, i))
                             .ToList()
                             .ToOneAction();
 
@@ -132,9 +134,8 @@ public static class AnimationGenerator
         string column, int columnIndex, List<Action> steps)
     {
         var parts = column.Split('(', 2);
-        SQLAggregateFunctionsKeyword keyword;
 
-        if (!Enum.TryParse(parts[0].Trim().ToUpperInvariant(), out keyword))
+        if (!Enum.TryParse(parts[0].Trim().ToUpperInvariant(), out SQLAggregateFunctionsKeyword keyword))
             throw new ArgumentException($"the aggregate function \"{parts[0].Trim()}\" is not supported");
 
         switch (keyword)
@@ -154,17 +155,17 @@ public static class AnimationGenerator
             int i = 0;
             foreach (var table in fromTables)
             {
-                steps.Add(CombineActions(
+                steps.Add(tvm.CombineActions(
                 [
-                    GenerateToggleHighlightRows(table.Entries),
-                    GenerateToggleVisibleCell(toTable, i, columnIndex),
-                    GenerateToggleHighlightCell(toTable, i, columnIndex)
+                    tvm.GenerateToggleHighlightRows(table.Entries),
+                    tvm.GenerateToggleVisibleCell(toTable, i, columnIndex),
+                    tvm.GenerateToggleHighlightCell(toTable, i, columnIndex)
                 ]));
 
-                steps.Add(CombineActions(
+                steps.Add(tvm.CombineActions(
                 [
-                    GenerateToggleHighlightRows(table.Entries),
-                    GenerateToggleHighlightCell(toTable, i++, columnIndex)
+                    tvm.GenerateToggleHighlightRows(table.Entries),
+                    tvm.GenerateToggleHighlightCell(toTable, i++, columnIndex)
                 ]));
             }
         }
@@ -191,17 +192,17 @@ public static class AnimationGenerator
                  fromTables[0].ColumnsOriginalTableNames[i]
                      .Equals(tableName, StringComparison.InvariantCultureIgnoreCase)))
             {
-                steps.Add(CombineActions(
+                steps.Add(tvm.CombineActions(
                 [
                     fromAnimation,
-                    GenerateToggleVisibleColumn(toTable, columnIndex),
-                    GenerateToggleHighlightColumn(toTable, columnIndex)
+                    tvm.GenerateToggleVisibleColumn(toTable, columnIndex),
+                    tvm.GenerateToggleHighlightColumn(toTable, columnIndex)
                 ]));
 
-                steps.Add(CombineActions(
+                steps.Add(tvm.CombineActions(
                 [
                     fromAnimation,
-                    GenerateToggleHighlightColumn(toTable, columnIndex)
+                    tvm.GenerateToggleHighlightColumn(toTable, columnIndex)
                 ]));
                 return;
             }
@@ -216,7 +217,7 @@ public static class AnimationGenerator
     {
         var steps = new List<Action>();
 
-        steps.Add(HideTablesCellBased(toTables));
+        steps.Add(tvm.HideTablesCellBased(toTables));
 
         var columnNamesToGroupBy = action.Clause.Split(',');
 
@@ -234,9 +235,9 @@ public static class AnimationGenerator
         {
             var fromAnimations = new List<Action>();
             var currRow = fromTable.Entries[row];
-            fromAnimations.Add(GenerateToggleHighlightRow(currRow));
-            ChangeHighlightColourCells(fromTable, row, groupByIndexes, "146af5");
-            fromAnimations.Add(GenerateToggleHighlightCells(fromTable, row, groupByIndexes));
+            fromAnimations.Add(tvm.GenerateToggleHighlightRow(currRow));
+            tvm.ChangeHighlightColourCells(fromTable, row, groupByIndexes, "146af5");
+            fromAnimations.Add(tvm.GenerateToggleHighlightCells(fromTable, row, groupByIndexes));
 
             var fromValues = currRow.ValuesAsImmutableArray(groupByIndexes);
             var toTable = toTables
@@ -246,18 +247,18 @@ public static class AnimationGenerator
 
             var indexOfToRow = toTableEntryValueMap[toTable.Entries[0].ValuesAsImmutableArray(groupByIndexes)]++;
 
-            ChangeHighlightColourCells(toTable, indexOfToRow, groupByIndexes, "146af5");
-            steps.Add(CombineActions(fromAnimations,
+            tvm.ChangeHighlightColourCells(toTable, indexOfToRow, groupByIndexes, "146af5");
+            steps.Add(tvm.CombineActions(fromAnimations,
             [
-                GenerateToggleVisibleCellsInRow(toTable.Entries[indexOfToRow]),
-                GenerateToggleHighlightRow(toTable.Entries[indexOfToRow]),
-                GenerateToggleHighlightCells(toTable, indexOfToRow, groupByIndexes)
+                tvm.GenerateToggleVisibleCellsInRow(toTable.Entries[indexOfToRow]),
+                tvm.GenerateToggleHighlightRow(toTable.Entries[indexOfToRow]),
+                tvm.GenerateToggleHighlightCells(toTable, indexOfToRow, groupByIndexes)
             ]));
 
-            steps.Add(CombineActions(fromAnimations,
+            steps.Add(tvm.CombineActions(fromAnimations,
             [
-                GenerateToggleHighlightRow(toTable.Entries[indexOfToRow]),
-                GenerateToggleHighlightCells(toTable, indexOfToRow, groupByIndexes)
+                tvm.GenerateToggleHighlightRow(toTable.Entries[indexOfToRow]),
+                tvm.GenerateToggleHighlightCells(toTable, indexOfToRow, groupByIndexes)
             ]));
         }
 
@@ -272,7 +273,7 @@ public static class AnimationGenerator
 
         foreach (var fromEntry in fromTable.Entries)
         {
-            var highlightSource = GenerateToggleHighlightRow(fromEntry);
+            var highlightSource = tvm.GenerateToggleHighlightRow(fromEntry);
 
             var matchingResult = remainingResultRows.FirstOrDefault(r =>
                 r.Values.Select(v => v.Value)
@@ -280,14 +281,14 @@ public static class AnimationGenerator
 
             if (matchingResult != null)
             {
-                steps.Add(CombineActions([
+                steps.Add(tvm.CombineActions([
                     highlightSource,
-                    GenerateToggleHighlightRow(matchingResult)
+                    tvm.GenerateToggleHighlightRow(matchingResult)
                 ]));
 
-                steps.Add(CombineActions([
+                steps.Add(tvm.CombineActions([
                     highlightSource,
-                    GenerateToggleHighlightRow(matchingResult)
+                    tvm.GenerateToggleHighlightRow(matchingResult)
                 ]));
 
                 remainingResultRows.Remove(matchingResult);
@@ -302,118 +303,6 @@ public static class AnimationGenerator
         return new Animation(steps);
     }
 
-    private static Action GenerateToggleHighlightRows(IReadOnlyList<TableEntry> entries)
-    {
-        //capture the list, so when its changed it doesn't apply to all functions
-        var snapshot = entries.ToList();
-        return () =>
-        {
-            foreach (var t in snapshot) t.ToggleHighlight();
-        };
-    }
-
-    private static Action GenerateToggleHighlightRow(TableEntry entry)
-    {
-        return entry.ToggleHighlight;
-    }
-
-    private static Action GenerateToggleHighlightCells(Table table, int row, ICollection<int> column)
-    {
-        return column
-            .Select(i => GenerateToggleHighlightCell(table, row, i))
-            .ToOneAction();
-    }
-
-    private static Action GenerateToggleHighlightCell(Table table, int row, int column)
-    {
-        return table.Entries[row].Values[column].ToggleHighlight;
-    }
-
-    private static void ChangeHighlightColourCells(Table table, int row, ICollection<int> columns, string hexColour)
-    {
-        foreach (var col in columns)
-            ChangeHighlightColourCell(table, row, col, hexColour);
-    }
-
-    private static void ChangeHighlightColourCell(Table table, int row, int column, string hexColour)
-    {
-        table.Entries[row].Values[column].SetHighlightHexColor(hexColour);
-    }
-
-    private static Action GenerateToggleHighlightColumn(Table table, int index)
-    {
-        return () =>
-        {
-            foreach (var te in table.Entries)
-            {
-                te.Values[index].ToggleHighlight();
-            }
-        };
-    }
-
-    private static Action GenerateToggleVisibleColumn(Table table, int index)
-    {
-        return () =>
-        {
-            foreach (var te in table.Entries)
-            {
-                te.Values[index].ToggleVisible();
-            }
-        };
-    }
-
-    private static Action GenerateToggleVisibleCellsInRow(TableEntry row)
-    {
-        var hide = new List<Action>();
-        foreach (var tableValue in row.Values)
-        {
-            hide.Add(() => tableValue.ToggleVisible());
-        }
-
-        return CombineActions(hide);
-    }
-
-    private static Action GenerateToggleVisibleCell(Table table, int row, int column)
-    {
-        return table.Entries[row].Values[column].ToggleVisible;
-    }
-
-    private static Action HideTablesCellBased(List<Table> tables)
-    {
-        var hide = new List<Action>();
-        foreach (var table in tables)
-            for (int i = 0; i < table.ColumnNames.Count; i++)
-                hide.Add(GenerateToggleVisibleColumn(table, i));
-
-        return CombineActions(hide);
-    }
-
-    private static Action CombineActions(IEnumerable<Action> actions)
-    {
-        //capture the list, so when its changed it doesn't apply to all functions
-        var snapshot = actions.ToList();
-        return () =>
-        {
-            foreach (var action in snapshot) action();
-        };
-    }
-
-    private static Action CombineActions(List<Action> a, List<Action> b)
-    {
-        //capture the list, so when its changed it doesn't apply to all functions
-        var snapshot = a.ToList();
-        snapshot.AddRange(b.ToList());
-        return () =>
-        {
-            foreach (var action in snapshot) action();
-        };
-    }
-
-    private static Action ToOneAction(this IEnumerable<Action> actions)
-    {
-        return CombineActions(actions);
-    }
-
     private static bool AreJoinEquivalentToResult(TableEntry primary, TableEntry joining, TableEntry result)
     {
         var p = primary.Values.Select(tv => tv.Value).ToList();
@@ -425,7 +314,7 @@ public static class AnimationGenerator
             .SequenceEqual(r.OrderBy(x => x));
     }
 
-    sealed class ImmutableArrayComparer<T> : IEqualityComparer<ImmutableArray<T>>
+    private sealed class ImmutableArrayComparer<T> : IEqualityComparer<ImmutableArray<T>>
     {
         private static readonly EqualityComparer<T> ItemComparer = EqualityComparer<T>.Default;
 
