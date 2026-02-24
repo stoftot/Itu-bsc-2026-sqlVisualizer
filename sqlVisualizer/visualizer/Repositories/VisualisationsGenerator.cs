@@ -74,7 +74,7 @@ public class VisualisationsGenerator(SQLDecomposer decomposer, TableGenerator tg
     {
         foreach (var vis in visualisations)
         {
-            // vis.Animation = AnimationGenerator.Generate(vis.FromTables, vis.ToTables, vis.Component);
+            vis.Animation = AnimationGenerator.Generate(vis.FromTables, vis.ToTables, vis.Component);
         }
     }
 }

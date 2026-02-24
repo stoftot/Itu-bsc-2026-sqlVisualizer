@@ -1,4 +1,5 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Collections.Immutable;
+using System.Text.RegularExpressions;
 using Microsoft.VisualBasic;
 using visualizer.Models;
 
@@ -217,36 +218,46 @@ public static class AnimationGenerator
 
         steps.Add(HideTablesCellBased(toTables));
 
-        var columnNameGroupingBy = action.Clause.Trim();
-        var columnIndexGroupingBy = fromTable.IndexOfColumn(columnNameGroupingBy);
+        var columnNamesToGroupBy = action.Clause.Split(',');
+
+        var groupByIndexes = columnNamesToGroupBy
+            .Select(columName => fromTable
+                .IndexOfColumn(columName.Trim())).ToList();
+
         var toTableEntryValueMap =
-            toTables.ToDictionary(table => table.Entries[0].Values[columnIndexGroupingBy], _ => 0);
+            new Dictionary<ImmutableArray<TableValue>, int>(new ImmutableArrayComparer<TableValue>());
+
+        toTables.ForEach(table => toTableEntryValueMap
+            .Add(table.Entries[0].ValuesAsImmutableArray(groupByIndexes), 0));
 
         for (int row = 0; row < fromTable.Entries.Count; row++)
         {
             var fromAnimations = new List<Action>();
             var currRow = fromTable.Entries[row];
             fromAnimations.Add(GenerateToggleHighlightRow(currRow));
-            ChangeHighlightColourCell(fromTable, row, columnIndexGroupingBy, "146af5");
-            fromAnimations.Add(GenerateToggleHighlightCell(fromTable, row, columnIndexGroupingBy));
+            ChangeHighlightColourCells(fromTable, row, groupByIndexes, "146af5");
+            fromAnimations.Add(GenerateToggleHighlightCells(fromTable, row, groupByIndexes));
 
-            var fromValue = currRow.Values[columnIndexGroupingBy];
-            var toTable = toTables.First(t => t.Entries[0].Values[columnIndexGroupingBy].Equals(fromValue));
+            var fromValues = currRow.ValuesAsImmutableArray(groupByIndexes);
+            var toTable = toTables
+                .First(t => t.Entries[0]
+                    .ValuesAsImmutableArray(groupByIndexes)
+                    .SequenceEqual(fromValues));
 
-            var indexOfToRow = toTableEntryValueMap[toTable.Entries[0].Values[columnIndexGroupingBy]]++;
+            var indexOfToRow = toTableEntryValueMap[toTable.Entries[0].ValuesAsImmutableArray(groupByIndexes)]++;
 
-            ChangeHighlightColourCell(toTable, indexOfToRow, columnIndexGroupingBy, "146af5");
+            ChangeHighlightColourCells(toTable, indexOfToRow, groupByIndexes, "146af5");
             steps.Add(CombineActions(fromAnimations,
             [
                 GenerateToggleVisibleCellsInRow(toTable.Entries[indexOfToRow]),
                 GenerateToggleHighlightRow(toTable.Entries[indexOfToRow]),
-                GenerateToggleHighlightCell(toTable, indexOfToRow, columnIndexGroupingBy)
+                GenerateToggleHighlightCells(toTable, indexOfToRow, groupByIndexes)
             ]));
 
             steps.Add(CombineActions(fromAnimations,
             [
                 GenerateToggleHighlightRow(toTable.Entries[indexOfToRow]),
-                GenerateToggleHighlightCell(toTable, indexOfToRow, columnIndexGroupingBy)
+                GenerateToggleHighlightCells(toTable, indexOfToRow, groupByIndexes)
             ]));
         }
 
@@ -306,9 +317,22 @@ public static class AnimationGenerator
         return entry.ToggleHighlight;
     }
 
+    private static Action GenerateToggleHighlightCells(Table table, int row, ICollection<int> column)
+    {
+        return column
+            .Select(i => GenerateToggleHighlightCell(table, row, i))
+            .ToOneAction();
+    }
+
     private static Action GenerateToggleHighlightCell(Table table, int row, int column)
     {
         return table.Entries[row].Values[column].ToggleHighlight;
+    }
+
+    private static void ChangeHighlightColourCells(Table table, int row, ICollection<int> columns, string hexColour)
+    {
+        foreach (var col in columns)
+            ChangeHighlightColourCell(table, row, col, hexColour);
     }
 
     private static void ChangeHighlightColourCell(Table table, int row, int column, string hexColour)
@@ -364,7 +388,7 @@ public static class AnimationGenerator
         return CombineActions(hide);
     }
 
-    private static Action CombineActions(List<Action> actions)
+    private static Action CombineActions(IEnumerable<Action> actions)
     {
         //capture the list, so when its changed it doesn't apply to all functions
         var snapshot = actions.ToList();
@@ -385,7 +409,7 @@ public static class AnimationGenerator
         };
     }
 
-    private static Action ToOneAction(this List<Action> actions)
+    private static Action ToOneAction(this IEnumerable<Action> actions)
     {
         return CombineActions(actions);
     }
@@ -399,5 +423,21 @@ public static class AnimationGenerator
         return p.Concat(j)
             .OrderBy(x => x)
             .SequenceEqual(r.OrderBy(x => x));
+    }
+
+    sealed class ImmutableArrayComparer<T> : IEqualityComparer<ImmutableArray<T>>
+    {
+        private static readonly EqualityComparer<T> ItemComparer = EqualityComparer<T>.Default;
+
+        public bool Equals(ImmutableArray<T> x, ImmutableArray<T> y)
+            => x.AsSpan().SequenceEqual(y.AsSpan());
+
+        public int GetHashCode(ImmutableArray<T> obj)
+        {
+            var hash = new HashCode();
+            foreach (var item in obj)
+                hash.Add(item, ItemComparer);
+            return hash.ToHashCode();
+        }
     }
 }
