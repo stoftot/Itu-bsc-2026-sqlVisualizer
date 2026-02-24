@@ -10,16 +10,34 @@
 
         <!-- Modal content -->
         <div class="modal-content" @onclick:stopPropagation="true">
-            <header>
-                <h1>SQL Visualizer</h1>
-                <span class="close" @onclick="ToggleModal">&times;</span>
-            </header>
+            
+            <span class="close" @onclick="ToggleModal">&times;</span>
+            
+            <h1>SQL Visualizer</h1>
+            <p>This project visualizes SQL to help students break up complex quires into smaller parts.</p>
+            
             <h3>How to use</h3>
-            <p>Some text in the Modal..</p>
+            <p>
+                This tool consists of 3 parts;<br/>
+                The database schema <br/>
+                    This shows you the tables and column names that are available to you <br/>
+                The SQL editor <br/>
+                    Here you can edit one of our example queries or write your own from scratch <br/>
+                The visualization view <br/>
+                    When you have written yor query pres Run Query <br/>
+            </p>
             
             <h3>Supported SQL keywords</h3>
-            <p>SELECT, FROM, WHERE, GROUP BY</p>
+            <p>
+                Currently not all of SQL is supported. As of now you can use;<br/>
+                Select, From, Where, and Group By statements
+            </p>
+            
+            <h3>GitHub</h3>
+            <p>
+                For more information check our 
+                <a target="_blank" rel="noopener noreferrer" href="https://github.com/stoftot/Itu-bsc-2026-sqlVisualizer">GitHub</a>
+            </p>
         </div>
-
     </div>
 }
