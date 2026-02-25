@@ -11,7 +11,7 @@ public class QueryIllustrationViewBase : ComponentBase
     [Inject] State State { get; init; }
     [Inject] private MetricsConfig MetricsConfig { get; init; } = null!;
     [Inject] VisualisationsGenerator VisualisationsGenerator { get; init; }
-    [Inject] public required MetricsHandler MetricsHandler { get; init; }
+    [Inject] public required IMetricsHandler MetricsHandler { get; init; }
     public required List<Table> FromTables { get; set; }
     public required List<Table> ToTables { get; set; }
     private List<Visualisation> Steps { get; set; }

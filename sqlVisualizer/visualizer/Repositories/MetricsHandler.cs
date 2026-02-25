@@ -3,7 +3,20 @@ using visualizer.Models;
 using DuckDB.NET.Data;
 
 namespace visualizer.Repositories;
-public class MetricsHandler
+
+public interface IMetricsHandler
+{
+    void IncrementAction(string sessionId, ActionType actionType);
+    void RecordQuery(string sessionId, string query);
+    void PrintQueries(string sessionId);
+    void PrintActions(string sessionId);
+    void EnterStep(string sessionId, SQLKeyword step);
+    void StartAnimation(string sessionId);
+    void StopAnimation(string sessionId);
+    void PrintSessionTimings(string sessionId);
+}
+
+public class MetricsHandler : IMetricsHandler
 {
     private readonly string _connectionString;
     private readonly ConcurrentDictionary<string, SessionTimingState> _sessions = new();
