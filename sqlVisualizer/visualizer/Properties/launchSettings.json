@@ -33,6 +33,16 @@
         "environmentVariables": {
           "ASPNETCORE_ENVIRONMENT": "Development"
         }
+      },
+      "Use Dummy Metrics": {
+        "commandName": "Project",
+        "dotnetRunMessages": true,
+        "launchBrowser": false,
+        "applicationUrl": "http://localhost:5205",
+        "environmentVariables": {
+          "ASPNETCORE_ENVIRONMENT": "Development",
+          "USE_DUMMY_METRICS": "true"
+        }
       }
     }
   }
