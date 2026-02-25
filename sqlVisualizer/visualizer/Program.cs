@@ -12,13 +12,21 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddSingleton<MetricsConfig>();
-builder.Services.AddSingleton<MetricsHandler>(sp =>
+var useDummy = Environment.GetEnvironmentVariable("USE_DUMMY_METRICS") == "true";
+if (useDummy)
 {
-    var configuration = sp.GetRequiredService<IConfiguration>();
-    var connectionString = configuration.GetConnectionString("Metrics");
+    builder.Services.AddSingleton<IMetricsHandler, DummyMetricsHandler>();
+}
+else
+{
+    builder.Services.AddSingleton<IMetricsHandler>(sp =>
+    {
+        var configuration = sp.GetRequiredService<IConfiguration>();
+        var connectionString = configuration.GetConnectionString("Metrics");
 
-    return new MetricsHandler(connectionString!);
-});
+        return new MetricsHandler(connectionString!);
+    });
+}
 
 
 var resourceBuilder = ResourceBuilder.CreateDefault()
