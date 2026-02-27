@@ -10,6 +10,8 @@ public partial class Metrics : ComponentBase
     [Inject] public required IMetricsHandler MetricsHandler { get; init; }
     [Inject] public required IHttpContextAccessor Http { get; init; }
     [Inject] public required State State { get; init; }
+
+    private string _sessionId = "";
     string[] ActionLabels = [];
     List<ChartSeries<double>> ActionData;
 
@@ -26,7 +28,7 @@ public partial class Metrics : ComponentBase
 
     protected override void OnInitialized()
     {
-        Console.WriteLine(Http.HttpContext?.Request.Cookies["session_id"] ?? "unknown");
+        _sessionId = Http.HttpContext?.Request.Cookies["session_id"] ?? "unknown";
         LoadActionMetrics();
         LoadTimeMetrics();
         StateHasChanged();
