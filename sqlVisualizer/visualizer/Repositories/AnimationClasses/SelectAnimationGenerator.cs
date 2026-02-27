@@ -11,7 +11,7 @@ public static class SelectAnimationGenerator
     {
         var steps = new List<Action>();
 
-        //TODO: Figuure out how we want to handle select *
+        //TODO: Figure out how we want to handle select *
         if (action.Clause.Trim().Equals("*"))
             return new Animation(steps);
 
