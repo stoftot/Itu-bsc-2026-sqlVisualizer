@@ -1,4 +1,5 @@
 using DuckDB.NET.Data;
+using MudBlazor.Services;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using visualizer;
@@ -28,7 +29,7 @@ else
     });
 }
 
-
+builder.Services.AddMudServices();
 var resourceBuilder = ResourceBuilder.CreateDefault()
     .AddService(MetricsConfig.ServiceName, serviceVersion: MetricsConfig.ServiceVersion);
 
