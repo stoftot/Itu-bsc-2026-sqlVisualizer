@@ -66,6 +66,11 @@ public class DbInitializer(IConfiguration config)
               ('2025-02-12 10:05', 'Small', 'Omar'),
               ('2025-02-12 10:06', 'Large', 'Omar'),
               ('2025-02-19 09:00', 'Small', 'Martin');
+              
+            create or replace view sales as
+            select pu.*, price
+            from purchase pu join product pr
+            on pu.productname = pr.productname;
             """;
         tableCmd.ExecuteNonQuery();
     }
