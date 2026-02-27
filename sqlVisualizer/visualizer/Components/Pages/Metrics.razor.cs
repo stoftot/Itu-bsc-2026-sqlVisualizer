@@ -17,15 +17,6 @@ public partial class Metrics : ComponentBase
 
     string[] StepLabels = [];
     List<ChartSeries<double>> StepData;
-    
-    public List<ChartSeries<double>> Series = new()
-    {
-        new() { Name = "United States", Data = new double[] { 40, 20, 25, 27, 46, 60, 48, 80, 15 } },
-        new() { Name = "Germany", Data = new double[] { 19, 24, 35, 13, 28, 15, 13, 16, 31 } },
-        new() { Name = "Sweden", Data = new double[] { 8, 6, 11, 13, 4, 16, 10, 16, 18 } },
-    };
-    public string[] XAxisLabels = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep" };
-
     protected override void OnInitialized()
     {
         _sessionId = Http.HttpContext?.Request.Cookies["session_id"] ?? "unknown";
@@ -73,18 +64,5 @@ public partial class Metrics : ComponentBase
         {
             new() { Name = "Steps", Data = values },
         };
-        
-        foreach (var a in labels)
-        {
-            Console.WriteLine(a);    
-        }
-
-        
-        foreach (var a in values)
-        {
-            Console.WriteLine(a);    
-        }
-        
-        MetricsHandler.PrintSessionTimings(Http.HttpContext?.Request.Cookies["session_id"] ?? "unknown");
     }
 }
