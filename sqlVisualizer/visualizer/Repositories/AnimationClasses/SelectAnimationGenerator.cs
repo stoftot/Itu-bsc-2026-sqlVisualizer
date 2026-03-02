@@ -22,6 +22,13 @@ public static class SelectAnimationGenerator
         var columnIndex = 0;
         foreach (var column in columns)
         {
+            // Handel window functions
+            if (column.Contains(" over "))
+            {
+                HandleWindowFunction(fromTables, toTable, column, columnIndex, steps);
+                continue;
+            }
+            
             if (column.Contains('('))
             {
                 if (fromTables.Count == 1)
@@ -134,5 +141,46 @@ public static class SelectAnimationGenerator
             steps.Add(fromAnimation);
             steps.Add(fromAnimation);
         }
+    }
+
+    private static void HandleWindowFunction(List<Table> fromTables, Table toTable,
+        string column, int columnIndex, List<Action> steps)
+    {
+        string function = column.Split(" over ")[0];
+        string window = column.Split(" over ")[1];
+
+        if (function.Contains("sum(", StringComparison.InvariantCultureIgnoreCase))
+        {
+            HandleWindowFunctionSum(fromTables, toTable, column, columnIndex, steps);
+            return;
+        }
+            
+        throw new NotImplementedException($"the window function \"{function}\" is not supported");
+    }
+    
+    private static void HandleWindowFunctionSum(List<Table> fromTables, Table toTable,
+        string column, int columnIndex, List<Action> steps)
+    {
+        int fromTableColumnIndex = fromTables[0].IndexOfColumn("price");
+        
+        int i = 0;
+        foreach (var entry in fromTables[0].Entries)
+        {
+            steps.Add(tvm.CombineActions(
+            [
+                tvm.GenerateToggleHighlightCell(fromTables[0], i, fromTableColumnIndex),
+                tvm.GenerateToggleVisibleCell(toTable, i, columnIndex),
+                tvm.GenerateToggleHighlightCell(toTable, i, columnIndex)
+            ]));
+            
+            steps.Add(tvm.CombineActions(
+            [
+                tvm.GenerateToggleHighlightCell(toTable, i++, columnIndex)
+            ]));
+        }
+        steps.Add(tvm.CombineActions(
+        [
+            tvm.GenerateToggleHighlightColumn(fromTables[0], fromTableColumnIndex)
+        ]));
     }
 }
