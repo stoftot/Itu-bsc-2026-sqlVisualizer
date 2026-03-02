@@ -29,6 +29,13 @@ else
     });
 }
 
+builder.Services.AddSingleton<UserRepository>(sp =>
+{
+    var config = sp.GetRequiredService<IConfiguration>();
+    var connString = config.GetConnectionString("User");
+    return new UserRepository(connString ?? throw new ArgumentNullException(nameof(connString)));
+});
+
 builder.Services.AddMudServices();
 var resourceBuilder = ResourceBuilder.CreateDefault()
     .AddService(MetricsConfig.ServiceName, serviceVersion: MetricsConfig.ServiceVersion);
