@@ -3,7 +3,6 @@ using DuckDB.NET.Data;
 
 public class UserRepository(string connectionString)
 {
-    // Create a repository for a duckdb database, that uses session id as the user id, and stores the last query for each user in a table called "user_queries"
     
     public void SaveUserQuery(string sessionId, string query)
     {
