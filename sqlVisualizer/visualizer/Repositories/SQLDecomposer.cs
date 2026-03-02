@@ -32,7 +32,6 @@ public class SQLDecomposer
         
         sql = sql.ToLower().Replace("\nfrom ", " from ");
         string selectSQL = sql.Split(" from ")[0].Replace("select ", "");
-        Console.WriteLine("selectSQL: " +selectSQL);
         sql = "from " + sql.Split(" from ")[1];
         
         SQLDecompositionComponent selectClause = new SQLDecompositionComponent(SQLKeyword.SELECT, selectSQL);
@@ -63,11 +62,6 @@ public class SQLDecomposer
         result = result
             .OrderBy(c => c.Keyword.ExecutionPrecedence())
             .ToList();
-
-        foreach (var clause in result)
-        {
-            Console.WriteLine(clause.ToString());
-        }
         
         return result.Count == 0 ? null : result;
     }

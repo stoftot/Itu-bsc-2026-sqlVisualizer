@@ -28,7 +28,7 @@ public class QueryIllustrationViewBase : ComponentBase
             State.CurrentStepIndex = value;
             
             MetricsHandler.EnterStep(State.SessionId, CurrStep.Component.Keyword);
-            MetricsHandler.PrintSessionTimings(State.SessionId);
+            //MetricsHandler.PrintSessionTimings(State.SessionId);
             UpdateStepShown();
         }
     }
