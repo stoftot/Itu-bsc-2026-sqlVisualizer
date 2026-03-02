@@ -120,4 +120,20 @@ public class DbInitializer(IConfiguration config)
             """;
         tableCmd.ExecuteNonQuery();
     }
+    
+    public void InitializeUser()
+    {
+        var connString = config.GetConnectionString("User");
+        using var connection = new  DuckDBConnection(connString);
+        connection.Open();
+        
+        var tableCmd = connection.CreateCommand();
+        tableCmd.CommandText = 
+            """
+            CREATE TABLE IF NOT EXISTS user_queries (
+                session_id TEXT PRIMARY KEY, query TEXT
+            )
+            """;
+        tableCmd.ExecuteNonQuery();
+    }
 }

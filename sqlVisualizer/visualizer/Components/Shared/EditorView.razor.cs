@@ -7,6 +7,7 @@ namespace visualizer.Components.Shared;
 public partial class EditorView : ComponentBase
 {
     [Inject] public required State State { get; init; }
+    [Inject] public required UserRepository UserRepository { get; init; }
 
     private StandaloneEditorConstructionOptions EditorConstructionOptions(StandaloneCodeEditor editor)
     {
@@ -14,7 +15,7 @@ public partial class EditorView : ComponentBase
         {
             AutomaticLayout = true,
             Language = "sql",
-            Value = State.Queries[1].SQL,
+            Value = UserRepository.GetUserQuery(sessionId: State.SessionId) ?? State.Queries[0].SQL,
             Minimap = new EditorMinimapOptions {Enabled =  false}
         };
     }

@@ -14,6 +14,9 @@ public interface IMetricsHandler
     void StartAnimation(string sessionId);
     void StopAnimation(string sessionId);
     void PrintSessionTimings(string sessionId);
+    IEnumerable<ActionCountDto> GetActionCounts();
+    IEnumerable<StepTimeDto> GetTimeSpentByStep();
+
 }
 
 public class MetricsHandler : IMetricsHandler
@@ -257,6 +260,55 @@ public class MetricsHandler : IMetricsHandler
         }
     }
 
+    public IEnumerable<StepTimeDto> GetTimeSpentByStep()
+    {
+        using var connection = new DuckDBConnection(_connectionString);
+        connection.Open();
+
+        using var command = connection.CreateCommand();
+        command.CommandText = @"
+        SELECT step,
+               SUM(time_spent_ms),
+               SUM(animation_ms)
+        FROM time_spent
+        GROUP BY step
+        ORDER BY step;
+    ";
+
+        using var reader = command.ExecuteReader();
+
+        while (reader.Read())
+        {
+            yield return new StepTimeDto(
+                reader.GetString(0),
+                reader.GetInt64(1),
+                reader.GetInt64(2)
+            );
+        }
+    }
+
+    public IEnumerable<ActionCountDto> GetActionCounts()
+    {
+        using var connection = new DuckDBConnection(_connectionString);
+        connection.Open();
+
+        using var command = connection.CreateCommand();
+        command.CommandText = @"
+        SELECT action_name, SUM(action_count)
+        FROM button_action_counts
+        GROUP BY action_name;
+    ";
+
+        using var reader = command.ExecuteReader();
+
+        while (reader.Read())
+        {
+            yield return new ActionCountDto(
+                reader.GetString(0),
+                reader.GetInt64(1)
+            );
+        }
+    }
     private sealed class SessionTimingState
     {
         public object LockObj { get; } = new();
