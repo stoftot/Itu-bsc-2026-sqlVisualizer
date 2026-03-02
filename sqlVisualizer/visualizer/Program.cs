@@ -88,7 +88,7 @@ app.MapPrometheusScrapingEndpoint();
 
 new DbInitializer(app.Configuration).Initialize();
 new DbInitializer(app.Configuration).InitializeMetrics();
-
+new DbInitializer(app.Configuration).InitializeUser();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
