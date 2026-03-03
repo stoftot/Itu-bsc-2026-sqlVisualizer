@@ -28,24 +28,19 @@ public class VisualisationsGenerator(SQLDecomposer decomposer, TableGenerator tg
         var prevToTables = new List<Table>();
         List<SQLDecompositionComponent> currSteps = [intialStep];
 
-        tg.GenerateTablesIntialStep(fromTables, intialStep);
+        tg.GenerateTablesIntialStepWithOriginColumns(fromTables, intialStep);
 
-        for (int i = 0; i < steps.Count; i++)
+        foreach (var currStep in steps)
         {
-            var currStep = steps[i];
             currSteps.Add(currStep);
             
             //Generate from tables
-            tg.GenerateFromTables(currStep, fromTables, prevToTables);
-            
-            //Generate origin on from tables
-            if (i == 0)
-                tocg.GenerateTableOriginOnColumnsFromTableName(fromTables);
+            tg.GenerateFromTablesWithOriginColumns(currStep, fromTables, prevToTables);
             
             ValidateOriginColumnsCount(fromTables, currStep);
             
             //Generate to tables
-            var currVis = tg.GenerateToTable(steps[i], currSteps, fromTables, toTables);
+            var currVis = tg.GenerateToTable(currStep, currSteps, fromTables, toTables);
 
             prevToTables = toTables.ToList();
             fromTables.Clear();

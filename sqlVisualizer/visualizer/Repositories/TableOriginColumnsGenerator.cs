@@ -38,10 +38,14 @@ public class TableOriginColumnsGenerator
     {
         foreach (var table in tables)
         {
-            table.ColumnsOriginalTableNames.AddRange(
-                Enumerable.Repeat(table.Name, table.ColumnNames.Count)
-            );
+            GenerateTableOriginOnColumnsFromTableName(table);
         }
+    }
+    
+    public void GenerateTableOriginOnColumnsFromTableName(Table table)
+    {
+        table.ColumnsOriginalTableNames.AddRange(
+                Enumerable.Repeat(table.Name, table.ColumnNames.Count));
     }
 
     public void DuplicateOriginOnColumnsToSingle(Table fromTable, Table toTable)
