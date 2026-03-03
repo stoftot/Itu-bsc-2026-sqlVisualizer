@@ -81,14 +81,14 @@ public static class SelectAnimationGenerator
             {
                 steps.Add(tvm.CombineActions(
                 [
-                    tvm.GenerateToggleHighlightRows(table.Entries),
+                    tvm.GenerateToggleHighlightColumn(table, 0),
                     tvm.GenerateToggleVisibleCell(toTable, i, columnIndex),
                     tvm.GenerateToggleHighlightCell(toTable, i, columnIndex)
                 ]));
 
                 steps.Add(tvm.CombineActions(
                 [
-                    tvm.GenerateToggleHighlightRows(table.Entries),
+                    tvm.GenerateToggleHighlightColumn(table, 0),
                     tvm.GenerateToggleHighlightCell(toTable, i++, columnIndex)
                 ]));
             }
