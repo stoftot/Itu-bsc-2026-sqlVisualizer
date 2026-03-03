@@ -6,6 +6,7 @@ namespace visualizer.Repositories.AnimationClasses;
 public static class SelectAnimationGenerator
 {
     private static TableVisualModifier tvm = new();
+
     public static Animation Generate(List<Table> fromTables, Table toTable,
         SQLDecompositionComponent action)
     {
@@ -24,10 +25,7 @@ public static class SelectAnimationGenerator
         {
             if (column.Contains('('))
             {
-                if (fromTables.Count == 1)
-                    throw new NotImplementedException();
-                else
-                    HandleAggregateColumnMultiTables(fromTables, toTable, column, columnIndex, steps);
+                HandleAggregateColumn(fromTables, toTable, column, columnIndex, steps);
             }
             else
             {
@@ -54,7 +52,7 @@ public static class SelectAnimationGenerator
         return new Animation(steps);
     }
 
-    private static void HandleAggregateColumnMultiTables(List<Table> fromTables, Table toTable,
+    private static void HandleAggregateColumn(List<Table> fromTables, Table toTable,
         string column, int columnIndex, List<Action> steps)
     {
         var parts = column.Split('(', 2);
