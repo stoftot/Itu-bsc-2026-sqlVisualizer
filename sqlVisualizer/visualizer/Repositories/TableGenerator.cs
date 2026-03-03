@@ -2,9 +2,15 @@
 
 namespace visualizer.Repositories;
 
-public class TableGenerator(SQLExecutor sqlExecutor)
+public class TableGenerator(SQLExecutor sqlExecutor, TableOriginColumnsGenerator tocg)
 {
-    public void GenerateFromTables(SQLDecompositionComponent currStep, 
+    public void GenerateTablesIntialStepWithOriginColumns(List<Table> fromTables, SQLDecompositionComponent intialStep)
+    {
+        fromTables.Add(sqlExecutor.Execute(intialStep).Result);
+        fromTables[0].Name = intialStep.Clause.Split(',')[0].Trim();
+        tocg.GenerateTableOriginOnColumnsFromTableName(fromTables);
+    }
+    public void GenerateFromTablesWithOriginColumns(SQLDecompositionComponent currStep, 
         List<Table> fromTables, List<Table> prevToTables)
     {
         fromTables.AddRange(prevToTables.Select(t => t.DeepClone()).ToList());
@@ -25,6 +31,7 @@ public class TableGenerator(SQLExecutor sqlExecutor)
     {
         var joiningTable = sqlExecutor.Execute(currentStep.GenerateFromClauseFromJoin()).Result;
         joiningTable.Name = currentStep.Clause.Split(' ')[0].Trim();
+        tocg.GenerateTableOriginOnColumnsFromTableName(joiningTable);
         fromTables.Add(joiningTable);
     }
 
@@ -51,11 +58,6 @@ public class TableGenerator(SQLExecutor sqlExecutor)
         };
     }
 
-    public void GenerateTablesIntialStep(List<Table> fromTables, SQLDecompositionComponent intialStep)
-    {
-        fromTables.Add(sqlExecutor.Execute(intialStep).Result);
-        fromTables[0].Name = intialStep.Clause.Split(',')[0].Trim();
-    }
 
     private void GenerateToTablesGroupBy(List<Table> fromTables, List<Table> toTables,
         SQLDecompositionComponent currentStep)

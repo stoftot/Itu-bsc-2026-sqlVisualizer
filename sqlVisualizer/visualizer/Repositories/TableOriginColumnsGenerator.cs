@@ -38,10 +38,14 @@ public class TableOriginColumnsGenerator
     {
         foreach (var table in tables)
         {
-            table.ColumnsOriginalTableNames.AddRange(
-                Enumerable.Repeat(table.Name, table.ColumnNames.Count)
-            );
+            GenerateTableOriginOnColumnsFromTableName(table);
         }
+    }
+    
+    public void GenerateTableOriginOnColumnsFromTableName(Table table)
+    {
+        table.ColumnsOriginalTableNames.AddRange(
+                Enumerable.Repeat(table.Name, table.ColumnNames.Count));
     }
 
     public void DuplicateOriginOnColumnsToSingle(Table fromTable, Table toTable)
@@ -80,7 +84,7 @@ public class TableOriginColumnsGenerator
         var allTablesHaveSameColumns = vis.FromTables
             .All(t => t.ColumnNames.SequenceEqual(vis.FromTables[0].ColumnNames));
         if (!allTablesHaveSameColumns)
-            throw new ArgumentException("select is only allowed from when selecting from tabels" +
+            throw new ArgumentException("select is only allowed when selecting from tabels" +
                                         ", that all contain the same colunmns");
 
         var toTable = vis.ToTables[0];
@@ -88,9 +92,13 @@ public class TableOriginColumnsGenerator
 
         if (vis.Component.Clause.Trim().Equals("*"))
             DuplicateOriginOnColumnsToSingle(fromTable, toTable);
+        else
+            GenerateTableOriginOnColumnsForSelectSpecificColumns(fromTable, toTable, vis.Component.Clause);
+    }
 
-
-        var columnsSelected = vis.Component.Clause.Split(',').Select(c => c.Trim()).ToList();
+    private void GenerateTableOriginOnColumnsForSelectSpecificColumns(Table fromTable, Table toTable, string clause)
+    {
+        var columnsSelected = clause.Split(',').Select(c => c.Trim()).ToList();
 
         foreach (var column in columnsSelected)
         {
@@ -116,9 +124,5 @@ public class TableOriginColumnsGenerator
                 }
             }
         }
-
-        if (toTable.ColumnsOriginalTableNames.Count != toTable.ColumnNames.Count)
-            throw new Exception("count of original table names are supposed to match with the count of columns" +
-                                $"\n{toTable.ColumnsOriginalTableNames.Count} :  {toTable.ColumnNames.Count}");
     }
 }
