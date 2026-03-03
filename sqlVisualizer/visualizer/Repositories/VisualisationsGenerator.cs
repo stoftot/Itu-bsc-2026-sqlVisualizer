@@ -39,22 +39,10 @@ public class VisualisationsGenerator(SQLDecomposer decomposer, TableGenerator tg
             tg.GenerateFromTables(currStep, fromTables, prevToTables);
             
             //Generate origin on from tables
-            if (i > 0)
-            {
-                var prevVis = visualisations[i - 1];
-                if (prevVis.ToTables.Count == 1)
-                {
-                    tocg.DuplicateOriginOnColumnsToSingle(prevVis.ToTables[0], fromTables[0]);
-                }
-                else
-                {
-                    tocg.DuplicateOriginOnColumnsToMulti(prevVis.ToTables, fromTables);
-                }
-            }
-            else
-            {
+            if (i == 0)
                 tocg.GenerateTableOriginOnColumnsFromTableName(fromTables);
-            }
+            
+            ValidateOriginColumnsCount(fromTables, currStep);
             
             //Generate to tables
             var currVis = tg.GenerateToTable(steps[i], currSteps, fromTables, toTables);
@@ -65,6 +53,7 @@ public class VisualisationsGenerator(SQLDecomposer decomposer, TableGenerator tg
             
             //Generate origin on to tables
             tocg.GenerateTableOriginOnToTablesColumns(currVis);
+            ValidateOriginColumnsCount(currVis.ToTables, currVis.Component);
             
             visualisations.Add(currVis);
         }
@@ -75,6 +64,17 @@ public class VisualisationsGenerator(SQLDecomposer decomposer, TableGenerator tg
         foreach (var vis in visualisations)
         {
             vis.Animation = AnimationGenerator.Generate(vis.FromTables, vis.ToTables, vis.Component);
+        }
+    }
+
+    private void ValidateOriginColumnsCount(List<Table> tables, SQLDecompositionComponent component)
+    {
+        foreach (var table in tables)
+        {
+            if (table.ColumnsOriginalTableNames.Count != table.ColumnNames.Count)
+                throw new Exception("count of original table names are supposed to match with the count of columns" +
+                                    $"\n{table.ColumnsOriginalTableNames.Count} :  {table.ColumnNames.Count}"+
+                                    $"\nStatment: \"{component}\"");
         }
     }
 }
