@@ -8,7 +8,7 @@ public partial class ToolBar : ComponentBase
 {
     [Inject] public required State State { get; init; }
     [Inject] public required IMetricsHandler MetricsHandler { get; init; }
-    [Inject] public required UserRepository UserRepository { get; init; }
+    [Inject] public required IUserRepository UserRepository { get; init; }
     string _current = "Custom";
 
     async Task SelectChanged(ChangeEventArgs e)

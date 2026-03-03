@@ -1,7 +1,13 @@
 ﻿namespace visualizer.Repositories;
 using DuckDB.NET.Data;
 
-public class UserRepository(string connectionString)
+public interface IUserRepository
+{
+    void SaveUserQuery(string sessionId, string query);
+    string? GetUserQuery(string sessionId);
+}
+
+public class UserRepository(string connectionString) : IUserRepository
 {
     
     public void SaveUserQuery(string sessionId, string query)

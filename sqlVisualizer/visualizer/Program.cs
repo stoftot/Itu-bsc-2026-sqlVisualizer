@@ -13,10 +13,11 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddSingleton<MetricsConfig>();
-var useDummy = Environment.GetEnvironmentVariable("USE_DUMMY_METRICS") == "true";
+var useDummy = Environment.GetEnvironmentVariable("USE_DUMMY") == "true";
 if (useDummy)
 {
     builder.Services.AddSingleton<IMetricsHandler, DummyMetricsHandler>();
+    builder.Services.AddSingleton<IUserRepository, DummyUserRepository>();
 }
 else
 {
@@ -27,14 +28,14 @@ else
 
         return new MetricsHandler(connectionString!);
     });
-}
 
-builder.Services.AddSingleton<UserRepository>(sp =>
-{
-    var config = sp.GetRequiredService<IConfiguration>();
-    var connString = config.GetConnectionString("User");
-    return new UserRepository(connString ?? throw new ArgumentNullException(nameof(connString)));
-});
+    builder.Services.AddSingleton<IUserRepository>(sp =>
+    {
+        var config = sp.GetRequiredService<IConfiguration>();
+        var connString = config.GetConnectionString("User");
+        return new UserRepository(connString ?? throw new ArgumentNullException(nameof(connString)));
+    });
+}
 
 builder.Services.AddMudServices();
 var resourceBuilder = ResourceBuilder.CreateDefault()
