@@ -1,4 +1,3 @@
-using DuckDB.NET.Data;
 using visualizer.Repositories;
 
 namespace TestProject1;
