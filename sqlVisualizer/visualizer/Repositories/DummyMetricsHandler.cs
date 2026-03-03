@@ -27,4 +27,14 @@ public class DummyMetricsHandler : IMetricsHandler
 
     public void PrintSessionTimings(string sessionId)
     { }
+
+    public IEnumerable<ActionCountDto> GetActionCounts()
+    {
+        throw new NotImplementedException();
+    }
+
+    public IEnumerable<StepTimeDto> GetTimeSpentByStep()
+    {
+        throw new NotImplementedException();
+    }
 }

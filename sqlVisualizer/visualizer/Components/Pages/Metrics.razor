@@ -1,0 +1,32 @@
+﻿@page "/metrics"
+@rendermode InteractiveServer
+@using MudBlazor
+<MudThemeProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+
+<MudText Typo="Typo.h4">Metrics Dashboard</MudText>
+
+<MudPaper Class="pa-4 mt-4">
+    <MudText Typo="Typo.h6">Time Spent per Step</MudText>
+
+    <MudChart T="double"
+              ChartType="ChartType.Bar"
+              ChartLabels="@StepLabels"
+              ChartSeries="@StepData"
+              Width="100%"
+              Height="350px"/>
+</MudPaper>
+<MudPaper Class="pa-4 mt-4">
+    <MudText Typo="Typo.h6">Actions</MudText>
+
+    <MudChart T="double"
+              ChartType="ChartType.Bar"
+              ChartLabels="@ActionLabels"
+              ChartSeries="@ActionData"
+              Width="100%"
+              Height="350px"/>
+</MudPaper>
+
+

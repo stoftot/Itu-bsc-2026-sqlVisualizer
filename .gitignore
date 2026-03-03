@@ -4,3 +4,4 @@ bin/
 *.user
 sqlVisualizer/visualizer/database.db
 sqlVisualizer/visualizer/metrics.db
+sqlVisualizer/visualizer/user.db
