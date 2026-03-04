@@ -28,11 +28,11 @@ public class AliasReplacer
         // Remove alias definitions
         foreach (var alias in _aliasToTableMap)
         {
-            result = Regex.Replace(result,$@"\b{alias.Key}\s+", string.Empty, RegexOptions.IgnoreCase);
+            result = Regex.Replace(result,$@"\b{alias.Value}\s+", string.Empty, RegexOptions.IgnoreCase);
         }
         foreach (var alias in _selectAliasMap)
         {
-            result = Regex.Replace(result,$@"\b{alias.Key}\s*", string.Empty, RegexOptions.IgnoreCase);
+            result = Regex.Replace(result,$@"\b{alias.Value}\s*", string.Empty, RegexOptions.IgnoreCase);
         }
         
         // Remove 'AS' keyword before alias definitions
@@ -41,8 +41,8 @@ public class AliasReplacer
         // Replace alias references with table names
         foreach (var kvp in _aliasToTableMap)
         {
-            string alias = kvp.Key;
-            string tableName = kvp.Value;
+            string alias = kvp.Value;
+            string tableName = kvp.Key;
 
             // Match alias as a whole word followed by a dot (e.g., "u.id" -> "users.id")
             result = Regex.Replace(result, $@"\b{Regex.Escape(alias)}\.(\w+)", $"{tableName}.$1",
@@ -76,7 +76,7 @@ public class AliasReplacer
             string tableName = match.Groups[1].Value;
             string alias = match.Groups[2].Value;
 
-            _aliasToTableMap[alias] = tableName;
+            _aliasToTableMap[tableName] = alias;
         }
     }
     
@@ -90,38 +90,16 @@ public class AliasReplacer
 
         string selectClause = selectMatch.Groups[1].Value;
 
-        // Split by comma to get individual column expressions
-        string[] columns = selectClause.Split(',');
+        string pattern = @"([^,]+?)(?:\s)(?:as\s+|\s*)(.+?)(?:,|$)";
+        MatchCollection matches =
+            Regex.Matches(selectClause, pattern, RegexOptions.IgnoreCase);
 
-        foreach (string column in columns)
+        foreach (Match match in matches)
         {
-            string trimmed = column.Trim();
-            if (string.IsNullOrWhiteSpace(trimmed))
-                continue;
+            string tableName = match.Groups[1].Value;
+            string alias = match.Groups[2].Value;
 
-            // Pattern 1: "expression AS alias"
-            Match asMatch = Regex.Match(trimmed, @"\s+AS\s+(\w+)\s*$", RegexOptions.IgnoreCase);
-            if (asMatch.Success)
-            {
-                string alias = asMatch.Groups[1].Value;
-                string expression = Regex.Replace(trimmed, @"\s+AS\s+\w+\s*$", string.Empty, RegexOptions.IgnoreCase)
-                    .Trim();
-                _selectAliasMap[alias] = expression;
-                continue;
-            }
-
-            // Pattern 2: "expression alias" (just a space, last word is the alias)
-            string[] parts = Regex.Split(trimmed, @"\s+");
-            if (parts.Length >= 2)
-            {
-                string lastPart = parts[parts.Length - 1];
-                // Only treat it as an alias if it's a simple identifier and not a reserved keyword
-                if (Regex.IsMatch(lastPart, @"^\w+$") && !IsReservedKeyword(lastPart))
-                {
-                    string expression = string.Join(" ", parts, 0, parts.Length - 1);
-                    _selectAliasMap[lastPart] = expression;
-                }
-            }
+            _selectAliasMap[tableName] = alias;
         }
     }
     
