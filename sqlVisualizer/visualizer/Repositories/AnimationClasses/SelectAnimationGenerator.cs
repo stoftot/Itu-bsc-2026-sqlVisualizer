@@ -331,6 +331,11 @@ public static class SelectAnimationGenerator
             }
         }
         
+        Console.WriteLine("PartitionCumulativeSums keys: " + string.Join(", ", partitionCumulativeSums.Keys));
+        Console.WriteLine("PartitionCumulativeSums values: " + string.Join(", ", partitionCumulativeSums.Values));
+        Console.WriteLine("PartitionRowCounts Keys: " + string.Join(", ", partitionRowCounts.Keys));
+        Console.WriteLine("PartitionRowCounts Values: " + string.Join(", ", partitionRowCounts.Values));
+        
         // Now match result values to partition cumulative sums to detect order
         decimal runningSum = 0;
         foreach (var resultEntry in resultTable.Entries)
