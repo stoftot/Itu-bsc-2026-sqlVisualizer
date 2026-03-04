@@ -3,6 +3,7 @@ using MudBlazor.Services;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using visualizer;
+using Visualizer;
 using visualizer.Components;
 using visualizer.Repositories;
 
@@ -68,6 +69,17 @@ builder.Services.AddScoped<VisualisationsGenerator>();
 builder.Services.AddScoped<State>();
 
 builder.Services.AddHttpContextAccessor();
+
+var ar = new AliasReplacer();
+var query = """
+            SELECT p.price pic, pu.productname, pu.purchasetime as ptime
+            FROM product as p
+            JOIN purchase as pu ON p.productname = pu.productname
+            JOIN user u on pu.username = u.username
+            """;
+var newQuery = ar.ReplaceAliases(query);
+Console.WriteLine(newQuery);
+
 
 var app = builder.Build();
 
