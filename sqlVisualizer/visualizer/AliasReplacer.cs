@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using visualizer.Models;
 
 namespace Visualizer;
 
@@ -28,7 +29,7 @@ public class AliasReplacer
         // Remove alias definitions
         foreach (var alias in _aliasToTableMap)
         {
-            result = Regex.Replace(result,$@"\b{alias.Value}\s+", string.Empty, RegexOptions.IgnoreCase);
+            result = Regex.Replace(result,$@"\b{alias.Key}\s+", string.Empty, RegexOptions.IgnoreCase);
         }
         foreach (var alias in _selectAliasMap)
         {
@@ -41,8 +42,8 @@ public class AliasReplacer
         // Replace alias references with table names
         foreach (var kvp in _aliasToTableMap)
         {
-            string alias = kvp.Value;
-            string tableName = kvp.Key;
+            string tableName = kvp.Value;
+            string alias = kvp.Key;
 
             // Match alias as a whole word followed by a dot (e.g., "u.id" -> "users.id")
             result = Regex.Replace(result, $@"\b{Regex.Escape(alias)}\.(\w+)", $"{tableName}.$1",
@@ -50,6 +51,19 @@ public class AliasReplacer
         }
 
         return result;
+    }
+
+    public void InsertAliases(List<Visualisation> visualisations)
+    {
+        var selectVis = visualisations.First(v => v.Component.Keyword == SQLKeyword.SELECT);
+        var table = selectVis.ToTables[0];
+        foreach (var a in _selectAliasMap)
+        {
+            var parts = a.Key.Trim().Split('.');
+            var columnName = _aliasToTableMap[parts[0]] + "." + parts[1];
+            var i = table.IndexOfColumn(columnName);
+            table.ColumnNames[i] = a.Value;
+        }
     }
     
     private void ExtractAliases(string sql)
@@ -66,17 +80,30 @@ public class AliasReplacer
     
     private void ExtractTableAliases(string sql)
     {
-        // Pattern to match: (FROM|JOIN) table_name (AS)? alias
-        string pattern = @"(?:FROM|JOIN)\s+(.+?)(?:\s)(?:as\s+|\s*)(.+?)(?:\s+?)";
-        MatchCollection matches =
+        //match from
+        string pattern = @"(?:FROM)\s+([^\s]+?)\s(?:as\s+|\s*)([^\s]+?)\s+(?:JOIN|INNER JOIN|LEFT JOIN|RIGHT JOIN|FULL JOIN|CROSS JOIN|NATURAL JOIN|WHERE|GROUP BY|HAVING|ORDER BY|LIMIT|OFFSET|WINDOW|UNION|INTERSECT|EXCEPT)\s";
+        var match =
+            Regex.Match(sql, pattern, RegexOptions.IgnoreCase);
+        
+        if (match.Success)
+        {
+            var tableName = match.Groups[1].Value;
+            var alias = match.Groups[2].Value;
+
+            _aliasToTableMap[alias] = tableName;
+        }
+        
+        //match joins
+        pattern = @"(?:JOIN)\s+([^\s]+?)\s(?:as\s+|\s*)([^\s]+?)\s+(?:ON)\s";
+        var matches =
             Regex.Matches(sql, pattern, RegexOptions.IgnoreCase);
 
-        foreach (Match match in matches)
+        foreach (Match m in matches)
         {
-            string tableName = match.Groups[1].Value;
-            string alias = match.Groups[2].Value;
+            var tableName = m.Groups[1].Value;
+            var alias = m.Groups[2].Value;
 
-            _aliasToTableMap[tableName] = alias;
+            _aliasToTableMap[alias] = tableName;
         }
     }
     
