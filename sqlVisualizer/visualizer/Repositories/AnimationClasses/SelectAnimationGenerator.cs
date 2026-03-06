@@ -5,6 +5,8 @@ namespace visualizer.Repositories.AnimationClasses;
 
 public static class SelectAnimationGenerator
 {
+    record Partition(List<int> RowIndices, List<int> Values);
+    
     private static TableVisualModifier tvm = new();
     public static Animation Generate(List<Table> fromTables, Table toTable,
         SQLDecompositionComponent action)
@@ -215,9 +217,13 @@ public static class SelectAnimationGenerator
     {
         // Extract partition columns from "partition by col1, col2, ..." 
         var partitionPart = window.Substring(window.IndexOf("partition by", StringComparison.InvariantCultureIgnoreCase) + 12).Trim();
-        var orderPart = partitionPart.Contains("order by", StringComparison.InvariantCultureIgnoreCase)
-            ? partitionPart.Substring(partitionPart.IndexOf("order by", StringComparison.InvariantCultureIgnoreCase))
-            : "";
+        //var orderPart = partitionPart.Contains("order by", StringComparison.InvariantCultureIgnoreCase)
+        //    ? partitionPart.Substring(partitionPart.IndexOf("order by", StringComparison.InvariantCultureIgnoreCase))
+        //    : "";
+        string orderPart = "productname";
+
+        
+        Table orderedFromTable = fromTables[0].AppendRowIndex().OrderBy(orderPart, true);
         
         Console.WriteLine("partitionPart: " + partitionPart);
         Console.WriteLine("orderPart: " + orderPart);
@@ -239,58 +245,82 @@ public static class SelectAnimationGenerator
         
         int sumColumnIndex = fromTables[0].IndexOfColumn("price");
         
+        List<Partition> partitionsFromSource = [];
+        
         // Group rows by partition values in source table
-        var partitions = new Dictionary<string, List<int>>();
-        for (int i = 0; i < fromTables[0].Entries.Count; i++)
+        var partitions = new Dictionary<string, int>();
+        for (int i = 0; i < orderedFromTable.Entries.Count; i++)
         {
-            var partitionKey = GetPartitionKey(fromTables[0], i, partitionColumnIndices);
-            Console.WriteLine("row: " + i + " partitionKey: " + partitionKey);
+            string partitionKey = GetPartitionKey(orderedFromTable, i, partitionColumnIndices);
             if (!partitions.ContainsKey(partitionKey))
-                partitions[partitionKey] = [];
-            partitions[partitionKey].Add(i);
+            {
+                partitions[partitionKey] = partitionsFromSource.Count;
+                partitionsFromSource.Add(new Partition([], []));
+            }
+            partitionsFromSource[partitions[partitionKey]].RowIndices.Add(i);
+            partitionsFromSource[partitions[partitionKey]].Values.Add(int.Parse(orderedFromTable.Entries[i].Values[sumColumnIndex].Value));
         }
         
-        Console.WriteLine("partitions Keys: " + string.Join(", ", partitions.Keys));
-        Console.WriteLine("partitions Values: " + string.Join(" | ", partitions.Values.Select(v => string.Join(", ", v))));
+        foreach (var partition in partitionsFromSource)
+        {
+            int sum = 0;
+            for (int i = 0; i < partition.Values.Count; i++)
+            {
+                sum += partition.Values[i];
+                partition.Values[i] = sum;
+            }
+        }
         
-        // Detect the actual order of partitions by mapping result rows to source partitions
-        var partitionOrder = DetectPartitionOrderFromSourceTable(fromTables[0], toTable, partitionColumnIndices, sumColumnIndex);
+        Console.WriteLine("Detected partitions from source: " + partitions.Count);
+        foreach (var partition in partitionsFromSource)
+        {
+            Console.WriteLine("Partition rows: " + string.Join(", ", partition.RowIndices) + 
+                              " Values: " + string.Join(", ", partition.Values));
+        }
         
-        Console.WriteLine("partitionOrder: " + string.Join(", ", partitionOrder));
+        // Detect partition boundaries from result table
+        var partitionsFromResult = GetPartitionOrderFromResultTable(toTable, columnIndex);
         
         // Animate each partition in the order they appear in the result
-        int resultRowIndex = 0;
-        foreach (var partitionKey in partitionOrder)
+        foreach (var partition in partitionsFromResult)
         {
-            Console.WriteLine("partitionKey: " + partitionKey);
-            if (!partitions.ContainsKey(partitionKey))
-                continue;
-                
-            var partition = partitions[partitionKey];
+            // Get the corresponding source table rows for this partition
+            var sourceRowIndices = new List<int>();
+            foreach (var resultRowIdx in partition.RowIndices)
+            {
+                // Map result row to source row - they should match in order within partitions
+                // For now, we'll use the same index (this assumes result and source are in same order)
+                if (resultRowIdx < fromTables[0].Entries.Count)
+                {
+                    sourceRowIndices.Add(resultRowIdx);
+                }
+            }
             
-            // First, highlight all rows in this partition
+            // First, highlight all rows in this partition in the source table
             var partitionRowActions = new List<Action>();
-            foreach (var rowIdx in partition)
+            foreach (var rowIdx in sourceRowIndices)
             {
                 partitionRowActions.Add(tvm.GenerateToggleHighlightRow(fromTables[0].Entries[rowIdx]));
             }
             steps.Add(tvm.CombineActions(partitionRowActions));
             
             // Then animate the sum calculation for this partition
-            foreach (var rowIdx in partition)
+            for (int i = 0; i < sourceRowIndices.Count; i++)
             {
+                var sourceRowIdx = sourceRowIndices[i];
+                var resultRowIdx = partition.RowIndices[i];
+                
                 steps.Add(tvm.CombineActions(
                 [
-                    tvm.GenerateToggleHighlightCell(fromTables[0], rowIdx, sumColumnIndex),
-                    tvm.GenerateToggleVisibleCell(toTable, resultRowIndex, columnIndex),
-                    tvm.GenerateToggleHighlightCell(toTable, resultRowIndex, columnIndex)
+                    tvm.GenerateToggleHighlightCell(fromTables[0], sourceRowIdx, sumColumnIndex),
+                    tvm.GenerateToggleVisibleCell(toTable, resultRowIdx, columnIndex),
+                    tvm.GenerateToggleHighlightCell(toTable, resultRowIdx, columnIndex)
                 ]));
-                resultRowIndex++;
             }
             
-            // Unhighlight the partition
+            // Unhighlight the partition in the source table
             var unhighlightPartitionActions = new List<Action>();
-            foreach (var rowIdx in partition)
+            foreach (var rowIdx in sourceRowIndices)
             {
                 unhighlightPartitionActions.Add(tvm.GenerateToggleHighlightRow(fromTables[0].Entries[rowIdx]));
             }
@@ -298,75 +328,86 @@ public static class SelectAnimationGenerator
         }
     }
     
-    private static List<string> DetectPartitionOrderFromSourceTable(Table sourceTable, Table resultTable, 
-        List<int> partitionColumnIndices, int sumColumnIndex)
+    private static List<Partition> GetPartitionOrderFromResultTable(Table resultTable, int columnIndex)
     {
-        // Strategy: Build cumulative sums for each partition in source table order,
-        // then match these cumulative values to result values to detect partition order
+        // Detect partition boundaries by analyzing where the cumulative sum resets or repeats
+        var partitions = new List<Partition>();
         
-        Console.WriteLine("DetectPartitionOrderFromSourceTable");
-        Console.WriteLine("partitionColumnIndices: " + string.Join(", ", partitionColumnIndices));
+        if (resultTable.Entries.Count == 0)
+            return partitions;
         
-        var partitionOrder = new List<string>();
-        var seenPartitions = new HashSet<string>();
+        var currentPartition = new List<int>();
+        var currentValues = new List<int>();
+        decimal? previousValue = null;
         
-        // First, calculate cumulative sums for each partition
-        var partitionCumulativeSums = new Dictionary<string, decimal>();
-        var partitionRowCounts = new Dictionary<string, int>();
-        
-        for (int i = 0; i < sourceTable.Entries.Count; i++)
+        for (int i = 0; i < resultTable.Entries.Count; i++)
         {
-            var entry = sourceTable.Entries[i];
-            var partitionKey = GetPartitionKey(sourceTable, i, partitionColumnIndices);
-            if (!partitionCumulativeSums.ContainsKey(partitionKey))
+            if (decimal.TryParse(resultTable.Entries[i].Values[columnIndex].Value, out decimal currentValue))
             {
-                partitionCumulativeSums[partitionKey] = 0;
-                partitionRowCounts[partitionKey] = 0;
-            }
-            
-            if (decimal.TryParse(entry.Values[sumColumnIndex].Value, out decimal value))
-            {
-                partitionCumulativeSums[partitionKey] += value;
-                partitionRowCounts[partitionKey]++;
-            }
-        }
-        
-        Console.WriteLine("PartitionCumulativeSums keys: " + string.Join(", ", partitionCumulativeSums.Keys));
-        Console.WriteLine("PartitionCumulativeSums values: " + string.Join(", ", partitionCumulativeSums.Values));
-        Console.WriteLine("PartitionRowCounts Keys: " + string.Join(", ", partitionRowCounts.Keys));
-        Console.WriteLine("PartitionRowCounts Values: " + string.Join(", ", partitionRowCounts.Values));
-        
-        // Now match result values to partition cumulative sums to detect order
-        decimal runningSum = 0;
-        foreach (var resultEntry in resultTable.Entries)
-        {
-            if (decimal.TryParse(resultEntry.Values[0].Value, out decimal resultValue))
-            {
-                // Find which partition this result row belongs to by checking cumulative sums
-                foreach (var partitionKey in partitionCumulativeSums.Keys)
+                // If the current value is less than or equal to the previous value, 
+                // it likely indicates a new partition (sum reset)
+                if (previousValue.HasValue && currentValue <= previousValue.Value)
                 {
-                    if (!seenPartitions.Contains(partitionKey))
+                    // Save the current partition
+                    if (currentPartition.Count > 0)
                     {
-                        // The cumulative sum for this partition should match when we reach its last row
-                        decimal partitionEnd = runningSum + partitionCumulativeSums[partitionKey];
-                        if (resultValue <= partitionEnd)
-                        {
-                            seenPartitions.Add(partitionKey);
-                            partitionOrder.Add(partitionKey);
-                            runningSum += partitionCumulativeSums[partitionKey];
-                            break;
-                        }
+                        partitions.Add(new Partition(new List<int>(currentPartition), new List<int>(currentValues)));
+                        currentPartition.Clear();
+                        currentValues.Clear();
                     }
                 }
+                
+                currentPartition.Add(i);
+                currentValues.Add((int)currentValue);
+                previousValue = currentValue;
             }
         }
         
-        return partitionOrder;
+        // Add the last partition
+        if (currentPartition.Count > 0)
+        {
+            partitions.Add(new Partition(currentPartition, currentValues));
+        }
+        
+        // Print detected partitions for debugging
+        Console.WriteLine("Detected partitions from result: " + partitions.Count);
+        foreach (var partition in partitions)
+        {
+            Console.WriteLine("Partition rows: " + string.Join(", ", partition.RowIndices) + 
+                              " Values: " + string.Join(", ", partition.Values));
+        }
+        
+        return partitions;
     }
     
     private static string GetPartitionKey(Table table, int rowIndex, List<int> partitionColumnIndices)
     {
         var keyParts = partitionColumnIndices.Select(colIdx => table.Entries[rowIndex].Values[colIdx].Value).ToList();
         return string.Join("|", keyParts);
+    }
+    
+    // Takes to lists of partitions (one from source table, one from result table) and matches them based on their values to determine the order of animation
+    // Returns a record containing two lists of partitions where the i'th partition in the first list corresponds to the i'th partition in the second list
+    private static (List<List<int>>, List<List<int>>) MatchPartitions(List<Partition> sourcePartitions, List<Partition> resultPartitions)
+    {
+        var matchedSourcePartitions = new List<List<int>>();
+        var matchedResultPartitions = new List<List<int>>();
+        
+        foreach (var resultPartition in resultPartitions)
+        {
+            // Find the source partition with the same values (the order of values within a partition should be the same in source and result)
+            var matchingSourcePartition = sourcePartitions.FirstOrDefault(sp => sp.Values.SequenceEqual(resultPartition.Values));
+            if (matchingSourcePartition != null)
+            {
+                matchedSourcePartitions.Add(matchingSourcePartition.RowIndices);
+                matchedResultPartitions.Add(resultPartition.RowIndices);
+            }
+            else
+            {
+                throw new Exception("Could not find matching source partition for result partition with values: " + string.Join(", ", resultPartition.Values));
+            }
+        }
+        
+        return (matchedSourcePartitions, matchedResultPartitions);
     }
 }

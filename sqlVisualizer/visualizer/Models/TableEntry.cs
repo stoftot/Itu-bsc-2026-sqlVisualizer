@@ -22,4 +22,14 @@ public class TableEntry : TableObjectBase
             .Select(columnIndex => Values[columnIndex])
             .ToImmutableArray();
     }
+
+    public TableEntry AppendRowIndex(string rowIndex)
+    {
+        List<TableValue> values = Values;
+        values.Add(new TableValue {Value =  rowIndex});
+        return new TableEntry
+        {
+            Values = values
+        };
+    }
 }

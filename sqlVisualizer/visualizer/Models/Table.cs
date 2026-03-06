@@ -49,4 +49,36 @@ public class Table
         
         throw new ArgumentException($"Column {column} not found in table {tableName}");
     }
+    
+    public Table OrderBy(string column, bool ascending)
+    {
+        var columnIndex = IndexOfColumn(column);
+        var orderedEntries = ascending
+            ? Entries.OrderBy(e => e.Values[columnIndex].Value).ToList()
+            : Entries.OrderByDescending(e => e.Values[columnIndex].Value).ToList();
+
+        return new Table
+        {
+            Name = Name,
+            ColumnNames = ColumnNames,
+            ColumnsOriginalTableNames = ColumnsOriginalTableNames,
+            Entries = orderedEntries
+        };
+    }
+
+    public Table AppendRowIndex()
+    {
+        List<TableEntry> entries = Entries.ToList();
+        for (int i = 0; i < entries.Count; i++)
+        {
+            entries[i] = entries[i].AppendRowIndex(i.ToString());
+        }
+        return new Table
+        {
+            Name = Name,
+            ColumnNames = ColumnNames.ToList(),
+            ColumnsOriginalTableNames = ColumnsOriginalTableNames.ToList(),
+            Entries = entries
+        };
+    }
 }
