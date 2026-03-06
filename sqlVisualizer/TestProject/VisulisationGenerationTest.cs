@@ -1,3 +1,4 @@
+using Visualizer;
 using visualizer.Repositories;
 
 namespace TestProject1;
@@ -12,7 +13,8 @@ public class VisulisationGenerationTest : IClassFixture<DuckDbFixture>
         generator = new VisualisationsGenerator(
             new SQLDecomposer(),
             new TableGenerator(new SQLExecutor(fixture.CreateConnection()), new TableOriginColumnsGenerator()),
-            new TableOriginColumnsGenerator());
+            new TableOriginColumnsGenerator(),
+            new AliasReplacer());
     }
 
     // [Theory]
