@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using System.Text.RegularExpressions;
 using visualizer.Models;
 
@@ -22,7 +23,7 @@ public class AliasReplacer
         var queryBody = Regex.Replace(sql, selectPart, string.Empty, RegexOptions.IgnoreCase);
         
         // Extract table aliases from FROM and JOIN clauses
-        ExtractTableAliases(queryBody);
+        ExtractTableAliases("FROM" + queryBody);
 
         // Extract column/expression aliases from SELECT clause
         ExtractSelectAliases(selectPart);
@@ -66,7 +67,7 @@ public class AliasReplacer
     private void ExtractTableAliases(string sql)
     {
         //match from
-        var pattern = @"([^\s]+?)\s(?:as\s+|\s*)([^\s]+?)\s+(?:JOIN|INNER JOIN|LEFT JOIN|RIGHT JOIN|FULL JOIN|CROSS JOIN|NATURAL JOIN|WHERE|GROUP BY|HAVING|ORDER BY|LIMIT|OFFSET|WINDOW|UNION|INTERSECT|EXCEPT)\s";
+        var pattern = @"(?:FROM)\s+([^\s]+?)\s(?:as\s+|\s*)([^\s]+?)\s+(?:JOIN|INNER JOIN|LEFT JOIN|RIGHT JOIN|FULL JOIN|CROSS JOIN|NATURAL JOIN|WHERE|GROUP BY|HAVING|ORDER BY|LIMIT|OFFSET|WINDOW|UNION|INTERSECT|EXCEPT)\s";
         var match =
             Regex.Match(sql, pattern, RegexOptions.IgnoreCase);
         
@@ -102,7 +103,7 @@ public class AliasReplacer
 
         var selectClause = selectMatch.Groups[1].Value;
 
-        const string pattern = @"([^,]+?)(?:\s)(?:as\s+|\s*)(.+?)(?:,|$)";
+        var pattern = $@"{SELECTKeywordsAsRegexExlusion()}([^,]+?)(?:\s)(?:as\s+|\s*)(.+?)(?:,|$)";
         var matches =
             Regex.Matches(selectClause, pattern, RegexOptions.IgnoreCase);
 
@@ -113,5 +114,24 @@ public class AliasReplacer
 
             SelectAliasMap[tableName] = alias;
         }
+    }
+    
+    private readonly List<string> SELECTKeyWords = ["DISTINCT"];
+    private string SELECTKeywordsAsRegexExlusion ()
+    {
+        var regexPattern = new StringBuilder();
+        regexPattern.Append("\\b(?!");
+        for (int i = 0; i < SELECTKeyWords.Count; i++)
+        {
+            if (i > 0)
+            {
+                regexPattern.Append('|');
+            }
+            regexPattern.Append(SELECTKeyWords[i]);
+            regexPattern.Append("\\b");
+        }
+
+        regexPattern.Append(')');
+        return regexPattern.ToString();
     }
 }
