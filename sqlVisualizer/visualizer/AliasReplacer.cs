@@ -17,10 +17,11 @@ public class AliasReplacer
         
         var selectMatch =
             Regex.Match(sql, @"SELECT\s+.*?\s+FROM", RegexOptions.IgnoreCase | RegexOptions.Singleline);
-
         var selectPart = selectMatch.Groups[0].Value;
         
-        var queryBody = Regex.Replace(sql, selectPart, string.Empty, RegexOptions.IgnoreCase);
+        var queryBodyMatch =
+            Regex.Match(sql, @"\bFROM\b(.*)", RegexOptions.IgnoreCase | RegexOptions.Singleline);
+        var queryBody = queryBodyMatch.Groups[1].Value;
         
         // Extract table aliases from FROM and JOIN clauses
         ExtractTableAliases("FROM" + queryBody);
