@@ -38,6 +38,54 @@ public class AliasReplacingTest
                 SELECT product.price, purchase.productname, purchase.purchasetime FROM product JOIN purchase ON product.productname = purchase.productname JOIN user on purchase.username = user.username
                 """
     )]
+    [InlineData("""
+                SELECT product.price, purchase.productname, purchase.purchasetime
+                FROM product
+                JOIN purchase ON product.productname = purchase.productname
+                JOIN user on purchase.username = user.username
+                """,
+        """
+                SELECT product.price, purchase.productname, purchase.purchasetime
+                FROM product
+                JOIN purchase ON product.productname = purchase.productname
+                JOIN user on purchase.username = user.username
+                """
+    )]
+    [InlineData("""
+                SELECT DISTINCT product.productname FROM product
+                """,
+        """
+                SELECT DISTINCT product.productname FROM product
+                """ 
+    )]
+    [InlineData("""
+                SELECT DISTINCT product.productname pic FROM product
+                """,
+        """
+                SELECT DISTINCT product.productname FROM product
+                """ 
+    )]
+    [InlineData("""
+                SELECT DISTINCT product.productname as pic FROM product
+                """,
+        """
+                SELECT DISTINCT product.productname FROM product
+                """ 
+    )]
+    [InlineData("""
+                SELECT DISTINCT product.productname as DISTINCT_Pname FROM product
+                """,
+        """
+                SELECT DISTINCT product.productname FROM product
+                """ 
+    )]
+    [InlineData("""
+                SELECT DISTINCT product.productname DISTINCT_Pname FROM product
+                """,
+        """
+                SELECT DISTINCT product.productname FROM product
+                """ 
+    )]
     public void Test(string query, string expected)
     {
         var actual = new AliasReplacer().ReplaceAliases(query);
