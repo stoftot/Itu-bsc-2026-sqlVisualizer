@@ -7,15 +7,8 @@ namespace Visualizer;
 
 public class AliasReplacer
 {
-    private Dictionary<string, string> _aliasToTableMap;
-    private Dictionary<string, string> _selectAliasMap;
-
-    public AliasReplacer()
-    {
-        _aliasToTableMap = new Dictionary<string, string>();
-        _selectAliasMap = new Dictionary<string, string>();
-    }
-    
+    private Dictionary<string, string> AliasToTableMap { get; } = new Dictionary<string, string>(); 
+    private Dictionary<string, string> SelectAliasMap { get; } = new Dictionary<string, string>(); 
     public string ReplaceAliases(string sql)
     {
         if (string.IsNullOrWhiteSpace(sql))
@@ -28,8 +21,6 @@ public class AliasReplacer
         
         var queryBody = Regex.Replace(sql, selectPart, string.Empty, RegexOptions.IgnoreCase);
         
-        // Extract alias mappings from FROM and JOIN clauses
-        // ExtractAliases(sql);
         // Extract table aliases from FROM and JOIN clauses
         ExtractTableAliases(queryBody);
 
@@ -37,23 +28,20 @@ public class AliasReplacer
         ExtractSelectAliases(selectPart);
         
         // Remove alias definitions
-        foreach (var alias in _aliasToTableMap)
+        foreach (var (alias, _) in AliasToTableMap)
         {
-            queryBody = Regex.Replace(queryBody,$@"(\s+AS\s+|\s+){alias.Key}(?=\s)", string.Empty, RegexOptions.IgnoreCase);
+            queryBody = Regex.Replace(queryBody,$@"(\s+AS\s+|\s+){alias}(?=\s)", string.Empty, RegexOptions.IgnoreCase);
         }
-        foreach (var alias in _selectAliasMap)
+        foreach (var (_, alias) in SelectAliasMap)
         {
-            selectPart = Regex.Replace(selectPart,$@"(\s+AS\s+|\s+){alias.Value}((?=\s*FROM)|[ ]*(?=,))", string.Empty, RegexOptions.IgnoreCase);
+            selectPart = Regex.Replace(selectPart,$@"(\s+AS\s+|\s+){alias}((?=\s*FROM)|[ ]*(?=,))", string.Empty, RegexOptions.IgnoreCase);
         }
         
         var result = selectPart + queryBody;
         
         // Replace alias references with table names
-        foreach (var kvp in _aliasToTableMap)
+        foreach (var (alias, tableName) in AliasToTableMap)
         {
-            string tableName = kvp.Value;
-            string alias = kvp.Key;
-
             // Match alias as a whole word followed by a dot (e.g., "u.id" -> "users.id")
             result = Regex.Replace(result, $@"\b{Regex.Escape(alias)}\.(\w+)", $"{tableName}.$1",
                 RegexOptions.IgnoreCase);
@@ -66,32 +54,19 @@ public class AliasReplacer
     {
         var selectVis = visualisations.First(v => v.Component.Keyword == SQLKeyword.SELECT);
         var table = selectVis.ToTables[0];
-        foreach (var a in _selectAliasMap)
+        foreach (var a in SelectAliasMap)
         {
             var parts = a.Key.Trim().Split('.');
-            var columnName = _aliasToTableMap[parts[0]] + "." + parts[1];
+            var columnName = AliasToTableMap[parts[0]] + "." + parts[1];
             var i = table.IndexOfColumn(columnName);
             table.ColumnNames[i] = a.Value;
         }
     }
     
-    private void ExtractAliases(string sql)
-    {
-        _aliasToTableMap.Clear();
-        _selectAliasMap.Clear();
-
-        // Extract table aliases from FROM and JOIN clauses
-        ExtractTableAliases(sql);
-
-        // Extract column/expression aliases from SELECT clause
-        ExtractSelectAliases(sql);
-    }
-    
     private void ExtractTableAliases(string sql)
     {
         //match from
-        // string pattern = @"(?:FROM)\s+([^\s]+?)\s(?:as\s+|\s*)([^\s]+?)\s+(?:JOIN|INNER JOIN|LEFT JOIN|RIGHT JOIN|FULL JOIN|CROSS JOIN|NATURAL JOIN|WHERE|GROUP BY|HAVING|ORDER BY|LIMIT|OFFSET|WINDOW|UNION|INTERSECT|EXCEPT)\s";
-        string pattern = @"([^\s]+?)\s(?:as\s+|\s*)([^\s]+?)\s+(?:JOIN|INNER JOIN|LEFT JOIN|RIGHT JOIN|FULL JOIN|CROSS JOIN|NATURAL JOIN|WHERE|GROUP BY|HAVING|ORDER BY|LIMIT|OFFSET|WINDOW|UNION|INTERSECT|EXCEPT)\s";
+        var pattern = @"([^\s]+?)\s(?:as\s+|\s*)([^\s]+?)\s+(?:JOIN|INNER JOIN|LEFT JOIN|RIGHT JOIN|FULL JOIN|CROSS JOIN|NATURAL JOIN|WHERE|GROUP BY|HAVING|ORDER BY|LIMIT|OFFSET|WINDOW|UNION|INTERSECT|EXCEPT)\s";
         var match =
             Regex.Match(sql, pattern, RegexOptions.IgnoreCase);
         
@@ -100,7 +75,7 @@ public class AliasReplacer
             var tableName = match.Groups[1].Value.Trim();
             var alias = match.Groups[2].Value.Trim();
 
-            _aliasToTableMap[alias] = tableName;
+            AliasToTableMap[alias] = tableName;
         }
         
         //match joins
@@ -113,36 +88,30 @@ public class AliasReplacer
             var tableName = m.Groups[1].Value.Trim();
             var alias = m.Groups[2].Value.Trim();
 
-            _aliasToTableMap[alias] = tableName;
+            AliasToTableMap[alias] = tableName;
         }
     }
     
     private void ExtractSelectAliases(string sql)
     {
         // Extract the SELECT clause (from SELECT to FROM)
-        Match selectMatch =
+        var selectMatch =
             Regex.Match(sql, @"SELECT\s+(.*?)\s+FROM", RegexOptions.IgnoreCase | RegexOptions.Singleline);
         if (!selectMatch.Success)
             return;
 
-        string selectClause = selectMatch.Groups[1].Value;
+        var selectClause = selectMatch.Groups[1].Value;
 
-        string pattern = @"([^,]+?)(?:\s)(?:as\s+|\s*)(.+?)(?:,|$)";
-        MatchCollection matches =
+        const string pattern = @"([^,]+?)(?:\s)(?:as\s+|\s*)(.+?)(?:,|$)";
+        var matches =
             Regex.Matches(selectClause, pattern, RegexOptions.IgnoreCase);
 
         foreach (Match match in matches)
         {
-            string tableName = match.Groups[1].Value;
-            string alias = match.Groups[2].Value;
+            var tableName = match.Groups[1].Value;
+            var alias = match.Groups[2].Value;
 
-            _selectAliasMap[tableName] = alias;
+            SelectAliasMap[tableName] = alias;
         }
-    }
-    
-    private bool IsReservedKeyword(string word)
-    {
-        var keywords = new[] { "AND", "OR", "NOT", "IN", "ON", "AS", "BY", "DESC", "ASC", "NULL", "TRUE", "FALSE" };
-        return keywords.Contains(word, StringComparer.OrdinalIgnoreCase);
     }
 }
