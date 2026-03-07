@@ -88,6 +88,30 @@ public class VisulisationGenerationTest : IClassFixture<DuckDbFixture>
     [InlineData("""
                 SELECT coUnT() FROM purchase
                 """)]
+    [InlineData("""
+                SELECT username, SUM(price)
+                FROM purchase
+                JOIN product ON purchase.productname = product.productname
+                GROUP BY username
+                """)]
+    [InlineData("""
+                SELECT username, AVG(price)
+                FROM purchase
+                JOIN product ON purchase.productname = product.productname
+                GROUP BY username
+                """)]
+    [InlineData("""
+                SELECT username, Min(price)
+                FROM purchase
+                JOIN product ON purchase.productname = product.productname
+                GROUP BY username
+                """)]
+    [InlineData("""
+                SELECT username, MAX(price)
+                FROM purchase
+                JOIN product ON purchase.productname = product.productname
+                GROUP BY username
+                """)]
     public void AggreGateFunctions(string query)
     {
         TestQuery(query);
