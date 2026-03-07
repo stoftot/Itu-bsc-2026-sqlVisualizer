@@ -20,24 +20,33 @@ public class AliasReplacer
     {
         if (string.IsNullOrWhiteSpace(sql))
             return sql;
+        
+        var selectMatch =
+            Regex.Match(sql, @"SELECT\s+.*?\s+FROM", RegexOptions.IgnoreCase | RegexOptions.Singleline);
 
+        var selectPart = selectMatch.Groups[0].Value;
+        
+        var queryBody = Regex.Replace(sql, selectPart, string.Empty, RegexOptions.IgnoreCase);
+        
         // Extract alias mappings from FROM and JOIN clauses
-        ExtractAliases(sql);
+        // ExtractAliases(sql);
+        // Extract table aliases from FROM and JOIN clauses
+        ExtractTableAliases(queryBody);
 
-        string result = sql;
-
+        // Extract column/expression aliases from SELECT clause
+        ExtractSelectAliases(selectPart);
+        
         // Remove alias definitions
         foreach (var alias in _aliasToTableMap)
         {
-            result = Regex.Replace(result,$@"\b{alias.Key}\s+", string.Empty, RegexOptions.IgnoreCase);
+            queryBody = Regex.Replace(queryBody,$@"(\s+AS\s+|\s+){alias.Key}(?=\s)", string.Empty, RegexOptions.IgnoreCase);
         }
         foreach (var alias in _selectAliasMap)
         {
-            result = Regex.Replace(result,$@"\b{alias.Value}\s*", string.Empty, RegexOptions.IgnoreCase);
+            selectPart = Regex.Replace(selectPart,$@"(\s+AS\s+|\s+){alias.Value}((?=\s*FROM)|[ ]*(?=,))", string.Empty, RegexOptions.IgnoreCase);
         }
         
-        // Remove 'AS' keyword before alias definitions
-        result = Regex.Replace(result, @"\bAS\s+", string.Empty, RegexOptions.IgnoreCase);
+        var result = selectPart + queryBody;
         
         // Replace alias references with table names
         foreach (var kvp in _aliasToTableMap)
@@ -81,14 +90,15 @@ public class AliasReplacer
     private void ExtractTableAliases(string sql)
     {
         //match from
-        string pattern = @"(?:FROM)\s+([^\s]+?)\s(?:as\s+|\s*)([^\s]+?)\s+(?:JOIN|INNER JOIN|LEFT JOIN|RIGHT JOIN|FULL JOIN|CROSS JOIN|NATURAL JOIN|WHERE|GROUP BY|HAVING|ORDER BY|LIMIT|OFFSET|WINDOW|UNION|INTERSECT|EXCEPT)\s";
+        // string pattern = @"(?:FROM)\s+([^\s]+?)\s(?:as\s+|\s*)([^\s]+?)\s+(?:JOIN|INNER JOIN|LEFT JOIN|RIGHT JOIN|FULL JOIN|CROSS JOIN|NATURAL JOIN|WHERE|GROUP BY|HAVING|ORDER BY|LIMIT|OFFSET|WINDOW|UNION|INTERSECT|EXCEPT)\s";
+        string pattern = @"([^\s]+?)\s(?:as\s+|\s*)([^\s]+?)\s+(?:JOIN|INNER JOIN|LEFT JOIN|RIGHT JOIN|FULL JOIN|CROSS JOIN|NATURAL JOIN|WHERE|GROUP BY|HAVING|ORDER BY|LIMIT|OFFSET|WINDOW|UNION|INTERSECT|EXCEPT)\s";
         var match =
             Regex.Match(sql, pattern, RegexOptions.IgnoreCase);
         
         if (match.Success)
         {
-            var tableName = match.Groups[1].Value;
-            var alias = match.Groups[2].Value;
+            var tableName = match.Groups[1].Value.Trim();
+            var alias = match.Groups[2].Value.Trim();
 
             _aliasToTableMap[alias] = tableName;
         }
@@ -100,8 +110,8 @@ public class AliasReplacer
 
         foreach (Match m in matches)
         {
-            var tableName = m.Groups[1].Value;
-            var alias = m.Groups[2].Value;
+            var tableName = m.Groups[1].Value.Trim();
+            var alias = m.Groups[2].Value.Trim();
 
             _aliasToTableMap[alias] = tableName;
         }
