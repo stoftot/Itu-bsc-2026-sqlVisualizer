@@ -71,7 +71,7 @@ public static class SelectAnimationGenerator
                 break;
             case SQLAggregateFunctionsKeyword.MIN:
             case SQLAggregateFunctionsKeyword.MAX:
-                throw new NotImplementedException();
+                HandleMinAndMaxAggregate(fromTables, toTable, parts[1].Replace(')', ' ').Trim(), toColumnIndex, steps);
                 break;
             default:
                 throw new ArgumentOutOfRangeException();
@@ -109,7 +109,7 @@ public static class SelectAnimationGenerator
     private static void HandleSumAndAvgAggregate(List<Table> fromTables, Table toTable,
         string parameter, int toColumnIndex, List<Action> steps)
     {
-        //TODO: right now only supports summing columns
+        //TODO: right now only supports summing and avg on single columns
         var fromColumnIndex = 0;
         try
         {
@@ -118,6 +118,38 @@ public static class SelectAnimationGenerator
         catch (ArgumentException e)
         {
             throw new NotSupportedException("The column wasn't found, and sum and avg only supports summing specific columns", e);
+        }
+
+        int i = 0;
+        foreach (var table in fromTables)
+        {
+            steps.Add(tvm.CombineActions(
+            [
+                tvm.GenerateToggleHighlightColumn(table, fromColumnIndex),
+                tvm.GenerateToggleVisibleCell(toTable, i, toColumnIndex),
+                tvm.GenerateToggleHighlightCell(toTable, i, toColumnIndex)
+            ]));
+
+            steps.Add(tvm.CombineActions(
+            [
+                tvm.GenerateToggleHighlightColumn(table, fromColumnIndex),
+                tvm.GenerateToggleHighlightCell(toTable, i++, toColumnIndex)
+            ]));
+        }
+    }
+    
+    private static void HandleMinAndMaxAggregate(List<Table> fromTables, Table toTable,
+        string parameter, int toColumnIndex, List<Action> steps)
+    {
+        //TODO: right now only supports min and max on single columns
+        var fromColumnIndex = 0;
+        try
+        {
+            fromColumnIndex = fromTables[0].IndexOfColumn(parameter);
+        }
+        catch (ArgumentException e)
+        {
+            throw new NotSupportedException("The column wasn't found, and min and max only supports summing specific columns", e);
         }
 
         int i = 0;
