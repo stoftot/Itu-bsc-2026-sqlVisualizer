@@ -86,6 +86,19 @@ public class AliasReplacingTest
                 SELECT DISTINCT product.productname FROM product
                 """ 
     )]
+    [InlineData("""
+                SELECT productname, count() 
+                FROM purchase 
+                GROUP BY productname
+                HAVING COUNT() > 2
+                """,
+        """
+                SELECT productname, count() 
+                FROM purchase 
+                GROUP BY productname
+                HAVING COUNT() > 2
+                """ 
+    )]
     public void Test(string query, string expected)
     {
         var actual = new AliasReplacer().ReplaceAliases(query);

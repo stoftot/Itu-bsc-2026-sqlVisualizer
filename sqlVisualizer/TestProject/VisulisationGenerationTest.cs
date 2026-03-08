@@ -83,6 +83,31 @@ public class VisulisationGenerationTest : IClassFixture<DuckDbFixture>
     {
         TestQuery(query);
     }
+    
+    [Theory]
+    [InlineData("""
+                SELECT productname, count() 
+                FROM purchase 
+                GROUP BY productname
+                HAVING COUNT() > 2
+                """)]
+    [InlineData("""
+                SELECT productname, count() 
+                FROM purchase 
+                GROUP BY productname
+                HAVING COUNT() between 1 and 3
+                """)]
+    [InlineData("""
+                SELECT username, SUM(price)
+                FROM purchase
+                JOIN product ON purchase.productname = product.productname
+                GROUP BY username
+                HAVING SUM(price) > 1000 or SUM(price) < 500
+                """)]
+    public void Having(string query)
+    {
+        TestQuery(query);
+    }
 
     [Theory]
     [InlineData("""
