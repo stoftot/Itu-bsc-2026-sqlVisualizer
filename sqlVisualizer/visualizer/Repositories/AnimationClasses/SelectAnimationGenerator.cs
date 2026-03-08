@@ -20,12 +20,12 @@ public static class SelectAnimationGenerator
 
         var columns = action.Clause.Split(',').Select(c => c.Trim()).ToList();
 
-        var columnIndex = 0;
+        var toColumnIndex = 0;
         foreach (var column in columns)
         {
             if (column.Contains('('))
             {
-                HandleAggregateColumn(fromTables, toTable, column, columnIndex, steps);
+                HandleAggregateColumn(fromTables, toTable, column, toColumnIndex, steps);
             }
             else
             {
@@ -33,7 +33,7 @@ public static class SelectAnimationGenerator
                 {
                     Action FromAnimationGenerator(int i) => tvm.GenerateToggleHighlightColumn(fromTables[0], i);
 
-                    HandleNormalSelect(fromTables, toTable, column, columnIndex, steps, FromAnimationGenerator);
+                    HandleNormalSelect(fromTables, toTable, column, toColumnIndex, steps, FromAnimationGenerator);
                 }
                 else
                 {
@@ -42,18 +42,18 @@ public static class SelectAnimationGenerator
                             .ToList()
                             .ToOneAction();
 
-                    HandleNormalSelect(fromTables, toTable, column, columnIndex, steps, FromAnimationGenerator);
+                    HandleNormalSelect(fromTables, toTable, column, toColumnIndex, steps, FromAnimationGenerator);
                 }
             }
 
-            columnIndex++;
+            toColumnIndex++;
         }
 
         return new Animation(steps);
     }
 
     private static void HandleAggregateColumn(List<Table> fromTables, Table toTable,
-        string column, int columnIndex, List<Action> steps)
+        string column, int toColumnIndex, List<Action> steps)
     {
         var parts = column.Split('(', 2);
 
@@ -63,7 +63,7 @@ public static class SelectAnimationGenerator
         switch (keyword)
         {
             case SQLAggregateFunctionsKeyword.COUNT:
-                HandleCountAggregate(fromTables, toTable, parts[1].Replace(')', ' ').Trim(), columnIndex,
+                HandleCountAggregate(fromTables, toTable, parts[1].Replace(')', ' ').Trim(), toColumnIndex,
                     steps);
                 break;
             case SQLAggregateFunctionsKeyword.SUM:
@@ -84,7 +84,7 @@ public static class SelectAnimationGenerator
     }
 
     private static void HandleCountAggregate(List<Table> fromTables, Table toTable,
-        string parameter, int columnIndex, List<Action> steps)
+        string parameter, int toColumnIndex, List<Action> steps)
     {
         if (string.IsNullOrEmpty(parameter))
         {
@@ -94,14 +94,14 @@ public static class SelectAnimationGenerator
                 steps.Add(tvm.CombineActions(
                 [
                     tvm.GenerateToggleHighlightColumn(table, 0),
-                    tvm.GenerateToggleVisibleCell(toTable, i, columnIndex),
-                    tvm.GenerateToggleHighlightCell(toTable, i, columnIndex)
+                    tvm.GenerateToggleVisibleCell(toTable, i, toColumnIndex),
+                    tvm.GenerateToggleHighlightCell(toTable, i, toColumnIndex)
                 ]));
 
                 steps.Add(tvm.CombineActions(
                 [
                     tvm.GenerateToggleHighlightColumn(table, 0),
-                    tvm.GenerateToggleHighlightCell(toTable, i++, columnIndex)
+                    tvm.GenerateToggleHighlightCell(toTable, i++, toColumnIndex)
                 ]));
             }
         }
