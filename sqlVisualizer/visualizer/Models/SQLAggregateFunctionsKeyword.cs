@@ -2,5 +2,9 @@
 
 public enum SQLAggregateFunctionsKeyword
 {
-    COUNT
+    COUNT,
+    SUM,
+    AVG,
+    MIN,
+    MAX,
 }

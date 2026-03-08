@@ -63,13 +63,27 @@ public static class SelectAnimationGenerator
         switch (keyword)
         {
             case SQLAggregateFunctionsKeyword.COUNT:
-                HandleCountAggregateMultipleTables(fromTables, toTable, parts[1].Replace(')', ' ').Trim(), columnIndex,
+                HandleCountAggregate(fromTables, toTable, parts[1].Replace(')', ' ').Trim(), columnIndex,
                     steps);
                 break;
+            case SQLAggregateFunctionsKeyword.SUM:
+                throw new NotImplementedException();
+                break;
+            case SQLAggregateFunctionsKeyword.AVG:
+                throw new NotImplementedException();
+                break;
+            case SQLAggregateFunctionsKeyword.MIN:
+                throw new NotImplementedException();
+                break;
+            case SQLAggregateFunctionsKeyword.MAX:
+                throw new NotImplementedException();
+                break;
+            default:
+                throw new ArgumentOutOfRangeException();
         }
     }
 
-    private static void HandleCountAggregateMultipleTables(List<Table> fromTables, Table toTable,
+    private static void HandleCountAggregate(List<Table> fromTables, Table toTable,
         string parameter, int columnIndex, List<Action> steps)
     {
         if (string.IsNullOrEmpty(parameter))
