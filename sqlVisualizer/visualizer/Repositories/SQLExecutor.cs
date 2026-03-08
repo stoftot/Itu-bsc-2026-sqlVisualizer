@@ -19,7 +19,13 @@ public class SQLExecutor(DuckDBConnection connection)
             var columnNames = new List<string>();
             for (var i = 0; i < reader.FieldCount; i++)
             {
-                columnNames.Add(reader.GetName(i));
+                var name = reader.GetName(i);
+                if (name.Equals("count_star()", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    name = "count()";
+                }
+                
+                columnNames.Add(name);
             }
 
             while (await reader.ReadAsync())
