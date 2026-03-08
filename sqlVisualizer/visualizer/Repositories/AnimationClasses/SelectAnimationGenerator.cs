@@ -63,18 +63,13 @@ public static class SelectAnimationGenerator
         switch (keyword)
         {
             case SQLAggregateFunctionsKeyword.COUNT:
-                HandleCountAggregate(fromTables, toTable, parts[1].Replace(')', ' ').Trim(), toColumnIndex,
-                    steps);
+                HandleCountAggregate(fromTables, toTable, parts[1].Replace(')', ' ').Trim(), toColumnIndex, steps);
                 break;
             case SQLAggregateFunctionsKeyword.SUM:
-                throw new NotImplementedException();
-                break;
             case SQLAggregateFunctionsKeyword.AVG:
-                throw new NotImplementedException();
+                HandleSumAndAvgAggregate(fromTables, toTable, parts[1].Replace(')', ' ').Trim(), toColumnIndex, steps);
                 break;
             case SQLAggregateFunctionsKeyword.MIN:
-                throw new NotImplementedException();
-                break;
             case SQLAggregateFunctionsKeyword.MAX:
                 throw new NotImplementedException();
                 break;
@@ -111,6 +106,38 @@ public static class SelectAnimationGenerator
         }
     }
 
+    private static void HandleSumAndAvgAggregate(List<Table> fromTables, Table toTable,
+        string parameter, int toColumnIndex, List<Action> steps)
+    {
+        //TODO: right now only supports summing columns
+        var fromColumnIndex = 0;
+        try
+        {
+             fromColumnIndex = fromTables[0].IndexOfColumn(parameter);
+        }
+        catch (ArgumentException e)
+        {
+            throw new NotSupportedException("The column wasn't found, and sum and avg only supports summing specific columns", e);
+        }
+
+        int i = 0;
+        foreach (var table in fromTables)
+        {
+            steps.Add(tvm.CombineActions(
+            [
+                tvm.GenerateToggleHighlightColumn(table, fromColumnIndex),
+                tvm.GenerateToggleVisibleCell(toTable, i, toColumnIndex),
+                tvm.GenerateToggleHighlightCell(toTable, i, toColumnIndex)
+            ]));
+
+            steps.Add(tvm.CombineActions(
+            [
+                tvm.GenerateToggleHighlightColumn(table, fromColumnIndex),
+                tvm.GenerateToggleHighlightCell(toTable, i++, toColumnIndex)
+            ]));
+        }
+    }
+    
     private static void HandleNormalSelect(List<Table> fromTables, Table toTable,
         string column, int columnIndex, List<Action> steps,
         Func<int, Action> generateFromAnimation)
