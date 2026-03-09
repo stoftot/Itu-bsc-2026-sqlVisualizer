@@ -172,18 +172,18 @@ public static class SelectAnimationGenerator
         if (window.Contains("partition by", StringComparison.InvariantCultureIgnoreCase))
         {
             Console.WriteLine("Handling window function sum with partition");
-            HandleWindowFunctionSumWithPartition(fromTables, toTable, column, columnIndex, steps, window);
+            HandleWindowFunctionSumWithPartition(fromTables, toTable, columnIndex, steps, window);
         }
         else
         {
             Console.WriteLine("Handling window function sum without partition");
-            HandleWindowFunctionSumNoPartition(fromTables, toTable, column, columnIndex, steps);
+            HandleWindowFunctionSumNoPartition(fromTables, toTable, columnIndex, steps);
         }
         Console.WriteLine("End of window function sum");
     }
     
     private static void HandleWindowFunctionSumNoPartition(List<Table> fromTables, Table toTable,
-        string column, int columnIndex, List<Action> steps)
+        int columnIndex, List<Action> steps)
     {
         int fromTableColumnIndex = fromTables[0].IndexOfColumn("price");
         
@@ -212,8 +212,7 @@ public static class SelectAnimationGenerator
         ]));
     }
     
-    private static void HandleWindowFunctionSumWithPartition(List<Table> fromTables, Table toTable,
-        string column, int columnIndex, List<Action> steps, string window)
+    private static void HandleWindowFunctionSumWithPartition(List<Table> fromTables, Table toTable, int columnIndex, List<Action> steps, string window)
     {
         // Extract partition columns from "partition by col1, col2, ..." 
         var partitionPart = window.Substring(window.IndexOf("partition by", StringComparison.InvariantCultureIgnoreCase) + 12).Trim();
@@ -228,7 +227,7 @@ public static class SelectAnimationGenerator
         Console.WriteLine("partitionPart: " + partitionPart);
         Console.WriteLine("orderPart: " + orderPart);
         
-        if (!string.IsNullOrEmpty(orderPart))
+        if (!string.IsNullOrEmpty(orderPart) && partitionPart.Contains("order by", StringComparison.InvariantCultureIgnoreCase))
             partitionPart = partitionPart.Substring(0, partitionPart.IndexOf("order by", StringComparison.InvariantCultureIgnoreCase)).Trim();
         
         var partitionColumns = partitionPart.Split(',').Select(c => c.Trim()).ToList();
@@ -251,6 +250,7 @@ public static class SelectAnimationGenerator
         var partitions = new Dictionary<string, int>();
         for (int i = 0; i < orderedFromTable.Entries.Count; i++)
         {
+            //Console.WriteLine(orderedFromTable.Entries[i].Values[4].Value);
             string partitionKey = GetPartitionKey(orderedFromTable, i, partitionColumnIndices);
             if (!partitions.ContainsKey(partitionKey))
             {
@@ -280,36 +280,33 @@ public static class SelectAnimationGenerator
         
         // Detect partition boundaries from result table
         var partitionsFromResult = GetPartitionOrderFromResultTable(toTable, columnIndex);
-        
-        // Animate each partition in the order they appear in the result
-        foreach (var partition in partitionsFromResult)
+
+        var (matchedSourcePartitions, matchedResultPartitions) = MatchPartitions(partitionsFromSource, partitionsFromResult);
+
+        // Animate each partition in the order they appear in the result table
+        for (int partitionIndex = 0; partitionIndex < matchedResultPartitions.Count; partitionIndex++)
         {
-            // Get the corresponding source table rows for this partition
-            var sourceRowIndices = new List<int>();
-            foreach (var resultRowIdx in partition.RowIndices)
+            var sourceRowIndices = matchedSourcePartitions[partitionIndex];
+            var resultRowIndices = matchedResultPartitions[partitionIndex];
+
+            if (sourceRowIndices.Count != resultRowIndices.Count)
             {
-                // Map result row to source row - they should match in order within partitions
-                // For now, we'll use the same index (this assumes result and source are in same order)
-                if (resultRowIdx < fromTables[0].Entries.Count)
-                {
-                    sourceRowIndices.Add(resultRowIdx);
-                }
+                throw new Exception(
+                    $"Partition size mismatch. Source rows: {sourceRowIndices.Count}, result rows: {resultRowIndices.Count}");
             }
-            
+
             // First, highlight all rows in this partition in the source table
-            var partitionRowActions = new List<Action>();
-            foreach (var rowIdx in sourceRowIndices)
-            {
-                partitionRowActions.Add(tvm.GenerateToggleHighlightRow(fromTables[0].Entries[rowIdx]));
-            }
+            var partitionRowActions = sourceRowIndices
+                .Select(rowIdx => tvm.GenerateToggleHighlightRow(fromTables[0].Entries[rowIdx]))
+                .ToList();
             steps.Add(tvm.CombineActions(partitionRowActions));
-            
+
             // Then animate the sum calculation for this partition
             for (int i = 0; i < sourceRowIndices.Count; i++)
             {
                 var sourceRowIdx = sourceRowIndices[i];
-                var resultRowIdx = partition.RowIndices[i];
-                
+                var resultRowIdx = resultRowIndices[i];
+
                 steps.Add(tvm.CombineActions(
                 [
                     tvm.GenerateToggleHighlightCell(fromTables[0], sourceRowIdx, sumColumnIndex),
@@ -317,14 +314,23 @@ public static class SelectAnimationGenerator
                     tvm.GenerateToggleHighlightCell(toTable, resultRowIdx, columnIndex)
                 ]));
             }
+
+            // Unhighlight
+            var unhighlightSourceRows = sourceRowIndices
+                .Select(rowIdx => tvm.GenerateToggleHighlightRow(fromTables[0].Entries[rowIdx]))
+                .ToList();
             
-            // Unhighlight the partition in the source table
-            var unhighlightPartitionActions = new List<Action>();
-            foreach (var rowIdx in sourceRowIndices)
-            {
-                unhighlightPartitionActions.Add(tvm.GenerateToggleHighlightRow(fromTables[0].Entries[rowIdx]));
-            }
-            steps.Add(tvm.CombineActions(unhighlightPartitionActions));
+            var unhighlightSourceCells = sourceRowIndices
+                .Select(rowIdx => tvm.GenerateToggleHighlightCell(toTable, rowIdx, columnIndex))
+                .ToList();
+            
+            var unhighlightResultCells = resultRowIndices
+                .Select(rowIdx => tvm.GenerateToggleHighlightCell(toTable, rowIdx, columnIndex))
+                .ToList();
+            
+            var unhighlightActions = unhighlightSourceRows.Concat(unhighlightSourceCells).Concat(unhighlightResultCells).ToList();
+            
+            steps.Add(tvm.CombineActions(unhighlightActions));
         }
     }
     
@@ -386,28 +392,46 @@ public static class SelectAnimationGenerator
         return string.Join("|", keyParts);
     }
     
-    // Takes to lists of partitions (one from source table, one from result table) and matches them based on their values to determine the order of animation
-    // Returns a record containing two lists of partitions where the i'th partition in the first list corresponds to the i'th partition in the second list
+    private static string BuildPartitionSignature(List<int> values)
+    {
+        return string.Join("|", values);
+    }
+
+    // Takes two lists of partitions (one from source table, one from result table) and matches them by cumulative values.
+    // Returns two aligned lists where index i is the same partition in source/result row-index space.
     private static (List<List<int>>, List<List<int>>) MatchPartitions(List<Partition> sourcePartitions, List<Partition> resultPartitions)
     {
         var matchedSourcePartitions = new List<List<int>>();
         var matchedResultPartitions = new List<List<int>>();
-        
+
+        var sourceBySignature = new Dictionary<string, Queue<Partition>>();
+        foreach (var sourcePartition in sourcePartitions)
+        {
+            var signature = BuildPartitionSignature(sourcePartition.Values);
+            if (!sourceBySignature.TryGetValue(signature, out var queue))
+            {
+                queue = new Queue<Partition>();
+                sourceBySignature[signature] = queue;
+            }
+
+            queue.Enqueue(sourcePartition);
+        }
+
         foreach (var resultPartition in resultPartitions)
         {
-            // Find the source partition with the same values (the order of values within a partition should be the same in source and result)
-            var matchingSourcePartition = sourcePartitions.FirstOrDefault(sp => sp.Values.SequenceEqual(resultPartition.Values));
-            if (matchingSourcePartition != null)
+            var signature = BuildPartitionSignature(resultPartition.Values);
+            if (!sourceBySignature.TryGetValue(signature, out var queue) || queue.Count == 0)
             {
-                matchedSourcePartitions.Add(matchingSourcePartition.RowIndices);
-                matchedResultPartitions.Add(resultPartition.RowIndices);
+                throw new Exception(
+                    "Could not find matching source partition for result partition with values: " +
+                    string.Join(", ", resultPartition.Values));
             }
-            else
-            {
-                throw new Exception("Could not find matching source partition for result partition with values: " + string.Join(", ", resultPartition.Values));
-            }
+
+            var matchingSourcePartition = queue.Dequeue();
+            matchedSourcePartitions.Add(matchingSourcePartition.RowIndices);
+            matchedResultPartitions.Add(resultPartition.RowIndices);
         }
-        
+
         return (matchedSourcePartitions, matchedResultPartitions);
     }
 }
