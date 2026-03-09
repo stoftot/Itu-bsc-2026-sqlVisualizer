@@ -73,11 +73,18 @@ public class Table
         {
             entries[i] = entries[i].AppendRowIndex(i.ToString());
         }
+
+        List<string> names = ColumnNames.ToList();
+        names.Add("index");
+        
+        List<string> originNames = ColumnsOriginalTableNames.ToList();
+        originNames.Add("index");
+        
         return new Table
         {
             Name = Name,
-            ColumnNames = ColumnNames.ToList(),
-            ColumnsOriginalTableNames = ColumnsOriginalTableNames.ToList(),
+            ColumnNames = names,
+            ColumnsOriginalTableNames = originNames,
             Entries = entries
         };
     }

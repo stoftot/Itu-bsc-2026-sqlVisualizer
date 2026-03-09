@@ -223,7 +223,7 @@ public static class SelectAnimationGenerator
         string orderPart = "productname";
 
         
-        Table orderedFromTable = fromTables[0].AppendRowIndex().OrderBy(orderPart, true);
+        Table orderedFromTable = fromTables[0].DeepClone().AppendRowIndex().OrderBy(orderPart, true);
         
         Console.WriteLine("partitionPart: " + partitionPart);
         Console.WriteLine("orderPart: " + orderPart);
@@ -257,7 +257,7 @@ public static class SelectAnimationGenerator
                 partitions[partitionKey] = partitionsFromSource.Count;
                 partitionsFromSource.Add(new Partition([], []));
             }
-            partitionsFromSource[partitions[partitionKey]].RowIndices.Add(i);
+            partitionsFromSource[partitions[partitionKey]].RowIndices.Add(int.Parse(orderedFromTable.Entries[i].Values[4].Value));
             partitionsFromSource[partitions[partitionKey]].Values.Add(int.Parse(orderedFromTable.Entries[i].Values[sumColumnIndex].Value));
         }
         
