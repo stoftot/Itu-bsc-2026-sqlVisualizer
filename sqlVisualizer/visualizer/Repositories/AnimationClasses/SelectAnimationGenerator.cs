@@ -220,26 +220,19 @@ public static class SelectAnimationGenerator
         //    ? partitionPart.Substring(partitionPart.IndexOf("order by", StringComparison.InvariantCultureIgnoreCase))
         //    : "";
         string orderPart = "productname";
-
         
         Table orderedFromTable = fromTables[0].DeepClone().AppendRowIndex().OrderBy(orderPart, true);
-        
-        Console.WriteLine("partitionPart: " + partitionPart);
-        Console.WriteLine("orderPart: " + orderPart);
         
         if (!string.IsNullOrEmpty(orderPart) && partitionPart.Contains("order by", StringComparison.InvariantCultureIgnoreCase))
             partitionPart = partitionPart.Substring(0, partitionPart.IndexOf("order by", StringComparison.InvariantCultureIgnoreCase)).Trim();
         
         var partitionColumns = partitionPart.Split(',').Select(c => c.Trim()).ToList();
         
-        Console.WriteLine("partitionColumns: " + string.Join(", ", partitionColumns));
-        
         // Find the column indices for partitioning in the source table
         var partitionColumnIndices = new List<int>();
         foreach (var partCol in partitionColumns)
         {
             partitionColumnIndices.Add(fromTables[0].IndexOfColumn(partCol));
-            Console.WriteLine("partitionColumnIndices: " + string.Join(", ", partitionColumnIndices));
         }
         
         int sumColumnIndex = fromTables[0].IndexOfColumn("price");
@@ -269,13 +262,6 @@ public static class SelectAnimationGenerator
                 sum += partition.Values[i];
                 partition.Values[i] = sum;
             }
-        }
-        
-        Console.WriteLine("Detected partitions from source: " + partitions.Count);
-        foreach (var partition in partitionsFromSource)
-        {
-            Console.WriteLine("Partition rows: " + string.Join(", ", partition.RowIndices) + 
-                              " Values: " + string.Join(", ", partition.Values));
         }
         
         // Detect partition boundaries from result table
@@ -373,14 +359,6 @@ public static class SelectAnimationGenerator
         if (currentPartition.Count > 0)
         {
             partitions.Add(new Partition(currentPartition, currentValues));
-        }
-        
-        // Print detected partitions for debugging
-        Console.WriteLine("Detected partitions from result: " + partitions.Count);
-        foreach (var partition in partitions)
-        {
-            Console.WriteLine("Partition rows: " + string.Join(", ", partition.RowIndices) + 
-                              " Values: " + string.Join(", ", partition.Values));
         }
         
         return partitions;
