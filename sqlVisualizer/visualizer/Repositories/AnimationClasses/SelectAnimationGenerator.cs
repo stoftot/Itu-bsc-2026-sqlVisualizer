@@ -321,7 +321,7 @@ public static class SelectAnimationGenerator
                 .ToList();
             
             var unhighlightSourceCells = sourceRowIndices
-                .Select(rowIdx => tvm.GenerateToggleHighlightCell(toTable, rowIdx, columnIndex))
+                .Select(rowIdx => tvm.GenerateToggleHighlightCell(fromTables[0], rowIdx, sumColumnIndex))
                 .ToList();
             
             var unhighlightResultCells = resultRowIndices
