@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using visualizer.Exstensions;
 using visualizer.Models;
 
@@ -154,6 +155,21 @@ public static class SelectAnimationGenerator
         Console.WriteLine("function: " + function);
         Console.WriteLine("window: " + window);
 
+        string? partitionPart;
+        string? orderPart;
+        
+        var pattern = @"\(\s*(?:partition\s+by\s+(?<partition>.*?))?\s*(?:order\s+by\s+(?<order>.*?))?\s*(?:rows|range|groups|$|\))";
+        var match = Regex.Match(window, pattern, RegexOptions.IgnoreCase | RegexOptions.Singleline);
+        
+        if (match.Success)
+        {
+            partitionPart = match.Groups["partition"].Success ? match.Groups["partition"].Value.Trim() : null;
+            Console.WriteLine("partitionPart: " + partitionPart);
+            
+            orderPart = match.Groups["order"].Success ? match.Groups["order"].Value.Trim() : null;
+            Console.WriteLine("orderPart: " + orderPart);
+        }
+        
         if (function.Contains("sum(", StringComparison.InvariantCultureIgnoreCase))
         {
             HandleWindowFunctionSum(fromTables, toTable, column, columnIndex, steps);
@@ -171,15 +187,12 @@ public static class SelectAnimationGenerator
         // Check if there's a PARTITION BY clause
         if (window.Contains("partition by", StringComparison.InvariantCultureIgnoreCase))
         {
-            Console.WriteLine("Handling window function sum with partition");
             HandleWindowFunctionSumWithPartition(fromTables, toTable, columnIndex, steps, window);
         }
         else
         {
-            Console.WriteLine("Handling window function sum without partition");
             HandleWindowFunctionSumNoPartition(fromTables, toTable, columnIndex, steps);
         }
-        Console.WriteLine("End of window function sum");
     }
     
     private static void HandleWindowFunctionSumNoPartition(List<Table> fromTables, Table toTable,
