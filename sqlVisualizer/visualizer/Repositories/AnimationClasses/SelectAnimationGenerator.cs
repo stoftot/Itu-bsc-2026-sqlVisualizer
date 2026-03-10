@@ -20,12 +20,35 @@ public static class SelectAnimationGenerator
             return new Animation(steps);
 
         steps.Add(tvm.HideTablesCellBased([toTable]));
+        
+        //TODO: regex docent support window functions with end parentheses inside the over, like "over (..)...)" 
+        var windowFunctionMatch = Regex.Match(action.Clause, @"\s*[^,]+?\bover\s*[^)]+\)[^,]+", RegexOptions.IgnoreCase | RegexOptions.Singleline);
+        List<string> columns;
+        
+        if (windowFunctionMatch.Success)
+        {
+            var windowFunction = windowFunctionMatch.Groups[0].Value;
+            var clauseMinusWindow = Regex.Replace(action.Clause, 
+                @"\s*[^,]+?\bover\s*[^)]+\)[^,]+", "()");
+            
+            columns = clauseMinusWindow.Split(',').Select(c => c.Trim()).ToList();
+            for (int i = 0; i < columns.Count; i++)
+            {
+                if (!columns[i].Equals("()")) continue;
+                
+                columns[i] = windowFunction;
+                break;
+            }
+        }
+        else
+        {
+            columns = action.Clause.Split(',').Select(c => c.Trim()).ToList();
+        }
 
-        var columns = action.Clause.Split(',').Select(c => c.Trim()).ToList();
-
-        var toColumnIndex = 0;
+        var toColumnIndex = -1;
         foreach (var column in columns)
         {
+            toColumnIndex++;
             // Handel window functions
             if (column.ToLower().Contains(" over "))
             {
@@ -55,8 +78,6 @@ public static class SelectAnimationGenerator
                     HandleNormalSelect(fromTables, toTable, column, toColumnIndex, steps, FromAnimationGenerator);
                 }
             }
-
-            toColumnIndex++;
         }
 
         return new Animation(steps);
