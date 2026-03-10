@@ -26,7 +26,7 @@ public static class SelectAnimationGenerator
         foreach (var column in columns)
         {
             // Handel window functions
-            if (column.Contains(" over "))
+            if (column.ToLower().Contains(" over "))
             {
                 HandleWindowFunction(fromTables, toTable, column, columnIndex, steps);
                 continue;
@@ -299,6 +299,7 @@ public static class SelectAnimationGenerator
                 var sourceRowIdx = sourceRowIndices[i];
                 var resultRowIdx = resultRowIndices[i];
 
+                tvm.ChangeHighlightColourCell(fromTables[0], sourceRowIdx, sumColumnIndex, "FF5733");
                 steps.Add(tvm.CombineActions(
                 [
                     tvm.GenerateToggleHighlightCell(fromTables[0], sourceRowIdx, sumColumnIndex),
