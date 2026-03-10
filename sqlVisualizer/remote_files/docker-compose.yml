@@ -1,0 +1,7 @@
+﻿services:
+  sqlvisualizer:
+    image: rasmusrlarsen/sqlvisualizer:latest
+    container_name: sqlvisualizer
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
