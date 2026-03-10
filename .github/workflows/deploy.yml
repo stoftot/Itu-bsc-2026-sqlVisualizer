@@ -1,0 +1,16 @@
+name: Deploy
+permissions: write-all
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    uses: ./.github/workflows/build.yml
+  
+  create-docker-image:
+    needs: build
+    uses: ./.github/workflows/create-docker-image.yml
+    secrets: inherit 
