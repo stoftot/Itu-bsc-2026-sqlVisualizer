@@ -4,45 +4,72 @@ using visualizer.Repositories;
 
 namespace visualizer.Components.Shared;
 
-public partial class ToolBar : ComponentBase
+public partial class ToolBar : ComponentBase, IDisposable
 {
-    [Inject] public required State State { get; init; }
+    [Inject] public required HomeState HomeState { get; init; }
     [Inject] public required IMetricsHandler MetricsHandler { get; init; }
     [Inject] public required IUserRepository UserRepository { get; init; }
     string _current = "Custom";
+
+    protected override void OnInitialized()
+    {
+        HomeState.StateChanged += OnHomeStateChanged;
+    }
+
+    private void OnHomeStateChanged() => _ = InvokeAsync(StateHasChanged);
 
     async Task SelectChanged(ChangeEventArgs e)
     {
         if (_current == "Custom")
         {
-            UserRepository.SaveUserQuery(sessionId: State.SessionId, query: await State.Editor.GetValue());
-            State.Queries[0].SQL = await State.Editor.GetValue();
+            UserRepository.SaveUserQuery(sessionId: HomeState.SessionId, query: await HomeState.Editor.GetValue());
+            HomeState.Queries[0].SQL = await HomeState.Editor.GetValue();
         }
         _current = e.Value!.ToString()!;
-        MetricsHandler.IncrementAction(State.SessionId, State.Queries[Int32.Parse((String)e.Value)].Type);
-        var newSQL = State.Queries[Int32.Parse((String)e.Value)].SQL;
-        await State.Editor.SetValue(newSQL);
+        MetricsHandler.IncrementAction(HomeState.SessionId, HomeState.Queries[Int32.Parse((String)e.Value)].Type);
+        var newSQL = HomeState.Queries[Int32.Parse((String)e.Value)].SQL;
+        await HomeState.Editor.SetValue(newSQL);
         await RunQuery();
     }
 
     async Task RunQuery()
     {
-        var editorContent = await State.Editor.GetValue();
-        MetricsHandler.RecordQuery(State.SessionId, editorContent);
-        State.RunSQL(editorContent ?? "");
+        var editorContent = await HomeState.Editor.GetValue();
+        MetricsHandler.RecordQuery(HomeState.SessionId, editorContent);
+        await HomeState.RunSQL(editorContent ?? "");
     }
-    
-    void StepPrevious()
+
+    async Task StepPrevious()
     {
-        MetricsHandler.IncrementAction(State.SessionId, ActionType.Previous);
-        State.PreviousStep();
-        StateHasChanged();
+        MetricsHandler.IncrementAction(HomeState.SessionId, ActionType.Previous);
+        await HomeState.PreviousStep();
     }
-    
-    void StepNext()
+
+    async Task StepNext()
     {
-        MetricsHandler.IncrementAction(State.SessionId, ActionType.Next);
-        State.NextStep();
-        StateHasChanged();
+        MetricsHandler.IncrementAction(HomeState.SessionId, ActionType.Next);
+        await HomeState.NextStep();
+    }
+
+    async Task ToggleAnimation()
+    {
+        if (HomeState.IsAnimationPlaying)
+        {
+            await HomeState.AnimatePause();
+        }
+        else
+        {
+            MetricsHandler.IncrementAction(HomeState.SessionId, ActionType.Animate);
+            await HomeState.AnimatePlay();
+        }
+    }
+
+    async Task StepAnimationPrevious() => await HomeState.AnimateStepPrivious();
+
+    async Task StepAnimationNext() => await HomeState.AnimateStepNext();
+
+    public void Dispose()
+    {
+        HomeState.StateChanged -= OnHomeStateChanged;
     }
 }
