@@ -29,7 +29,7 @@ public static class SelectAnimationGenerator
             // Handel window functions
             if (column.ToLower().Contains(" over "))
             {
-                HandleWindowFunction(fromTables, toTable, column, columnIndex, steps);
+                HandleWindowFunction(fromTables, toTable, column, toColumnIndex, steps);
                 continue;
             }
             
