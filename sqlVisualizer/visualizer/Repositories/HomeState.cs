@@ -4,7 +4,7 @@ using visualizer.Models;
 
 namespace visualizer.Repositories;
 
-public class State
+public class HomeState
 {
     public required string SessionId;
     public required StandaloneCodeEditor Editor { get; set; }

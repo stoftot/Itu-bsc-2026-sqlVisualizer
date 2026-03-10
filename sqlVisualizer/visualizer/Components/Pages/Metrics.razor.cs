@@ -9,7 +9,7 @@ public partial class Metrics : ComponentBase
 {
     [Inject] public required IMetricsHandler MetricsHandler { get; init; }
     [Inject] public required IHttpContextAccessor Http { get; init; }
-    [Inject] public required State State { get; init; }
+    [Inject] public required HomeState HomeState { get; init; }
 
     private string _sessionId = "";
     string[] ActionLabels = [];

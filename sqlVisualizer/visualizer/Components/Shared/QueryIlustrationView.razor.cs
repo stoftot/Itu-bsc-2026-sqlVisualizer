@@ -8,7 +8,7 @@ public class QueryIllustrationViewBase : ComponentBase
 {
     [Parameter] public required string Query { get; init; }
     [Inject] SQLExecutor SQLExecutor { get; init; }
-    [Inject] State State { get; init; }
+    [Inject] HomeState HomeState { get; init; }
     [Inject] private MetricsConfig MetricsConfig { get; init; } = null!;
     [Inject] VisualisationsGenerator VisualisationsGenerator { get; init; }
     [Inject] public required IMetricsHandler MetricsHandler { get; init; }
@@ -25,10 +25,10 @@ public class QueryIllustrationViewBase : ComponentBase
             if (value < 0 || value >= Steps.Count) return;
                     
             _indexOfStepToHighlight = value;
-            State.CurrentStepIndex = value;
+            HomeState.CurrentStepIndex = value;
             
-            MetricsHandler.EnterStep(State.SessionId, CurrStep.Component.Keyword);
-            MetricsHandler.PrintSessionTimings(State.SessionId);
+            MetricsHandler.EnterStep(HomeState.SessionId, CurrStep.Component.Keyword);
+            MetricsHandler.PrintSessionTimings(HomeState.SessionId);
             UpdateStepShown();
         }
     }
@@ -37,22 +37,22 @@ public class QueryIllustrationViewBase : ComponentBase
     
     protected override void OnInitialized()
     {
-        State.NextStep = OnNextStep;
-        State.PreviousStep = OnPreviousStep;
-        State.AnimatePlay = OnAnimateSteps;
+        HomeState.NextStep = OnNextStep;
+        HomeState.PreviousStep = OnPreviousStep;
+        HomeState.AnimatePlay = OnAnimateSteps;
     }
 
     protected override void OnAfterRender(bool firstRender)
     {
         if(!firstRender) return;
         Init();
-        MetricsHandler.EnterStep(State.SessionId, CurrStep.Component.Keyword);
+        MetricsHandler.EnterStep(HomeState.SessionId, CurrStep.Component.Keyword);
     }
 
     public void Init()
     {
         Steps = VisualisationsGenerator.Generate(Query);
-        State.Steps = Steps;
+        HomeState.Steps = Steps;
         IndexOfStepToHighlight = 0;
         
         UpdateStepShown();
@@ -101,7 +101,7 @@ public class QueryIllustrationViewBase : ComponentBase
 
     private async Task AnimateSteps()
     {
-        MetricsHandler.StartAnimation(State.SessionId);
+        MetricsHandler.StartAnimation(HomeState.SessionId);
         var animation = CurrStep.Animation;
         animation.Reset();
 
@@ -110,7 +110,7 @@ public class QueryIllustrationViewBase : ComponentBase
             StateHasChanged();
             await Task.Delay(1100);
         }
-        MetricsHandler.StopAnimation(State.SessionId);
+        MetricsHandler.StopAnimation(HomeState.SessionId);
     }
     
     private void OnAnimateSteps()
