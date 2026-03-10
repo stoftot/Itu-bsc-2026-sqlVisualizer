@@ -54,7 +54,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ./sqlVisualizer
-          file: ./Dockerfile
+          file: ./sqlVisualizer/Dockerfile
           push: true
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/sqlvisualizer:latest
