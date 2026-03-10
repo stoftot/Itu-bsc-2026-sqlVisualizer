@@ -1,5 +1,4 @@
 ﻿using BlazorMonaco.Editor;
-using Microsoft.AspNetCore.Components;
 using visualizer.Models;
 
 namespace visualizer.Repositories;
@@ -8,15 +7,21 @@ public class HomeState
 {
     public required string SessionId;
     public required StandaloneCodeEditor Editor { get; set; }
-    public Action<string> RunSQL { get; set; }
-    public Action NextStep { get; set; }
-    public Action PreviousStep { get; set; }
-    public Action AnimatePlay { get; set; }
-    public Action AnimatePause { get; set; }
-    public Action AnimateStepNext { get; set; }
-    public Action AnimateStepPrivious { get; set; }
+    public Func<string, Task> RunSQL { get; set; } = _ => Task.CompletedTask;
+    public Func<Task> NextStep { get; set; } = () => Task.CompletedTask;
+    public Func<Task> PreviousStep { get; set; } = () => Task.CompletedTask;
+    public Func<Task> AnimatePlay { get; set; } = () => Task.CompletedTask;
+    public Func<Task> AnimatePause { get; set; } = () => Task.CompletedTask;
+    public Func<Task> AnimateStepNext { get; set; } = () => Task.CompletedTask;
+    public Func<Task> AnimateStepPrivious { get; set; } = () => Task.CompletedTask;
     public List<Visualisation> Steps { get; set; } = [];
     public int CurrentStepIndex { get; set; } = 0;
+    public int CurrentAnimationStepIndex { get; set; } = 0;
+    public int CurrentAnimationStepCount { get; set; } = 0;
+    public bool IsAnimationPlaying { get; set; }
+    public bool IsAnimationPaused => !IsAnimationPlaying && CurrentAnimationStepIndex > 0 && CurrentAnimationStepIndex < CurrentAnimationStepCount;
+    public event Action? StateChanged;
+    public void NotifyStateChanged() => StateChanged?.Invoke();
     public List<Query> Queries = [
         new()
         {

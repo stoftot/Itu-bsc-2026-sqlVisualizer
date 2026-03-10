@@ -4,12 +4,19 @@ using visualizer.Repositories;
 
 namespace visualizer.Components.Shared;
 
-public partial class ToolBar : ComponentBase
+public partial class ToolBar : ComponentBase, IDisposable
 {
     [Inject] public required HomeState HomeState { get; init; }
     [Inject] public required IMetricsHandler MetricsHandler { get; init; }
     [Inject] public required IUserRepository UserRepository { get; init; }
     string _current = "Custom";
+
+    protected override void OnInitialized()
+    {
+        HomeState.StateChanged += OnHomeStateChanged;
+    }
+
+    private void OnHomeStateChanged() => _ = InvokeAsync(StateHasChanged);
 
     async Task SelectChanged(ChangeEventArgs e)
     {
@@ -29,20 +36,40 @@ public partial class ToolBar : ComponentBase
     {
         var editorContent = await HomeState.Editor.GetValue();
         MetricsHandler.RecordQuery(HomeState.SessionId, editorContent);
-        HomeState.RunSQL(editorContent ?? "");
+        await HomeState.RunSQL(editorContent ?? "");
     }
-    
-    void StepPrevious()
+
+    async Task StepPrevious()
     {
         MetricsHandler.IncrementAction(HomeState.SessionId, ActionType.Previous);
-        HomeState.PreviousStep();
-        StateHasChanged();
+        await HomeState.PreviousStep();
     }
-    
-    void StepNext()
+
+    async Task StepNext()
     {
         MetricsHandler.IncrementAction(HomeState.SessionId, ActionType.Next);
-        HomeState.NextStep();
-        StateHasChanged();
+        await HomeState.NextStep();
+    }
+
+    async Task ToggleAnimation()
+    {
+        if (HomeState.IsAnimationPlaying)
+        {
+            await HomeState.AnimatePause();
+        }
+        else
+        {
+            MetricsHandler.IncrementAction(HomeState.SessionId, ActionType.Animate);
+            await HomeState.AnimatePlay();
+        }
+    }
+
+    async Task StepAnimationPrevious() => await HomeState.AnimateStepPrivious();
+
+    async Task StepAnimationNext() => await HomeState.AnimateStepNext();
+
+    public void Dispose()
+    {
+        HomeState.StateChanged -= OnHomeStateChanged;
     }
 }

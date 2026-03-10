@@ -41,16 +41,20 @@
         </div>
         
         <div class="stepper animation-stepper">
-            <button>
+            <button @onclick="StepAnimationPrevious"
+                    disabled="@(HomeState.IsAnimationPlaying || HomeState.CurrentAnimationStepIndex <= 0)">
                 <i class="bi bi-chevron-left"></i>
             </button>
             
-            <button @onclick="HomeState.AnimatePlay" class="text-button">
-                <p class="text-button__text">Animation</p> 
-                <i class="bi bi-play-fill"></i>
+            <button @onclick="ToggleAnimation"
+                    class="text-button"
+                    disabled="@(HomeState.CurrentAnimationStepCount == 0)">
+                <p class="text-button__text">@(HomeState.IsAnimationPlaying ? "Pause" : "Play")</p>
+                <i class="bi @(HomeState.IsAnimationPlaying ? "bi-pause-fill" : "bi-play-fill")"></i>
             </button>
             
-            <button>
+            <button @onclick="StepAnimationNext"
+                    disabled="@(HomeState.IsAnimationPlaying || HomeState.CurrentAnimationStepIndex >= HomeState.CurrentAnimationStepCount)">
                 <i class="bi bi-chevron-right"></i>
             </button>
         </div>
