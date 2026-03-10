@@ -53,8 +53,8 @@ jobs:
       - name: Build and push image
         uses: docker/build-push-action@v6
         with:
-          context: .
-          file: ./sqlVisualizer/Dockerfile
+          context: ./sqlVisualizer
+          file: ./Dockerfile
           push: true
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/sqlvisualizer:latest
