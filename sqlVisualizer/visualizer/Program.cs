@@ -3,6 +3,7 @@ using MudBlazor.Services;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using visualizer;
+using Visualizer;
 using visualizer.Components;
 using visualizer.Repositories;
 
@@ -13,10 +14,11 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddSingleton<MetricsConfig>();
-var useDummy = Environment.GetEnvironmentVariable("USE_DUMMY_METRICS") == "true";
+var useDummy = Environment.GetEnvironmentVariable("USE_DUMMY") == "true";
 if (useDummy)
 {
     builder.Services.AddSingleton<IMetricsHandler, DummyMetricsHandler>();
+    builder.Services.AddSingleton<IUserRepository, DummyUserRepository>();
 }
 else
 {
@@ -27,14 +29,14 @@ else
 
         return new MetricsHandler(connectionString!);
     });
-}
 
-builder.Services.AddSingleton<UserRepository>(sp =>
-{
-    var config = sp.GetRequiredService<IConfiguration>();
-    var connString = config.GetConnectionString("User");
-    return new UserRepository(connString ?? throw new ArgumentNullException(nameof(connString)));
-});
+    builder.Services.AddSingleton<IUserRepository>(sp =>
+    {
+        var config = sp.GetRequiredService<IConfiguration>();
+        var connString = config.GetConnectionString("User");
+        return new UserRepository(connString ?? throw new ArgumentNullException(nameof(connString)));
+    });
+}
 
 builder.Services.AddMudServices();
 var resourceBuilder = ResourceBuilder.CreateDefault()
@@ -63,6 +65,7 @@ builder.Services.AddScoped<SQLExecutor>();
 builder.Services.AddScoped<SQLDecomposer>();
 builder.Services.AddScoped<TableGenerator>();
 builder.Services.AddScoped<TableOriginColumnsGenerator>();
+builder.Services.AddScoped<AliasReplacer>();
 builder.Services.AddScoped<VisualisationsGenerator>();
 builder.Services.AddScoped<State>();
 

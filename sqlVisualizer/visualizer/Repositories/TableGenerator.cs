@@ -2,9 +2,15 @@
 
 namespace visualizer.Repositories;
 
-public class TableGenerator(SQLExecutor sqlExecutor)
+public class TableGenerator(SQLExecutor sqlExecutor, TableOriginColumnsGenerator tocg)
 {
-    public void GenerateFromTables(SQLDecompositionComponent currStep, 
+    public void GenerateTablesIntialStepWithOriginColumns(List<Table> fromTables, SQLDecompositionComponent intialStep)
+    {
+        fromTables.Add(sqlExecutor.Execute(intialStep).Result);
+        fromTables[0].Name = intialStep.Clause.Split(',')[0].Trim();
+        tocg.GenerateTableOriginOnColumnsFromTableName(fromTables);
+    }
+    public void GenerateFromTablesWithOriginColumns(SQLDecompositionComponent currStep, 
         List<Table> fromTables, List<Table> prevToTables)
     {
         fromTables.AddRange(prevToTables.Select(t => t.DeepClone()).ToList());
@@ -25,6 +31,7 @@ public class TableGenerator(SQLExecutor sqlExecutor)
     {
         var joiningTable = sqlExecutor.Execute(currentStep.GenerateFromClauseFromJoin()).Result;
         joiningTable.Name = currentStep.Clause.Split(' ')[0].Trim();
+        tocg.GenerateTableOriginOnColumnsFromTableName(joiningTable);
         fromTables.Add(joiningTable);
     }
 
@@ -51,11 +58,6 @@ public class TableGenerator(SQLExecutor sqlExecutor)
         };
     }
 
-    public void GenerateTablesIntialStep(List<Table> fromTables, SQLDecompositionComponent intialStep)
-    {
-        fromTables.Add(sqlExecutor.Execute(intialStep).Result);
-        fromTables[0].Name = intialStep.Clause.Split(',')[0].Trim();
-    }
 
     private void GenerateToTablesGroupBy(List<Table> fromTables, List<Table> toTables,
         SQLDecompositionComponent currentStep)
@@ -75,12 +77,12 @@ public class TableGenerator(SQLExecutor sqlExecutor)
 
         var groupedTables = tabel.Entries
             .GroupBy(e => new CompositeKey(groupByIndexes.Select(i => e.Values[i].Value)))
+            .OrderBy(g => g.Key, CompositeKeyComparer.Instance)
             .Select(g => new Table
             {
                 ColumnNames = tabel.ColumnNames.ToList(),
                 Entries = g.ToList()
             })
-            .Reverse()
             .ToList();
 
         toTables.AddRange(groupedTables);
@@ -91,6 +93,7 @@ public class TableGenerator(SQLExecutor sqlExecutor)
         private readonly object?[] _values;
 
         public CompositeKey(IEnumerable<object?> values) => _values = values.ToArray();
+        public object?[] GetValues() => _values;
 
         public bool Equals(CompositeKey? other)
             => other is not null && _values.SequenceEqual(other._values);
@@ -102,6 +105,44 @@ public class TableGenerator(SQLExecutor sqlExecutor)
             var hc = new HashCode();
             foreach (var v in _values) hc.Add(v);
             return hc.ToHashCode();
+        }
+    }
+
+    private sealed class CompositeKeyComparer : IComparer<CompositeKey>
+    {
+        public static readonly CompositeKeyComparer Instance = new();
+
+        public int Compare(CompositeKey? x, CompositeKey? y)
+        {
+            if (ReferenceEquals(x, y)) return 0;
+            if (x is null) return -1;
+            if (y is null) return 1;
+
+            var xValues = x.GetValues();
+            var yValues = y.GetValues();
+
+            var lengthCompare = xValues.Length.CompareTo(yValues.Length);
+            if (lengthCompare != 0) return lengthCompare;
+
+            for (var i = 0; i < xValues.Length; i++)
+            {
+                var comparison = CompareValue(xValues[i], yValues[i]);
+                if (comparison != 0) return comparison;
+            }
+
+            return 0;
+        }
+
+        private static int CompareValue(object? left, object? right)
+        {
+            if (ReferenceEquals(left, right)) return 0;
+            if (left is null) return -1;
+            if (right is null) return 1;
+
+            if (left is IComparable comparable && left.GetType() == right.GetType())
+                return comparable.CompareTo(right);
+
+            return string.Compare(left.ToString(), right.ToString(), StringComparison.Ordinal);
         }
     }
 }
