@@ -14,3 +14,8 @@ jobs:
     needs: build
     uses: ./.github/workflows/create-docker-image.yml
     secrets: inherit 
+
+  deploy-to-digitalocean:
+    needs: create-docker-image
+    uses: ./.github/workflows/deploy-to-digitalocean.yml
+    secrets: inherit
