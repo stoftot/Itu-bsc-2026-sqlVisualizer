@@ -11,13 +11,13 @@ public class VisualisationsGenerator(SQLDecomposer decomposer, TableGenerator tg
     public List<Visualisation> Generate(string query)
     {
         var visualisations = new List<Visualisation>();
-        query = ar.ReplaceAliases(query);
+        // query = ar.ReplaceAliases(query);
         var steps = decomposer.Decompose(query);
 
         GenerateTablesWithOriginOnColumns(steps, visualisations);
         GenerateAnimations(visualisations);
         
-        ar.InsertAliases(visualisations);
+        // ar.InsertAliases(visualisations);
 
         return visualisations;
     }
