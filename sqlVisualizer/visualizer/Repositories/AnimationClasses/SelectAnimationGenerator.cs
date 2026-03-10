@@ -152,14 +152,17 @@ public static class SelectAnimationGenerator
         string function = column.Split(" over ")[0];
         string window = column.Split(" over ")[1];
         
-        Console.WriteLine("function: " + function);
-        Console.WriteLine("window: " + window);
+        // Extract the function column (e.g., "price" from "sum(price)")
+        var pattern = "\\((?<function>.*)\\)";
+        var match = Regex.Match(function, pattern, RegexOptions.IgnoreCase | RegexOptions.Singleline);
+        string functionColumn = match.Groups["function"].Value.Trim();
 
-        string? partitionPart;
-        string? orderPart;
+        // Extract PARTITION BY and ORDER BY clauses if they exist
+        string? partitionPart = null;
+        string? orderPart = null;
         
-        var pattern = @"\(\s*(?:partition\s+by\s+(?<partition>.*?))?\s*(?:order\s+by\s+(?<order>.*?))?\s*(?:rows|range|groups|$|\))";
-        var match = Regex.Match(window, pattern, RegexOptions.IgnoreCase | RegexOptions.Singleline);
+        pattern = @"\(\s*(?:partition\s+by\s+(?<partition>.*?))?\s*(?:order\s+by\s+(?<order>.*?))?(?:\s|rows|range|groups|\)|$)";
+        match = Regex.Match(window, pattern, RegexOptions.IgnoreCase | RegexOptions.Singleline);
         
         if (match.Success)
         {
@@ -172,7 +175,7 @@ public static class SelectAnimationGenerator
         
         if (function.Contains("sum(", StringComparison.InvariantCultureIgnoreCase))
         {
-            HandleWindowFunctionSum(fromTables, toTable, column, columnIndex, steps);
+            HandleWindowFunctionSum(fromTables, toTable, column, columnIndex, steps, functionColumn, partitionPart, orderPart);
             return;
         }
             
@@ -180,14 +183,14 @@ public static class SelectAnimationGenerator
     }
     
     private static void HandleWindowFunctionSum(List<Table> fromTables, Table toTable,
-        string column, int columnIndex, List<Action> steps)
+        string column, int columnIndex, List<Action> steps, string functionColumn, string? partitionColumn, string? orderColumn)
     {
         string window = column.Split(" over ")[1];
         
         // Check if there's a PARTITION BY clause
         if (window.Contains("partition by", StringComparison.InvariantCultureIgnoreCase))
         {
-            HandleWindowFunctionSumWithPartition(fromTables, toTable, columnIndex, steps, window);
+            HandleWindowFunctionSumWithPartition(fromTables, toTable, columnIndex, steps, functionColumn, partitionColumn, orderColumn);
         }
         else
         {
@@ -225,48 +228,38 @@ public static class SelectAnimationGenerator
         ]));
     }
     
-    private static void HandleWindowFunctionSumWithPartition(List<Table> fromTables, Table toTable, int columnIndex, List<Action> steps, string window)
+    private static void HandleWindowFunctionSumWithPartition(List<Table> fromTables, Table toTable, int columnIndex, 
+        List<Action> steps, string functionColumn, string? partitionColumn, string? orderColumn)
     {
-        // Extract partition columns from "partition by col1, col2, ..." 
-        var partitionPart = window.Substring(window.IndexOf("partition by", StringComparison.InvariantCultureIgnoreCase) + 12).Trim();
-        //var orderPart = partitionPart.Contains("order by", StringComparison.InvariantCultureIgnoreCase)
-        //    ? partitionPart.Substring(partitionPart.IndexOf("order by", StringComparison.InvariantCultureIgnoreCase))
-        //    : "";
-        string orderPart = "productname";
+        Table fromTableWithRowIndex = fromTables[0].DeepClone().AppendRowIndex();
         
-        Table orderedFromTable = fromTables[0].DeepClone().AppendRowIndex().OrderBy(orderPart, true);
-        
-        if (!string.IsNullOrEmpty(orderPart) && partitionPart.Contains("order by", StringComparison.InvariantCultureIgnoreCase))
-            partitionPart = partitionPart.Substring(0, partitionPart.IndexOf("order by", StringComparison.InvariantCultureIgnoreCase)).Trim();
-        
-        var partitionColumns = partitionPart.Split(',').Select(c => c.Trim()).ToList();
+        if (orderColumn != null)
+            fromTableWithRowIndex = fromTableWithRowIndex.OrderBy(orderColumn, true);
         
         // Find the column indices for partitioning in the source table
         var partitionColumnIndices = new List<int>();
-        foreach (var partCol in partitionColumns)
-        {
-            partitionColumnIndices.Add(fromTables[0].IndexOfColumn(partCol));
-        }
+        partitionColumnIndices.Add(fromTables[0].IndexOfColumn(partitionColumn));
         
-        int sumColumnIndex = fromTables[0].IndexOfColumn("price");
+        int sumColumnIndex = fromTables[0].IndexOfColumn(functionColumn);
         
         List<Partition> partitionsFromSource = [];
         
         // Group rows by partition values in source table
         var partitions = new Dictionary<string, int>();
-        for (int i = 0; i < orderedFromTable.Entries.Count; i++)
+        for (int i = 0; i < fromTableWithRowIndex.Entries.Count; i++)
         {
             //Console.WriteLine(orderedFromTable.Entries[i].Values[4].Value);
-            string partitionKey = GetPartitionKey(orderedFromTable, i, partitionColumnIndices);
+            string partitionKey = GetPartitionKey(fromTableWithRowIndex, i, partitionColumnIndices);
             if (!partitions.ContainsKey(partitionKey))
             {
                 partitions[partitionKey] = partitionsFromSource.Count;
                 partitionsFromSource.Add(new Partition([], []));
             }
-            partitionsFromSource[partitions[partitionKey]].RowIndices.Add(int.Parse(orderedFromTable.Entries[i].Values[4].Value));
-            partitionsFromSource[partitions[partitionKey]].Values.Add(int.Parse(orderedFromTable.Entries[i].Values[sumColumnIndex].Value));
+            partitionsFromSource[partitions[partitionKey]].RowIndices.Add(int.Parse(fromTableWithRowIndex.Entries[i].Values[fromTableWithRowIndex.ColumnNames.Count-1].Value));
+            partitionsFromSource[partitions[partitionKey]].Values.Add(int.Parse(fromTableWithRowIndex.Entries[i].Values[sumColumnIndex].Value));
         }
         
+        // Calculate cumulative sums for each source partition
         foreach (var partition in partitionsFromSource)
         {
             int sum = 0;
@@ -392,6 +385,9 @@ public static class SelectAnimationGenerator
     // Returns two aligned lists where index i is the same partition in source/result row-index space.
     private static (List<List<int>>, List<List<int>>) MatchPartitions(List<Partition> sourcePartitions, List<Partition> resultPartitions)
     {
+        Console.WriteLine("sourcePartitions: " + string.Join(" || ", sourcePartitions.Select(p => $"[{string.Join(",", p.Values)}]")));
+        Console.WriteLine("resultPartitions: " + string.Join(" || ", resultPartitions.Select(p => $"[{string.Join(",", p.Values)}]")));
+        
         var matchedSourcePartitions = new List<List<int>>();
         var matchedResultPartitions = new List<List<int>>();
 
