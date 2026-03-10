@@ -34,5 +34,7 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           script: |
+            ll
             cd /sqlvisualizer
-            ./deploy.sh
+            ll
+            bash deploy.sh
