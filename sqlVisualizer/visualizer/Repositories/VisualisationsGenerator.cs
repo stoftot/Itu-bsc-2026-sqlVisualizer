@@ -39,7 +39,7 @@ public class VisualisationsGenerator(SQLDecomposer decomposer, TableGenerator tg
             currSteps.Add(currStep);
             
             //Generate from tables
-            tg.GenerateFromTablesWithOriginColumns(currStep, fromTables, prevToTables);
+            tg.GenerateFromTablesWithOriginColumns(currStep, fromTables, prevToTables, currSteps);
             
             ValidateOriginColumnsCount(fromTables, currStep);
             
