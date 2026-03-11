@@ -1,0 +1,38 @@
+name: Deploy to digitalocean.yml
+on:
+  workflow_call:
+    secrets:
+        SSH_HOST:
+          required: true
+        SSH_USER:
+          required: true
+        SSH_KEY:
+          required: true
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        
+      - name: Upload docker-compose.yml to Server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          source: './sqlVisualizer/remote_files/'
+          target: '/sqlvisualizer/'
+          overwrite: true
+
+      - name: Deploy Application via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            cd /sqlvisualizer/sqlVisualizer/remote_files
+            bash deploy.sh

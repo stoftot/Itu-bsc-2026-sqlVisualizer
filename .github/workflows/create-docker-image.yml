@@ -1,0 +1,64 @@
+name: Create docker image
+on:
+  workflow_call:
+    secrets:
+      DOCKER_PASSWORD:
+        required: true
+      DOCKER_USERNAME:
+        required: true
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+        
+      - name: Get latest tag and increment
+        id: version
+        run: |
+          git fetch --tags
+          latest=$(git tag -l "v*" | sed 's/v//' | sort -n | tail -n 1)
+          if [ -z "$latest" ]; then
+            next=1
+          else
+            next=$((latest + 1))
+          fi
+          tag="v$next"
+          echo "Next tag: $tag"
+          echo "tag=$tag" >> $GITHUB_OUTPUT
+
+      - name: Push tag
+        run: |
+          git tag ${{ steps.version.outputs.tag }}
+          git push origin ${{ steps.version.outputs.tag }}
+            
+      - name: SETUP .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.x
+      
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./sqlVisualizer
+          file: ./sqlVisualizer/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/sqlvisualizer:latest
+            ${{ secrets.DOCKER_USERNAME }}/sqlvisualizer:${{ steps.version.outputs.tag }}
+          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/sqlvisualizer:webbuildcache
+          cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/sqlvisualizer:webbuildcache,mode=max

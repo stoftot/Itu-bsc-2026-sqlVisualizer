@@ -7,24 +7,24 @@ namespace visualizer.Components.Pages;
 public partial class Home : ComponentBase
 {
     [Inject] public required IHttpContextAccessor Http { get; init; }
-    [Inject] public required State State { get; init; }
-    private QueryIlustrationView QueryView; 
-    private string query = "";
-
+    [Inject] public required HomeState HomeState { get; init; }
+    private QueryIlustrationView QueryView = null!;
+    private string _query = "";
 
     protected override void OnInitialized()
     {
-        query = State.Queries[0].SQL;
-        State.SessionId = Http.HttpContext?.Request.Cookies["session_id"] ?? "unknown";
+        _query = HomeState.Queries[0].SQL;
+        HomeState.SessionId = Http.HttpContext?.Request.Cookies["session_id"] ?? "unknown";
     }
+
     protected override void OnAfterRender(bool firstRender)
     {
         if (!firstRender) return;
-        State.RunSQL = sql =>
+        HomeState.RunSQL = async sql =>
         {
-            query = sql;
-            StateHasChanged();
-            QueryView.Init();
+            _query = sql;
+            await InvokeAsync(StateHasChanged);
+            await QueryView.Init();
         };
     }
 }
