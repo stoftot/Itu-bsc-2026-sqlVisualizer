@@ -19,7 +19,10 @@ public class Table
 
     public required List<string> ColumnNames { get; init; }
     public required IReadOnlyList<TableEntry> Entries { get; init; }
-
+    public Table? AggregationTable { get; set; }
+    public bool AggregationVisible { get; private set; } = false;
+    
+    public void ToggleAggregationVisible() => AggregationVisible = !AggregationVisible;
     public Table DeepClone()
     {
         return new Table
