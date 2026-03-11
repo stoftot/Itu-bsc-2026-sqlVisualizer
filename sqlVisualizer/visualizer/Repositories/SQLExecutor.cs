@@ -56,7 +56,7 @@ public class SQLExecutor(DuckDBConnection connection)
                 , new SQLDecompositionComponent(SQLKeyword.SELECT, "")).Clause,
             @"(\s|\))\s*over\s*(\s|\()", RegexOptions.IgnoreCase | RegexOptions.Singleline)
                 .Success
-            && components.All(c => c.Keyword != SQLKeyword.GROUP_BY);
+            && components.All(c => c.Keyword != SQLKeyword.ORDER_BY);
             
         var queryBuilder = new StringBuilder();
         if (!containsSelect)
