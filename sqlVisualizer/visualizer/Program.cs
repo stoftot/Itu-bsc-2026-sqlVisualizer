@@ -67,7 +67,7 @@ builder.Services.AddScoped<TableGenerator>();
 builder.Services.AddScoped<TableOriginColumnsGenerator>();
 builder.Services.AddScoped<AliasReplacer>();
 builder.Services.AddScoped<VisualisationsGenerator>();
-builder.Services.AddScoped<State>();
+builder.Services.AddScoped<HomeState>();
 
 builder.Services.AddHttpContextAccessor();
 
