@@ -1,5 +1,6 @@
 ﻿using System.Drawing;
 using System.Text;
+using System.Text.RegularExpressions;
 using DuckDB.NET.Data;
 using visualizer.Models;
 
@@ -49,6 +50,14 @@ public class SQLExecutor(DuckDBConnection connection)
                                                c.Keyword == SQLKeyword.GROUP_BY) &&
                                            components.All(c =>
                                                c.Keyword != SQLKeyword.ORDER_BY);
+        var containsWindowFunctionAndNotOrderBy =
+            Regex.Match(
+            components.FirstOrDefault(c => c.Keyword == SQLKeyword.SELECT
+                , new SQLDecompositionComponent(SQLKeyword.SELECT, "")).Clause,
+            @"(\s|\))\s*over\s*(\s|\()", RegexOptions.IgnoreCase | RegexOptions.Singleline)
+                .Success
+            && components.All(c => c.Keyword != SQLKeyword.GROUP_BY);
+            
         var queryBuilder = new StringBuilder();
         if (!containsSelect)
         {
@@ -59,6 +68,13 @@ public class SQLExecutor(DuckDBConnection connection)
         {
             var groupBy = components.First(c => c.Keyword == SQLKeyword.GROUP_BY);
             components.Add(new SQLDecompositionComponent(SQLKeyword.ORDER_BY, groupBy.Clause));
+        }
+
+        if (containsWindowFunctionAndNotOrderBy)
+        {
+            var selectComponent = components.First(c => c.Keyword == SQLKeyword.SELECT);
+            var columnsToOrderBy = GetWindowFunctionsColumnsToGroupBy(selectComponent.Clause);
+            components.Add(new SQLDecompositionComponent(SQLKeyword.ORDER_BY, columnsToOrderBy));
         }
 
         foreach (var component in components.OrderBy(c => c.Keyword.SyntaxPrecedence()))
@@ -78,10 +94,39 @@ public class SQLExecutor(DuckDBConnection connection)
 
         if (component.Keyword == SQLKeyword.FROM)
         {
-            table.Name = component.Clause.Split(' ')[0];
+            table.Name = component.Clause.Split(' ')[0].Trim();
         }
 
         return table;
+    }
+
+    private string GetWindowFunctionsColumnsToGroupBy(string selectClause)
+    {
+        var windowFunctionMatch = Regex.Match(selectClause, 
+            @"\s*[^,]+?\bover\s*[^)]+\)[^,]+", RegexOptions.IgnoreCase | RegexOptions.Singleline);
+        var windowFunction = windowFunctionMatch.Groups[0].Value;
+
+        var columnsPartitionByMatch = Regex.Match(windowFunction,
+            @"PARTITION BY (.+?)\b\s+(?=[^,\s])", 
+            RegexOptions.IgnoreCase | RegexOptions.Singleline);
+        var columnsOrderByMatch = Regex.Match(windowFunction,
+            @"ORDER BY (.+?)\b\s+(?=[^,\s])", 
+            RegexOptions.IgnoreCase | RegexOptions.Singleline);
+
+        var columns = new StringBuilder();
+
+        if (columnsPartitionByMatch.Success)
+        {
+            columns.Append(columnsPartitionByMatch.Groups[1].Value);
+        }
+
+        if (columnsOrderByMatch.Success)
+        {
+            columns.Append(',');
+            columns.Append(columnsOrderByMatch.Groups[1].Value);
+        }
+        
+        return columns.ToString();
     }
 
     public async Task<Database> GetDatabase()
