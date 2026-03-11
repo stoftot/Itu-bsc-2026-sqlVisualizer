@@ -16,7 +16,7 @@ public static class SelectAnimationGenerator
         if (action.Clause.Trim().Equals("*"))
             return new Animation(steps);
 
-        steps.Add(tvm.HideTablesCellBased([toTable]));
+        steps.Add(tvm.HideTableCellBased(toTable));
 
         var columns = action.Clause.Split(',').Select(c => c.Trim()).ToList();
 
