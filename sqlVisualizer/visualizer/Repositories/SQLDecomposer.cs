@@ -30,7 +30,7 @@ public class SQLDecomposer
     {
         List<SQLDecompositionComponent> result = [];
         
-        sql = sql.ToLower().Replace("\nfrom ", " from ");
+        sql = sql.ToLower().Replace("\nfrom ", " from ").Replace(";", "");
         string selectSQL = sql.Split(" from ")[0].Replace("select ", "");
         sql = "from " + sql.Split(" from ")[1];
         
