@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using visualizer.Exstensions;
 using visualizer.Models;
+using visualizer.Utility;
 
 namespace visualizer.Repositories.AnimationClasses;
 
@@ -391,7 +392,7 @@ public static class SelectAnimationGenerator
                 var sourceRowIdx = sourceRowIndices[i];
                 var resultRowIdx = resultRowIndices[i];
 
-                tvm.ChangeHighlightColourCell(fromTables[0], sourceRowIdx, sumColumnIndex, "FF5733");
+                tvm.ChangeHighlightColourCell(fromTables[0], sourceRowIdx, sumColumnIndex, UtilColor.SecondaryHiglightColor);
                 steps.Add(tvm.CombineActions(
                 [
                     tvm.GenerateToggleHighlightCell(fromTables[0], sourceRowIdx, sumColumnIndex),
