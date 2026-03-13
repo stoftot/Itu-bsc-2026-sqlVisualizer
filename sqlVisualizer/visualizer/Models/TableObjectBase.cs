@@ -1,3 +1,5 @@
+using visualizer.Utility;
+
 namespace visualizer.Models;
 
 public abstract class TableObjectBase
@@ -19,8 +21,10 @@ public abstract class TableObjectBase
         return HighlightStyle;
     }
     
-    public void SetHighlightStyleDefault() => HighlightStyle = "background-color: #FFF3CD;";
+    public void SetHighlightStyleDefault() => SetHighlightHexColor(UtilColor.PrimaryHighlightColor);
+    public void SetHighlightStyleSecondary() => SetHighlightHexColor(UtilColor.SecondaryHiglightColor);
+    
 
     public void SetHighlightHexColor(string hexColor) =>
-        HighlightStyle = $"background-color: #{hexColor};";
+        HighlightStyle = $"background-color: {hexColor};";
 }
