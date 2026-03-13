@@ -1,3 +1,5 @@
+using System.Text.RegularExpressions;
+
 namespace visualizer.Utility;
 
 public static class UtilRegex
@@ -12,6 +14,7 @@ public static class UtilRegex
     public const string ExtractWindowFunctionFromSelectClausePattern = @"\s*[^,]+?\bover\s*[^)]+\)[^,]+";
     public const string ExtractColumnsFromPartitionByInWindowFunctionPattern = @"PARTITION BY (.+?)\b\s+(?=[^,\s])";
     public const string ExtractColumnsFromOrderByInWindowFunctionPattern = @"ORDER BY (.+?)\b\s+(?=[^,\s])";
+    public const string NamedWindowFunctionPattern = @"(?<function>\w+)\((?<argument>\w*)\).*OVER\s+\(\s*(?:PARTITION BY (?<partitions>.+?)\b\s+(?=[^,\s]))?(?:ORDER BY (?<orders>.+?)\b\s+(?=[^,\s]))?";
     // public const string Pattern = "";
     // public const string Pattern = "";
     // public const string Pattern = "";
@@ -30,5 +33,9 @@ public static class UtilRegex
     // public const string Pattern = "";
     // public const string Pattern = "";
     // public const string Pattern = "";
-    // public const string Pattern = "";
+    
+    public static Match Match(string input, string pattern)
+    {
+        return Regex.Match(input, pattern, RegexOptions.IgnoreCase | RegexOptions.Multiline);
+    }
 }

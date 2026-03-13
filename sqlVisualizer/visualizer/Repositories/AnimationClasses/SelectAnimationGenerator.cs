@@ -53,7 +53,7 @@ public static class SelectAnimationGenerator
             // Handel window functions
             if (column.ToLower().Contains(" over "))
             {
-                HandleWindowFunction(fromTables, toTable, column, toColumnIndex, steps);
+                HandleWindowFunction(fromTables[0], toTable, column, toColumnIndex, steps);
                 continue;
             }
             
@@ -238,55 +238,33 @@ public static class SelectAnimationGenerator
         }
     }
 
-    private static void HandleWindowFunction(List<Table> fromTables, Table toTable,
+    private static void HandleWindowFunction(Table fromTable, Table toTable,
         string column, int columnIndex, List<Action> steps)
     {
-        string function = column.Split(" over ")[0];
-        string window = column.Split(" over ")[1];
+        WindowFunction windowFunction = WindowFunction.FromString(column);
+        windowFunction.Print();
         
-        // Extract the function column (e.g., "price" from "sum(price)")
-        var pattern = "\\((?<function>.*)\\)";
-        var match = Regex.Match(function, pattern, RegexOptions.IgnoreCase | RegexOptions.Singleline);
-        string functionColumn = match.Groups["function"].Value.Trim();
-
-        // Extract PARTITION BY and ORDER BY clauses if they exist
-        string? partitionPart = null;
-        string? orderPart = null;
-        
-        pattern = @"\(\s*(?:partition\s+by\s+(?<partition>.*?))?\s*(?:order\s+by\s+(?<order>.*?))?(?:\s|rows|range|groups|\)|$)";
-        match = Regex.Match(window, pattern, RegexOptions.IgnoreCase | RegexOptions.Singleline);
-        
-        if (match.Success)
+        switch (windowFunction.Function.ToLower())
         {
-            partitionPart = match.Groups["partition"].Success ? match.Groups["partition"].Value.Trim() : null;
-            Console.WriteLine("partitionPart: " + partitionPart);
-            
-            orderPart = match.Groups["order"].Success ? match.Groups["order"].Value.Trim() : null;
-            Console.WriteLine("orderPart: " + orderPart);
+            case "sum":
+                HandleWindowFunctionSum(fromTable, toTable, windowFunction, columnIndex, steps);
+                break;
+            default:
+                throw new NotImplementedException($"the window function \"{windowFunction.Function}\" is not supported");
         }
-        
-        if (function.Contains("sum(", StringComparison.InvariantCultureIgnoreCase))
-        {
-            HandleWindowFunctionSum(fromTables, toTable, column, columnIndex, steps, functionColumn, partitionPart, orderPart);
-            return;
-        }
-            
-        throw new NotImplementedException($"the window function \"{function}\" is not supported");
     }
     
-    private static void HandleWindowFunctionSum(List<Table> fromTables, Table toTable,
-        string column, int columnIndex, List<Action> steps, string functionColumn, string? partitionColumn, string? orderColumn)
+    private static void HandleWindowFunctionSum(Table fromTable, Table toTable, WindowFunction windowFunction, 
+        int columnIndex, List<Action> steps)
     {
-        string window = column.Split(" over ")[1];
-        
-        // Check if there's a PARTITION BY clause
-        if (window.Contains("partition by", StringComparison.InvariantCultureIgnoreCase))
+        Table fromTableWithRowIndex = fromTable.DeepClone().AppendRowIndex();
+
+        if (windowFunction.Orders.Count > 0)
         {
-            HandleWindowFunctionSumWithPartition(fromTables, toTable, columnIndex, steps, functionColumn, partitionColumn, orderColumn);
-        }
-        else
-        {
-            HandleWindowFunctionSumNoPartition(fromTables, toTable, columnIndex, steps);
+            var orderNames = windowFunction.Orders;
+            orderNames.Reverse();
+            foreach (var orderName in orderNames)
+                fromTableWithRowIndex = fromTableWithRowIndex.OrderBy(orderName.Name, orderName.IsAscending);
         }
     }
     
