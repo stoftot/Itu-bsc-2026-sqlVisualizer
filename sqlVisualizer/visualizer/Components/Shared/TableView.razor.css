@@ -5,3 +5,33 @@
 .table-body-sm td {
     font-size: 0.75rem;
 }
+
+.table-wrapper {
+    display: inline-block;
+}
+
+.brace-and-text {
+    display: flex;
+    align-items: center;
+}
+
+.brace-svg {
+    width: 40px;   /* fixed width */
+    min-width: 40px;
+    height: 80%;
+    display: block;
+    transform: scaleX(-1) translateY(-8px);
+}
+
+.brace-text {
+    display: flex;
+    flex-direction: column;
+    padding-left: 0.5rem;
+    font-size: 0.75rem;
+    /*gap: 10px;*/
+    transform: translateY(-8px);
+}
+
+.brace-text-line {
+    white-space: nowrap;
+}

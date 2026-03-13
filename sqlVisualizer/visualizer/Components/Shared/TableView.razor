@@ -7,52 +7,78 @@
 }
 else
 {
-    if (Table.AggregationTable != null && Table.AggregationVisible)
-    {
-        <table class="table table-striped table-bordered table-sm mb-0">
-            <thead class="table-dark table-header-sm">
-            <tr>
-                @foreach (var columnName in Table.AggregationTable.ColumnNames)
-                {
-                    <th scope="col">@columnName</th>
-                }
-            </tr>
-            </thead>
+    @* if (Table.AggregationTable != null && Table.AggregationVisible) *@
+    @* { *@
+    @*     <table class="table table-striped table-bordered table-sm mb-0"> *@
+    @*         <thead class="table-dark table-header-sm"> *@
+    @*         <tr> *@
+    @*             @foreach (var columnName in Table.AggregationTable.ColumnNames) *@
+    @*             { *@
+    @*                 <th scope="col">@columnName</th> *@
+    @*             } *@
+    @*         </tr> *@
+    @*         </thead> *@
+    @* *@
+    @*         <tbody class="table-body-sm fw-bolder"> *@
+    @*         @foreach (var entry in Table.AggregationTable.Entries.Where(e => e.IsVisible)) *@
+    @*         { *@
+    @*             <tr style="@(entry.IsHighlighted ? entry.GetHighlightStyle() : null)"> *@
+    @*                 @foreach (var cell in entry.Values) *@
+    @*                 { *@
+    @*                     <td style="@cell.GetStyle()">@cell.Value</td> *@
+    @*                 } *@
+    @*             </tr> *@
+    @*         } *@
+    @*         </tbody> *@
+    @*     </table> *@
+    @* } *@
 
-            <tbody class="table-body-sm fw-bolder">
-            @foreach (var entry in Table.AggregationTable.Entries.Where(e => e.IsVisible))
-            {
-                <tr style="@(entry.IsHighlighted ? entry.GetHighlightStyle() : null)">
-                    @foreach (var cell in entry.Values)
+    <div class="d-flex align-items-stretch gap-2">
+        <div @ref="tableWrapper" class="table-wrapper">
+            <table class="table table-striped table-bordered table-sm">
+                <thead class="table-dark table-header-sm">
+                <tr>
+                    @foreach (var columnName in Table.ColumnNames)
                     {
-                        <td style="@cell.GetStyle()">@cell.Value</td>
+                        <th scope="col">@columnName</th>
                     }
                 </tr>
-            }
-            </tbody>
-        </table>
-    }
+                </thead>
 
-    <table class="table table-striped table-bordered table-sm">
-        <thead class="table-dark table-header-sm">
-        <tr>
-            @foreach (var columnName in Table.ColumnNames)
-            {
-                <th scope="col">@columnName</th>
-            }
-        </tr>
-        </thead>
-
-        <tbody class="table-body-sm fw-bolder">
-        @foreach (var entry in Table.Entries.Where(e => e.IsVisible))
-        {
-            <tr style="@(entry.IsHighlighted ? entry.GetHighlightStyle() : null)">
-                @foreach (var cell in entry.Values)
+                <tbody class="table-body-sm fw-bolder">
+                @foreach (var entry in Table.Entries.Where(e => e.IsVisible))
                 {
-                    <td style="@cell.GetStyle()">@cell.Value</td>
+                    <tr style="@(entry.IsHighlighted ? entry.GetHighlightStyle() : null)">
+                        @foreach (var cell in entry.Values)
+                        {
+                            <td style="@cell.GetStyle()">@cell.Value</td>
+                        }
+                    </tr>
                 }
-            </tr>
-        }
-        </tbody>
-    </table>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="brace-and-text" style="height:@($"{tableHeight}px")">
+            <svg class="brace-svg"
+                 width="32"
+                 height="@braceHeight"
+                 viewBox="0 0 32 @braceHeight"
+                 preserveAspectRatio="none">
+                <path d="@BracePath(braceHeight)"
+                      fill="none"
+                      stroke="black"
+                      stroke-width="2"/>
+            </svg>
+            <div class="brace-text">
+                @* <div class="brace-text-line">Line 1</div> *@
+                @* <div class="brace-text-line">Line 2</div> *@
+                @* <div class="brace-text-line">Line 3</div> *@
+                @* <div class="brace-text-line">This is a longer line to see what happens</div> *@
+                <div class="brace-text-line">Count 5</div>
+                <div class="brace-text-line">Avg 4</div>
+                <div class="brace-text-line">Sum 3</div>
+            </div>
+        </div>
+    </div>
 }
