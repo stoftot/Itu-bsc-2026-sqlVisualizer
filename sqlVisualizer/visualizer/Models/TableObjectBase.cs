@@ -22,7 +22,7 @@ public abstract class TableObjectBase
     }
     
     public void SetHighlightStyleDefault() => SetHighlightHexColor(UtilColor.PrimaryHighlightColor);
-    public void SetHighlightStyleSecondary() => SetHighlightHexColor(UtilColor.SecondaryHiglightColor);
+    public void SetHighlightStyleSecondary() => SetHighlightHexColor(UtilColor.SecondaryHighlightColor);
     
 
     public void SetHighlightHexColor(string hexColor) =>

@@ -22,7 +22,7 @@ public static class SelectAnimationGenerator
 
         steps.Add(tvm.HideTablesCellBased([toTable]));
         
-        //TODO: regex docent support window functions with end parentheses inside the over, like "over (..)...)" 
+        //TODO: regex dosen't support window functions with end parentheses inside the over, like "over (..)...)" 
         var windowFunctionMatch = Regex.Match(action.Clause, @"\s*[^,]+?\bover\s*[^)]+\)[^,]+", RegexOptions.IgnoreCase | RegexOptions.Singleline);
         List<string> columns;
         
@@ -60,24 +60,23 @@ public static class SelectAnimationGenerator
             if (column.Contains('('))
             {
                 HandleAggregateColumn(fromTables, toTable, column, toColumnIndex, steps);
+                continue;
+            }
+            
+            if (fromTables.Count == 1)
+            {
+                Action FromAnimationGenerator(int i) => tvm.GenerateToggleHighlightColumn(fromTables[0], i);
+
+                HandleNormalSelect(fromTables, toTable, column, toColumnIndex, steps, FromAnimationGenerator);
             }
             else
             {
-                if (fromTables.Count == 1)
-                {
-                    Action FromAnimationGenerator(int i) => tvm.GenerateToggleHighlightColumn(fromTables[0], i);
+                Action FromAnimationGenerator(int i) =>
+                    fromTables.Select(table => tvm.GenerateToggleHighlightCell(table, 0, i))
+                        .ToList()
+                        .ToOneAction();
 
-                    HandleNormalSelect(fromTables, toTable, column, toColumnIndex, steps, FromAnimationGenerator);
-                }
-                else
-                {
-                    Action FromAnimationGenerator(int i) =>
-                        fromTables.Select(table => tvm.GenerateToggleHighlightCell(table, 0, i))
-                            .ToList()
-                            .ToOneAction();
-
-                    HandleNormalSelect(fromTables, toTable, column, toColumnIndex, steps, FromAnimationGenerator);
-                }
+                HandleNormalSelect(fromTables, toTable, column, toColumnIndex, steps, FromAnimationGenerator);
             }
         }
 
@@ -392,7 +391,7 @@ public static class SelectAnimationGenerator
                 var sourceRowIdx = sourceRowIndices[i];
                 var resultRowIdx = resultRowIndices[i];
 
-                tvm.ChangeHighlightColourCell(fromTables[0], sourceRowIdx, sumColumnIndex, UtilColor.SecondaryHiglightColor);
+                tvm.ChangeHighlightColourCell(fromTables[0], sourceRowIdx, sumColumnIndex, UtilColor.SecondaryHighlightColor);
                 steps.Add(tvm.CombineActions(
                 [
                     tvm.GenerateToggleHighlightCell(fromTables[0], sourceRowIdx, sumColumnIndex),
