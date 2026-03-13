@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 using visualizer.Models;
+using visualizer.Utility;
 
 namespace Visualizer;
 
@@ -16,7 +17,7 @@ public class AliasReplacer
             return sql;
         
         var selectMatch =
-            Regex.Match(sql, @"SELECT\s+.*?\s+FROM", RegexOptions.IgnoreCase | RegexOptions.Singleline);
+            Regex.Match(sql, UtilRegex.SelectToFromInclusivePattern, RegexOptions.IgnoreCase | RegexOptions.Singleline);
         var selectPart = selectMatch.Groups[0].Value;
         
         var queryBodyMatch =
@@ -68,9 +69,8 @@ public class AliasReplacer
     private void ExtractTableAliases(string sql)
     {
         //match from
-        var pattern = @"(?:FROM)\s+([^\s]+?)\s(?:as\s+|\s*)([^\s]+?)\s+(?:JOIN|INNER JOIN|LEFT JOIN|RIGHT JOIN|FULL JOIN|CROSS JOIN|NATURAL JOIN|WHERE|GROUP BY|HAVING|ORDER BY|LIMIT|OFFSET|WINDOW|UNION|INTERSECT|EXCEPT)\s";
         var match =
-            Regex.Match(sql, pattern, RegexOptions.IgnoreCase);
+            Regex.Match(sql, UtilRegex.AliasForFromTablePattern, RegexOptions.IgnoreCase);
         
         if (match.Success)
         {
@@ -81,9 +81,8 @@ public class AliasReplacer
         }
         
         //match joins
-        pattern = @"(?:JOIN)\s+([^\s]+?)\s(?:as\s+|\s*)([^\s]+?)\s+(?:ON)\s";
         var matches =
-            Regex.Matches(sql, pattern, RegexOptions.IgnoreCase);
+            Regex.Matches(sql, UtilRegex.AliasForJoinsPattern, RegexOptions.IgnoreCase);
 
         foreach (Match m in matches)
         {
@@ -98,15 +97,14 @@ public class AliasReplacer
     {
         // Extract the SELECT clause (from SELECT to FROM)
         var selectMatch =
-            Regex.Match(sql, @"SELECT\s+(.*?)\s+FROM", RegexOptions.IgnoreCase | RegexOptions.Singleline);
+            Regex.Match(sql, UtilRegex.SelectClausePattern, RegexOptions.IgnoreCase | RegexOptions.Singleline);
         if (!selectMatch.Success)
             return;
 
         var selectClause = selectMatch.Groups[1].Value;
-
-        var pattern = $@"{SELECTKeywordsAsRegexExlusion()}([^,]+?)(?:\s)(?:as\s+|\s*)(.+?)(?:,|$)";
+        
         var matches =
-            Regex.Matches(selectClause, pattern, RegexOptions.IgnoreCase);
+            Regex.Matches(selectClause, UtilRegex.ExtractAliasForSelectClausePattern, RegexOptions.IgnoreCase);
 
         foreach (Match match in matches)
         {
@@ -115,24 +113,5 @@ public class AliasReplacer
 
             SelectAliasMap[tableName] = alias;
         }
-    }
-    
-    private readonly List<string> SELECTKeyWords = ["DISTINCT"];
-    private string SELECTKeywordsAsRegexExlusion ()
-    {
-        var regexPattern = new StringBuilder();
-        regexPattern.Append("\\b(?!");
-        for (int i = 0; i < SELECTKeyWords.Count; i++)
-        {
-            if (i > 0)
-            {
-                regexPattern.Append('|');
-            }
-            regexPattern.Append(SELECTKeyWords[i]);
-            regexPattern.Append("\\b");
-        }
-
-        regexPattern.Append(')');
-        return regexPattern.ToString();
     }
 }
