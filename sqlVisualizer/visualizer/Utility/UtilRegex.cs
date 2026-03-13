@@ -8,9 +8,10 @@ public static class UtilRegex
     public const string SelectToFromInclusivePattern = @"SELECT\s+.*?\s+FROM";
     public const string SelectClausePattern = @"SELECT\s+(.*?)\s+FROM";
     public const string ExtractAliasForSelectClausePattern = @"\b(?!DISTINCT)\b([^,]+?)(?:\s)(?:as\s+|\s*)(.+?)(?:,|$)";
-    // public const string Pattern = "";
-    // public const string Pattern = "";
-    // public const string Pattern = "";
+    public const string ContainsWindowFunctionPattern = @"(\s|\))\s*over\s*(\s|\()";
+    public const string ExtractWindowFunctionFromSelectClausePattern = @"\s*[^,]+?\bover\s*[^)]+\)[^,]+";
+    public const string ExtractColumnsFromPartitionByInWindowFunctionPattern = @"PARTITION BY (.+?)\b\s+(?=[^,\s])";
+    public const string ExtractColumnsFromOrderByInWindowFunctionPattern = @"ORDER BY (.+?)\b\s+(?=[^,\s])";
     // public const string Pattern = "";
     // public const string Pattern = "";
     // public const string Pattern = "";

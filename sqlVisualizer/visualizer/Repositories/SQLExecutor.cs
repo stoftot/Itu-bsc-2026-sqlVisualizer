@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using DuckDB.NET.Data;
 using visualizer.Models;
+using visualizer.Utility;
 
 namespace visualizer.Repositories;
 
@@ -54,7 +55,7 @@ public class SQLExecutor(DuckDBConnection connection)
             Regex.Match(
             components.FirstOrDefault(c => c.Keyword == SQLKeyword.SELECT
                 , new SQLDecompositionComponent(SQLKeyword.SELECT, "")).Clause,
-            @"(\s|\))\s*over\s*(\s|\()", RegexOptions.IgnoreCase | RegexOptions.Singleline)
+            UtilRegex.ContainsWindowFunctionPattern, RegexOptions.IgnoreCase | RegexOptions.Singleline)
                 .Success
             && components.All(c => c.Keyword != SQLKeyword.ORDER_BY);
             
@@ -103,14 +104,14 @@ public class SQLExecutor(DuckDBConnection connection)
     private string GetWindowFunctionsColumnsToGroupBy(string selectClause)
     {
         var windowFunctionMatch = Regex.Match(selectClause, 
-            @"\s*[^,]+?\bover\s*[^)]+\)[^,]+", RegexOptions.IgnoreCase | RegexOptions.Singleline);
+            UtilRegex.ExtractWindowFunctionFromSelectClausePattern, RegexOptions.IgnoreCase | RegexOptions.Singleline);
         var windowFunction = windowFunctionMatch.Groups[0].Value;
 
         var columnsPartitionByMatch = Regex.Match(windowFunction,
-            @"PARTITION BY (.+?)\b\s+(?=[^,\s])", 
+            UtilRegex.ExtractColumnsFromPartitionByInWindowFunctionPattern, 
             RegexOptions.IgnoreCase | RegexOptions.Singleline);
         var columnsOrderByMatch = Regex.Match(windowFunction,
-            @"ORDER BY (.+?)\b\s+(?=[^,\s])", 
+            UtilRegex.ExtractColumnsFromOrderByInWindowFunctionPattern, 
             RegexOptions.IgnoreCase | RegexOptions.Singleline);
 
         var columns = new StringBuilder();
