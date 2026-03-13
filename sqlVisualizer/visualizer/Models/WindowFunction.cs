@@ -2,7 +2,7 @@
 
 namespace visualizer.Models;
 
-public record Order(string Name, bool IsAscending);
+public record Order(string ColumnName, bool IsAscending);
 public class WindowFunction
 {
     public required string SQL { get; init; }

@@ -261,10 +261,23 @@ public static class SelectAnimationGenerator
 
         if (windowFunction.Orders.Count > 0)
         {
-            var orderNames = windowFunction.Orders;
-            orderNames.Reverse();
-            foreach (var orderName in orderNames)
-                fromTableWithRowIndex = fromTableWithRowIndex.OrderBy(orderName.Name, orderName.IsAscending);
+            var orders = windowFunction.Orders;
+            orders.Reverse();
+            foreach (var order in orders)
+                fromTableWithRowIndex = fromTableWithRowIndex.OrderBy(order.ColumnName, order.IsAscending);
+        }
+
+        if (windowFunction.PartitionNames.Count > 0)
+        {
+            List<int> partitionIndices = windowFunction.PartitionNames.Select(p => fromTableWithRowIndex.IndexOfColumn(p)).ToList();
+            var t = fromTableWithRowIndex.Entries
+                .GroupBy(e => string.Join(", ", partitionIndices.Select(i => e.Values[i].Value)))
+                .OrderBy(g => g.Key)
+                .ToList();
+            Console.WriteLine("Partitions:" +  string.Join(", ", t.Select(g => g.Key)));
+            Console.WriteLine("Partitions entries:" +  string.Join(" | ", t.Select(g => string.Join(", ", g.Select(b => b.Values[4].Value)))));
+            Console.WriteLine("Partitions entries:" +  string.Join(", ", t.Select(g => string.Join(", ", g.Select(b => b.Values[1].Value)))));
+            Console.WriteLine("Partitions entries:" +  string.Join(", ", t.Select(g => string.Join(", ", g.Select(b => b.Values[2].Value)))));
         }
     }
     
