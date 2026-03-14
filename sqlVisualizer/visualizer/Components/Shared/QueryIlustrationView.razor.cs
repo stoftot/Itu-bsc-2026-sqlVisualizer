@@ -23,6 +23,7 @@ public class QueryIllustrationViewBase : ComponentBase, IDisposable
 
     private int IndexOfStepToHighlight => _indexOfStepToHighlight;
     private Visualisation CurrStep => Steps[IndexOfStepToHighlight];
+    protected bool ShowAggregation => FromTables.Count != 0 && FromTables[0].Aggregations.Count != 0;
 
     protected override void OnInitialized()
     {
