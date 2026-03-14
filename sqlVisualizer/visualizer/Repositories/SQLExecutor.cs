@@ -103,31 +103,43 @@ public class SQLExecutor(DuckDBConnection connection)
 
     private string GetWindowFunctionsColumnsToGroupBy(string selectClause)
     {
-        var windowFunctionMatch = Regex.Match(selectClause, 
+        var windowFunctionMatch = Regex.Match(selectClause,
             UtilRegex.ExtractWindowFunctionFromSelectClausePattern, RegexOptions.IgnoreCase | RegexOptions.Singleline);
         var windowFunction = windowFunctionMatch.Groups[0].Value;
 
         var columnsPartitionByMatch = Regex.Match(windowFunction,
-            UtilRegex.ExtractColumnsFromPartitionByInWindowFunctionPattern, 
+            UtilRegex.ExtractColumnsFromPartitionByInWindowFunctionPattern,
             RegexOptions.IgnoreCase | RegexOptions.Singleline);
         var columnsOrderByMatch = Regex.Match(windowFunction,
-            UtilRegex.ExtractColumnsFromOrderByInWindowFunctionPattern, 
+            UtilRegex.ExtractColumnsFromOrderByInWindowFunctionPattern,
             RegexOptions.IgnoreCase | RegexOptions.Singleline);
+        var orderDesc = Regex.Match(windowFunction,
+            "ORDER BY.*DESC", RegexOptions.IgnoreCase | RegexOptions.Singleline);
 
-        var columns = new StringBuilder();
+        var columns = new List<string>();
 
         if (columnsPartitionByMatch.Success)
         {
-            columns.Append(columnsPartitionByMatch.Groups[1].Value);
+            foreach (var column in columnsPartitionByMatch.Groups[1].Value.Split(','))
+            {
+                var c = column.Trim();
+                if (columns.Contains(c)) continue;
+                columns.Add(c);
+            }
         }
 
         if (columnsOrderByMatch.Success)
         {
-            columns.Append(',');
-            columns.Append(columnsOrderByMatch.Groups[1].Value);
+            foreach (var column in columnsOrderByMatch.Groups[1].Value.Split(','))
+            {
+                var c = column.Trim();
+                if (columns.Contains(c)) continue;
+                columns.Add(c);
+            }
         }
-        
-        return columns.ToString();
+
+        var result = string.Join(",", columns);
+        return result + (orderDesc.Success ? " DESC" : " ASC");
     }
 
     public async Task<Database> GetDatabase()
