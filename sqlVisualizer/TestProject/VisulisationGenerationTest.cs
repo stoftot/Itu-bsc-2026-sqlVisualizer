@@ -119,6 +119,9 @@ public class VisulisationGenerationTest : IClassFixture<DuckDbFixture>
                 SELECT coUnT() FROM purchase
                 """)]
     [InlineData("""
+                SELECT COUNT(username) FROM purchase
+                """)]
+    [InlineData("""
                 SELECT username, SUM(price)
                 FROM purchase
                 JOIN product ON purchase.productname = product.productname

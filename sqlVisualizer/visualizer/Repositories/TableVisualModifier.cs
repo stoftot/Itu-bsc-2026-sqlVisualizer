@@ -72,6 +72,9 @@ public class TableVisualModifier
         };
     }
 
+    public Action GenerateToggleHighlightColumns(Table table, List<int> indexes)
+        => indexes.Select(i => GenerateToggleHighlightColumn(table, i)).ToOneAction();
+
     public Action GenerateToggleVisibleColumn(Table table, int index)
     {
         return () =>
@@ -118,7 +121,6 @@ public class TableVisualModifier
     public Action ToggleHighlightAggregations(Table table) =>
         table.Aggregations
             .Select(aggr => (Action)aggr.ToggleHighlight)
-            .ToList()
             .ToOneAction();
     
     public Action CombineActions(List<Action> a, List<Action> b)

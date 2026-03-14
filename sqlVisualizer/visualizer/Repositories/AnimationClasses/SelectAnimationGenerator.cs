@@ -69,15 +69,15 @@ public static class SelectAnimationGenerator
         switch (keyword)
         {
             case SQLAggregateFunctionsKeyword.COUNT:
-                HandleCountAggregate(fromTables, toTable, parts[1].Replace(')', ' ').Trim(), toColumnIndex, steps);
+                HandleCountAggregate(fromTables, toTable, parts[1].Trim()[..^1], toColumnIndex, steps);
                 break;
             case SQLAggregateFunctionsKeyword.SUM:
             case SQLAggregateFunctionsKeyword.AVG:
-                HandleSumAndAvgAggregate(fromTables, toTable, parts[1].Replace(')', ' ').Trim(), toColumnIndex, steps);
+                HandleSumAndAvgAggregate(fromTables, toTable, parts[1].Trim()[..^1], toColumnIndex, steps);
                 break;
             case SQLAggregateFunctionsKeyword.MIN:
             case SQLAggregateFunctionsKeyword.MAX:
-                HandleMinAndMaxAggregate(fromTables, toTable, parts[1].Replace(')', ' ').Trim(), toColumnIndex, steps);
+                HandleMinAndMaxAggregate(fromTables, toTable, parts[1].Trim()[..^1], toColumnIndex, steps);
                 break;
             default:
                 throw new ArgumentOutOfRangeException();
@@ -108,54 +108,39 @@ public static class SelectAnimationGenerator
         }
         else
         {
-            throw new NotImplementedException();
+            //TODO: right now only supports count on specific columns
+            HandleAggregateSpecificColumns(fromTables, toTable, parameter, toColumnIndex, steps);
         }
     }
 
     private static void HandleSumAndAvgAggregate(List<Table> fromTables, Table toTable,
         string parameter, int toColumnIndex, List<Action> steps)
     {
-        //TODO: right now only supports summing and avg on single columns
-        var fromColumnIndex = 0;
-        try
-        {
-             fromColumnIndex = fromTables[0].IndexOfColumn(parameter);
-        }
-        catch (ArgumentException e)
-        {
-            throw new NotSupportedException("The column wasn't found, and sum and avg only supports summing specific columns", e);
-        }
-
-        int i = 0;
-        foreach (var table in fromTables)
-        {
-            steps.Add(tvm.CombineActions(
-            [
-                tvm.GenerateToggleHighlightColumn(table, fromColumnIndex),
-                tvm.GenerateToggleVisibleCell(toTable, i, toColumnIndex),
-                tvm.GenerateToggleHighlightCell(toTable, i, toColumnIndex)
-            ]));
-
-            steps.Add(tvm.CombineActions(
-            [
-                tvm.GenerateToggleHighlightColumn(table, fromColumnIndex),
-                tvm.GenerateToggleHighlightCell(toTable, i++, toColumnIndex)
-            ]));
-        }
+        //TODO: right now only supports summing and avg on specific columns
+        HandleAggregateSpecificColumns(fromTables, toTable, parameter, toColumnIndex, steps);
     }
     
     private static void HandleMinAndMaxAggregate(List<Table> fromTables, Table toTable,
         string parameter, int toColumnIndex, List<Action> steps)
     {
-        //TODO: right now only supports min and max on single columns
-        var fromColumnIndex = 0;
+        //TODO: right now only supports min and max on specific columns
+        HandleAggregateSpecificColumns(fromTables, toTable, parameter, toColumnIndex, steps);
+    }
+
+    private static void HandleAggregateSpecificColumns(List<Table> fromTables, Table toTable,
+        string parameters, int toColumnIndex, List<Action> steps)
+    {
+        var fromColumnIndexes = new List<int>();
         try
         {
-            fromColumnIndex = fromTables[0].IndexOfColumn(parameter);
+            foreach (var param in parameters.Split(','))
+            {
+                fromColumnIndexes.Add(fromTables[0].IndexOfColumn(param));
+            }
         }
         catch (ArgumentException e)
         {
-            throw new NotSupportedException("The column wasn't found, and min and max only supports summing specific columns", e);
+            throw new NotSupportedException("The column wasn't found, this method only handles a specific columns", e);
         }
 
         int i = 0;
@@ -163,14 +148,14 @@ public static class SelectAnimationGenerator
         {
             steps.Add(tvm.CombineActions(
             [
-                tvm.GenerateToggleHighlightColumn(table, fromColumnIndex),
+                tvm.GenerateToggleHighlightColumns(table, fromColumnIndexes),
                 tvm.GenerateToggleVisibleCell(toTable, i, toColumnIndex),
                 tvm.GenerateToggleHighlightCell(toTable, i, toColumnIndex)
             ]));
 
             steps.Add(tvm.CombineActions(
             [
-                tvm.GenerateToggleHighlightColumn(table, fromColumnIndex),
+                tvm.GenerateToggleHighlightColumns(table, fromColumnIndexes),
                 tvm.GenerateToggleHighlightCell(toTable, i++, toColumnIndex)
             ]));
         }
