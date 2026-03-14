@@ -267,17 +267,34 @@ public static class SelectAnimationGenerator
                 fromTableWithRowIndex = fromTableWithRowIndex.OrderBy(order.ColumnName, order.IsAscending);
         }
 
+        List<List<int>> partitions = [];
+        int rowIndexColumnIndex = fromTableWithRowIndex.IndexOfColumn(Table.RowIndexColumnName);
+
         if (windowFunction.PartitionNames.Count > 0)
         {
-            int RowIndexColumnIndex = fromTableWithRowIndex.IndexOfColumn(Table.RowIndexColumnName);
             List<int> partitionIndices = windowFunction.PartitionNames
                 .Select(p => fromTableWithRowIndex.IndexOfColumn(p)).ToList();
-            var t = fromTableWithRowIndex.Entries
+            partitions = fromTableWithRowIndex.Entries
                 .GroupBy(e => string.Join(", ", partitionIndices.Select(i => e.Values[i].Value)))
                 .OrderBy(g => g.Key)
-                .Select(g => g.Select(e => int.Parse(e.Values[RowIndexColumnIndex].Value)).ToList())
+                .Select(g => g.Select(e => int.Parse(e.Values[rowIndexColumnIndex].Value)).ToList())
                 .ToList();
-            Console.WriteLine("Partitions entries:" +  string.Join(" | ", t.Select(g => string.Join(", ", g))));
+        }
+        else
+        {
+            partitions = [fromTableWithRowIndex.Entries.Select(e => int.Parse(e.Values[rowIndexColumnIndex].Value)).ToList()];
+        }
+        
+        Console.WriteLine("Partitions entries:" +  string.Join(" | ", partitions.Select(g => string.Join(", ", g))));
+
+        int resultTableRowIndex = 0;
+        foreach (var partition in partitions)
+        {
+            // First, highlight all rows in this partition in the source table
+            var partitionRowActions = partition
+                .Select(rowIdx => tvm.GenerateToggleHighlightRow(fromTable.Entries[rowIdx]))
+                .ToList();
+            steps.Add(tvm.CombineActions(partitionRowActions));
         }
     }
     

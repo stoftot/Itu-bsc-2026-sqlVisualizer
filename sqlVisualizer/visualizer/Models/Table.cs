@@ -79,10 +79,10 @@ public class Table
         }
 
         List<string> names = ColumnNames.ToList();
-        names.Add("RowIndexColumnName");
+        names.Add(RowIndexColumnName);
         
         List<string> originNames = ColumnsOriginalTableNames.ToList();
-        originNames.Add("RowIndexColumnName");
+        originNames.Add(RowIndexColumnName);
         
         return new Table
         {
