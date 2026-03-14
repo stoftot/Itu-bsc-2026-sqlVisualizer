@@ -75,16 +75,14 @@ public class TableGenerator(SQLExecutor sqlExecutor, TableOriginColumnsGenerator
             var fromTable = fromTables[i];
             var aggregationResult = aggregationResults.Entries[i];
             
-            // fromTable.ColumnNames.AddRange(aggregationResults.ColumnNames);
-            // fromTable.ColumnsOriginalTableNames.AddRange(Enumerable.Repeat<string>("()", aggregationResults.ColumnNames.Count));
-            // fromTable.Entries[0].Values.AddRange(aggregationResult.Values);
-
-            fromTable.AggregationTable = new Table()
+            foreach (var (name, tableValue) in aggregationResults.ColumnNames.Zip(aggregationResult.Values))
             {
-                Name = "()",
-                ColumnNames = aggregationResults.ColumnNames,
-                Entries = [aggregationResult]
-            };
+                fromTable.Aggregations.Add(new Aggregation()
+                {
+                    Name = name,
+                    Value = tableValue.Value
+                });
+            }
         }
     }
 
@@ -170,10 +168,12 @@ public class TableGenerator(SQLExecutor sqlExecutor, TableOriginColumnsGenerator
         var startOfAggregation = fromTables[0].ColumnsOriginalTableNames.IndexOf("()");
         foreach (var fromTable in fromTables)
         {
-            var aggregationValues = aggregationResults.Entries[aggregationIndex].Values;
+            var aggregationValues = aggregationResults.Entries[aggregationIndex].Values
+                .Select(v => v.Value);
             // var fromValues = fromTable.Entries[0].Values.GetRange(startOfAggregation, fromTable.Entries[0].Values.Count - startOfAggregation);
-            if(fromTable.AggregationTable is null) throw new ArgumentException("AggregationTable cannot be null");
-            var fromValues = fromTable.AggregationTable.Entries[0].Values;
+            if(fromTable.Aggregations.Count == 0) throw new ArgumentException("Aggregations cannot be empty");
+            var fromValues = fromTable.Aggregations
+                .Select(a => a.Value);
             
             if (aggregationValues.SequenceEqual(fromValues))
             {

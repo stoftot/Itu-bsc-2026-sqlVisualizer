@@ -99,11 +99,6 @@ public class TableVisualModifier
         return table.Entries[row].Values[column].ToggleVisible;
     }
 
-    public Action GenerateToggleVisibleAggregaton(Table table)
-    {
-        return table.ToggleAggregationVisible;
-    }
-
     public Action HideTableCellBased(Table table)
     {
         var hide = new List<Action>();

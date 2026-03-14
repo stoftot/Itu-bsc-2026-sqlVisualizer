@@ -14,12 +14,7 @@ public static class HavingAnimationGenerator
         var toTableIndex = 0;
         foreach (var fromTable in fromTables)
         {
-            var step = new List<Action>
-            {
-                tvm.ChangeHighlightColourRow(fromTable.AggregationTable!, 0, "146af5"),
-                tvm.GenerateToggleVisibleAggregaton(fromTable),
-                tvm.GenerateToggleHighlightRow(fromTable.AggregationTable!.Entries[0])
-            };
+            var step = new List<Action>();
 
             if (toTableIndex !>= toTables.Count &&
                 fromTable.Entries.SequenceEqual(toTables[toTableIndex].Entries))
