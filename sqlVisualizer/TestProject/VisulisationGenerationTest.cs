@@ -50,6 +50,11 @@ public class VisulisationGenerationTest : IClassFixture<DuckDbFixture>
                 SELECT productname, username FROM purchase
                 where username LIKE 'M%'
                 """)]
+    [InlineData("""
+                SELECT * FROM shift
+                GROUP BY day, cashier
+                """
+        )]
     public void Where(string query)
     {
         TestQuery(query);

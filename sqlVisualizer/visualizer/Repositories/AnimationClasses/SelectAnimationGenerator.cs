@@ -11,10 +11,16 @@ public static class SelectAnimationGenerator
         SQLDecompositionComponent action)
     {
         var steps = new List<Action>();
-
-        //TODO: Figuure out how we want to handle select *
+        
         if (action.Clause.Trim().Equals("*"))
-            return new Animation(steps);
+        {
+            var step = tvm.CombineActions([
+                tvm.GenerateToggleHighlightTables(fromTables),
+                tvm.GenerateToggleHighlightTable(toTable)
+            ]);
+            
+            return new Animation([step, step]);
+        }
 
         steps.Add(tvm.HideTableCellBased(toTable));
 

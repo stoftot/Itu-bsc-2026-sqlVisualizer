@@ -111,6 +111,9 @@ public class TableVisualModifier
 
     public Action GenerateToggleHighlightTable(Table table)
         => table.Entries.Select(GenerateToggleHighlightRow).ToOneAction();
+    
+    public Action GenerateToggleHighlightTables(List<Table> tables) 
+        => tables.Select(GenerateToggleHighlightTable).ToOneAction();
 
     public Action ToggleHighlightAggregations(Table table) =>
         table.Aggregations
