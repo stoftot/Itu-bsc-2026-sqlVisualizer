@@ -19,6 +19,7 @@ public class Table
 
     public required List<string> ColumnNames { get; init; }
     public required IReadOnlyList<TableEntry> Entries { get; init; }
+    public const string RowIndexColumnName = "RowIndex";
 
     public Table DeepClone()
     {
@@ -78,10 +79,10 @@ public class Table
         }
 
         List<string> names = ColumnNames.ToList();
-        names.Add("index");
+        names.Add("RowIndexColumnName");
         
         List<string> originNames = ColumnsOriginalTableNames.ToList();
-        originNames.Add("index");
+        originNames.Add("RowIndexColumnName");
         
         return new Table
         {

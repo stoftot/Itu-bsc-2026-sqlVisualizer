@@ -269,15 +269,15 @@ public static class SelectAnimationGenerator
 
         if (windowFunction.PartitionNames.Count > 0)
         {
-            List<int> partitionIndices = windowFunction.PartitionNames.Select(p => fromTableWithRowIndex.IndexOfColumn(p)).ToList();
+            int RowIndexColumnIndex = fromTableWithRowIndex.IndexOfColumn(Table.RowIndexColumnName);
+            List<int> partitionIndices = windowFunction.PartitionNames
+                .Select(p => fromTableWithRowIndex.IndexOfColumn(p)).ToList();
             var t = fromTableWithRowIndex.Entries
                 .GroupBy(e => string.Join(", ", partitionIndices.Select(i => e.Values[i].Value)))
                 .OrderBy(g => g.Key)
+                .Select(g => g.Select(e => int.Parse(e.Values[RowIndexColumnIndex].Value)).ToList())
                 .ToList();
-            Console.WriteLine("Partitions:" +  string.Join(", ", t.Select(g => g.Key)));
-            Console.WriteLine("Partitions entries:" +  string.Join(" | ", t.Select(g => string.Join(", ", g.Select(b => b.Values[4].Value)))));
-            Console.WriteLine("Partitions entries:" +  string.Join(", ", t.Select(g => string.Join(", ", g.Select(b => b.Values[1].Value)))));
-            Console.WriteLine("Partitions entries:" +  string.Join(", ", t.Select(g => string.Join(", ", g.Select(b => b.Values[2].Value)))));
+            Console.WriteLine("Partitions entries:" +  string.Join(" | ", t.Select(g => string.Join(", ", g))));
         }
     }
     
