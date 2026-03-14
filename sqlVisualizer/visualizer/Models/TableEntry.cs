@@ -16,6 +16,11 @@ public class TableEntry : TableObjectBase
         };
     }
 
+    public override bool Equals(object? obj)
+    {
+        return Values.SequenceEqual(((TableEntry)obj).Values);
+    }
+
     public ImmutableArray<TableValue> ValuesAsImmutableArray(ICollection<int> columnIndexes)
     {
         return columnIndexes
