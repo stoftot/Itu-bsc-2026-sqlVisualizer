@@ -1,4 +1,6 @@
-﻿namespace visualizer.Models;
+﻿using visualizer.Utility;
+
+namespace visualizer.Models;
 
 public class Table
 {
@@ -60,4 +62,7 @@ public class Aggregation
     public required string Name { get; set; }
     public required string Value  { get; set; }
     
+    public string HexBackGroundColor { get; set; } = UtilColor.SecondaryHiglightColor;
+    public bool IsHighlighted { get; set; } = false;
+    public void ToggleHighlight() => IsHighlighted = !IsHighlighted;
 }

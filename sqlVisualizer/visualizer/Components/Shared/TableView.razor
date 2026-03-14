@@ -37,9 +37,9 @@ else
                 @if (ShowAggregation) 
                 {
                     <div class="col-auto">
-                        @foreach (var text in Table.Aggregations)
+                        @foreach (var aggr in Table.Aggregations)
                         {
-                            <div class="aggregation-text-line">@text.Name = @text.Value</div>
+                            <div style="@(aggr.IsHighlighted ? $"background-color: {aggr.HexBackGroundColor}" : null)" class="aggregation-text-line">@aggr.Name = @aggr.Value</div>
                         }
                     </div>
                 }
