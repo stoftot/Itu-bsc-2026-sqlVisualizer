@@ -113,8 +113,6 @@ public class SQLExecutor(DuckDBConnection connection)
         var columnsOrderByMatch = Regex.Match(windowFunction,
             UtilRegex.ExtractColumnsFromOrderByInWindowFunctionPattern,
             RegexOptions.IgnoreCase | RegexOptions.Singleline);
-        var orderDesc = Regex.Match(windowFunction,
-            "ORDER BY.*DESC", RegexOptions.IgnoreCase | RegexOptions.Singleline);
 
         var columns = new List<string>();
 
@@ -130,16 +128,16 @@ public class SQLExecutor(DuckDBConnection connection)
 
         if (columnsOrderByMatch.Success)
         {
-            foreach (var column in columnsOrderByMatch.Groups[1].Value.Split(','))
+            foreach (var column in columnsOrderByMatch.Groups[0].Value.Split(','))
             {
                 var c = column.Trim();
                 if (columns.Contains(c)) continue;
+                // columns.Remove(c);
                 columns.Add(c);
             }
         }
 
-        var result = string.Join(",", columns);
-        return result + (orderDesc.Success ? " DESC" : " ASC");
+        return string.Join(",", columns);
     }
 
     public async Task<Database> GetDatabase()
