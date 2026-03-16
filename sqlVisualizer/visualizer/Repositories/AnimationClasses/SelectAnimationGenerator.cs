@@ -267,14 +267,14 @@ public static class SelectAnimationGenerator
                 fromTableWithRowIndex = fromTableWithRowIndex.OrderBy(order.ColumnName, order.IsAscending);
         }
 
-        List<List<int>> partitions = [];
+        List<List<int>> sourcePartitions = [];
         int rowIndexColumnIndex = fromTableWithRowIndex.IndexOfColumn(Table.RowIndexColumnName);
 
         if (windowFunction.PartitionNames.Count > 0)
         {
             List<int> partitionIndices = windowFunction.PartitionNames
                 .Select(p => fromTableWithRowIndex.IndexOfColumn(p)).ToList();
-            partitions = fromTableWithRowIndex.Entries
+            sourcePartitions = fromTableWithRowIndex.Entries
                 .GroupBy(e => string.Join(", ", partitionIndices.Select(i => e.Values[i].Value)))
                 .OrderBy(g => g.Key)
                 .Select(g => g.Select(e => int.Parse(e.Values[rowIndexColumnIndex].Value)).ToList())
@@ -282,19 +282,53 @@ public static class SelectAnimationGenerator
         }
         else
         {
-            partitions = [fromTableWithRowIndex.Entries.Select(e => int.Parse(e.Values[rowIndexColumnIndex].Value)).ToList()];
+            sourcePartitions = [fromTableWithRowIndex.Entries.Select(e => int.Parse(e.Values[rowIndexColumnIndex].Value)).ToList()];
         }
-        
-        Console.WriteLine("Partitions entries:" +  string.Join(" | ", partitions.Select(g => string.Join(", ", g))));
 
         int resultTableRowIndex = 0;
-        foreach (var partition in partitions)
+        List<List<int>> resultPartitions = sourcePartitions.Select(partition => partition.Select(_ => resultTableRowIndex++).ToList()).ToList();
+        
+        Console.WriteLine("Partitions entries:" +  string.Join(" | ", sourcePartitions.Select(g => string.Join(", ", g))));
+        Console.WriteLine("Partitions entries:" +  string.Join(" | ", resultPartitions.Select(g => string.Join(", ", g))));
+
+        // Generating Animation
+        
+        for (int i = 0; i < sourcePartitions.Count; i++)
         {
+            var sourcePartition = sourcePartitions[i];
+            var resultPartition = resultPartitions[i];
+
             // First, highlight all rows in this partition in the source table
-            var partitionRowActions = partition
+            var partitionRowActions = sourcePartition
                 .Select(rowIdx => tvm.GenerateToggleHighlightRow(fromTable.Entries[rowIdx]))
                 .ToList();
             steps.Add(tvm.CombineActions(partitionRowActions));
+
+            for (int j = 0; j < sourcePartition.Count; j++)
+            {
+                int sourceRowIndex = sourcePartition[j];
+                int resultRowIndex = resultPartition[j];
+                tvm.ChangeHighlightColourCell(fromTable, sourceRowIndex, fromTable.IndexOfColumn(windowFunction.Argument), UtilColor.SecondaryHighlightColor);
+                steps.Add(tvm.CombineActions(
+                [
+                    tvm.GenerateToggleHighlightCell(fromTable, sourceRowIndex, fromTable.IndexOfColumn(windowFunction.Argument)),
+                    tvm.GenerateToggleVisibleCell(toTable, resultRowIndex, columnIndex),
+                    tvm.GenerateToggleHighlightCell(toTable, resultRowIndex, columnIndex)
+                ]));
+            }
+            
+            // Unhighlight
+            var unhighlightSourceCells = sourcePartition
+                .Select(rowIdx => tvm.GenerateToggleHighlightCell(fromTable, rowIdx, fromTable.IndexOfColumn(windowFunction.Argument)))
+                .ToList();
+            
+            var unhighlightResultCells = resultPartition
+                .Select(rowIdx => tvm.GenerateToggleHighlightCell(toTable, rowIdx, columnIndex))
+                .ToList();
+
+            var unhighlightActions = partitionRowActions.Concat(unhighlightSourceCells).Concat(unhighlightResultCells).ToList();
+            
+            steps.Add(tvm.CombineActions(unhighlightActions));
         }
     }
     
