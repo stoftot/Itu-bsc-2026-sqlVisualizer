@@ -246,15 +246,19 @@ public static class SelectAnimationGenerator
         
         switch (windowFunction.Function.ToLower())
         {
+            case "avg":
+            case "max":
+            case "min":
             case "sum":
-                HandleWindowFunctionSum(fromTable, toTable, windowFunction, columnIndex, steps);
+            case "count":
+                HandleAggregateWindowFunction(fromTable, toTable, windowFunction, columnIndex, steps);
                 break;
             default:
                 throw new NotImplementedException($"the window function \"{windowFunction.Function}\" is not supported");
         }
     }
     
-    private static void HandleWindowFunctionSum(Table fromTable, Table toTable, WindowFunction windowFunction, 
+    private static void HandleAggregateWindowFunction(Table fromTable, Table toTable, WindowFunction windowFunction, 
         int columnIndex, List<Action> steps)
     {
         Table fromTableWithRowIndex = fromTable.DeepClone().AppendRowIndex();
@@ -292,7 +296,6 @@ public static class SelectAnimationGenerator
         Console.WriteLine("Partitions entries:" +  string.Join(" | ", resultPartitions.Select(g => string.Join(", ", g))));
 
         // Generating Animation
-        
         for (int i = 0; i < sourcePartitions.Count; i++)
         {
             var sourcePartition = sourcePartitions[i];
