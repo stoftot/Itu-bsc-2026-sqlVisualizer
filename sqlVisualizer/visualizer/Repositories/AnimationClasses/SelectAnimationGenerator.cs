@@ -242,7 +242,6 @@ public static class SelectAnimationGenerator
         string column, int columnIndex, List<Action> steps)
     {
         WindowFunction windowFunction = WindowFunction.FromString(column);
-        windowFunction.Print();
         
         switch (windowFunction.Function.ToLower())
         {
@@ -292,8 +291,6 @@ public static class SelectAnimationGenerator
         int resultTableRowIndex = 0;
         List<List<int>> resultPartitions = sourcePartitions.Select(partition => partition.Select(_ => resultTableRowIndex++).ToList()).ToList();
         
-        Console.WriteLine("Partitions entries:" +  string.Join(" | ", sourcePartitions.Select(g => string.Join(", ", g))));
-        Console.WriteLine("Partitions entries:" +  string.Join(" | ", resultPartitions.Select(g => string.Join(", ", g))));
 
         // Generating Animation
         for (int i = 0; i < sourcePartitions.Count; i++)
