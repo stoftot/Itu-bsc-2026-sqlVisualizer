@@ -252,6 +252,10 @@ public static class SelectAnimationGenerator
             case "count":
                 HandleAggregateWindowFunction(fromTable, toTable, windowFunction, columnIndex, steps);
                 break;
+            case "rank":
+            case "row_number":
+                HandleRankingWindowFunction(fromTable, toTable, windowFunction, columnIndex, steps);
+                break;
             default:
                 throw new NotImplementedException($"the window function \"{windowFunction.Function}\" is not supported");
         }
@@ -327,6 +331,80 @@ public static class SelectAnimationGenerator
                 .ToList();
 
             var unhighlightActions = partitionRowActions.Concat(unhighlightSourceCells).Concat(unhighlightResultCells).ToList();
+            
+            steps.Add(tvm.CombineActions(unhighlightActions));
+        }
+    }
+    
+    private static void HandleRankingWindowFunction(Table fromTable, Table toTable, WindowFunction windowFunction, 
+        int columnIndex, List<Action> steps)
+    {
+        Table fromTableWithRowIndex = fromTable.DeepClone().AppendRowIndex();
+
+        if (windowFunction.Orders.Count > 0)
+        {
+            var orders = windowFunction.Orders;
+            orders.Reverse();
+            foreach (var order in orders)
+                fromTableWithRowIndex = fromTableWithRowIndex.OrderBy(order.ColumnName, order.IsAscending);
+        }
+
+        List<List<int>> sourcePartitions = [];
+        int rowIndexColumnIndex = fromTableWithRowIndex.IndexOfColumn(Table.RowIndexColumnName);
+
+        if (windowFunction.PartitionNames.Count > 0)
+        {
+            List<int> partitionIndices = windowFunction.PartitionNames
+                .Select(p => fromTableWithRowIndex.IndexOfColumn(p)).ToList();
+            sourcePartitions = fromTableWithRowIndex.Entries
+                .GroupBy(e => string.Join(", ", partitionIndices.Select(i => e.Values[i].Value)))
+                .OrderBy(g => g.Key)
+                .Select(g => g.Select(e => int.Parse(e.Values[rowIndexColumnIndex].Value)).ToList())
+                .ToList();
+        }
+        else
+        {
+            sourcePartitions = [fromTableWithRowIndex.Entries.Select(e => int.Parse(e.Values[rowIndexColumnIndex].Value)).ToList()];
+        }
+
+        int resultTableRowIndex = 0;
+        List<List<int>> resultPartitions = sourcePartitions.Select(partition => partition.Select(_ => resultTableRowIndex++).ToList()).ToList();
+
+        // Generating Animation
+        for (int i = 0; i < sourcePartitions.Count; i++)
+        {
+            var sourcePartition = sourcePartitions[i];
+            var resultPartition = resultPartitions[i];
+
+            // First, highlight all rows in this partition in the source table
+            var partitionRowActions = sourcePartition
+                .Select(rowIdx => tvm.GenerateToggleHighlightCell(fromTable, rowIdx, fromTable.IndexOfColumn(windowFunction.Argument)))
+                .ToList();
+            steps.Add(tvm.CombineActions(partitionRowActions));
+
+            for (int j = 0; j < sourcePartition.Count; j++)
+            {
+                int sourceRowIndex = sourcePartition[j];
+                int resultRowIndex = resultPartition[j];
+                //tvm.ChangeHighlightColourCell(fromTable, sourceRowIndex, fromTable.IndexOfColumn(windowFunction.Argument), UtilColor.SecondaryHighlightColor);
+                steps.Add(tvm.CombineActions(
+                [
+                    //tvm.GenerateToggleHighlightCell(fromTable, sourceRowIndex, fromTable.IndexOfColumn(windowFunction.Argument)),
+                    tvm.GenerateToggleVisibleCell(toTable, resultRowIndex, columnIndex),
+                    tvm.GenerateToggleHighlightCell(toTable, resultRowIndex, columnIndex)
+                ]));
+            }
+            
+            // Unhighlight
+            /*var unhighlightSourceCells = sourcePartition
+                .Select(rowIdx => tvm.GenerateToggleHighlightCell(fromTable, rowIdx, fromTable.IndexOfColumn(windowFunction.Argument)))
+                .ToList();*/
+            
+            var unhighlightResultCells = resultPartition
+                .Select(rowIdx => tvm.GenerateToggleHighlightCell(toTable, rowIdx, columnIndex))
+                .ToList();
+
+            var unhighlightActions = partitionRowActions.Concat(unhighlightResultCells).ToList();//.Concat(unhighlightSourceCells).ToList();
             
             steps.Add(tvm.CombineActions(unhighlightActions));
         }
