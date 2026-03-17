@@ -77,6 +77,19 @@ public sealed class DuckDbFixture : IDisposable
               ('2025-02-12 10:05', 'Small', 'Omar'),
               ('2025-02-12 10:06', 'Large', 'Omar'),
               ('2025-02-19 09:00', 'Small', 'Martin');
+            
+            -- Retardo table
+            DROP TABLE IF EXISTS "123";
+            CREATE TABLE "123" (
+                "*" INTEGER,
+                "123" INTEGER,
+                "user" TEXT,
+            );
+            
+            INSERT INTO "123" VALUES
+                (1, 2, '1_1'),
+                (3, 4, '2_1'),
+                (5, 6, '3_1');
             """;
         cmd.ExecuteNonQuery();
         conn.Close();
