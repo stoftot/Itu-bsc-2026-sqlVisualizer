@@ -145,6 +145,13 @@ public class VisulisationGenerationTest : IClassFixture<DuckDbFixture>
                 JOIN product ON purchase.productname = product.productname
                 GROUP BY username
                 """)]
+    [InlineData("""
+                SELECT username, SUM(p1.price + p2.price), AVG(p1.price - p2.price), MIN(p1.price * p2.price), MAX(p1.price / p2.price)
+                FROM purchase
+                JOIN product p1 ON purchase.productname = p1.productname
+                JOIN product p2 ON purchase.productname = p2.productname
+                GROUP BY username
+                """)]
     public void AggreGateFunctions(string query)
     {
         TestQuery(query);
