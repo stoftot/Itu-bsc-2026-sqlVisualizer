@@ -9,7 +9,6 @@ public class TableGenerator(SQLExecutor sqlExecutor, TableOriginColumnsGenerator
     public void GenerateTablesIntialStepWithOriginColumns(List<Table> fromTables, SQLDecompositionComponent intialStep)
     {
         fromTables.Add(sqlExecutor.Execute(intialStep).Result);
-        fromTables[0].Name = intialStep.Clause.Split(',')[0].Trim();
         tocg.GenerateTableOriginOnColumnsFromTableName(fromTables);
     }
 
