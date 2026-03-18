@@ -146,6 +146,30 @@ public class VisulisationGenerationTest : IClassFixture<DuckDbFixture>
                 GROUP BY username
                 """)]
     [InlineData("""
+                SELECT username, SUM(price + 123)
+                FROM purchase
+                JOIN product ON purchase.productname = product.productname
+                GROUP BY username
+                """)]
+    [InlineData("""
+                SELECT username, AVG(price - 123)
+                FROM purchase
+                JOIN product ON purchase.productname = product.productname
+                GROUP BY username
+                """)]
+    [InlineData("""
+                SELECT username, Min(price / 123)
+                FROM purchase
+                JOIN product ON purchase.productname = product.productname
+                GROUP BY username
+                """)]
+    [InlineData("""
+                SELECT username, MAX(price * 123)
+                FROM purchase
+                JOIN product ON purchase.productname = product.productname
+                GROUP BY username
+                """)]
+    [InlineData("""
                 SELECT username, SUM(p1.price + p2.price), AVG(p1.price - p2.price), MIN(p1.price * p2.price), MAX(p1.price / p2.price)
                 FROM purchase
                 JOIN product p1 ON purchase.productname = p1.productname

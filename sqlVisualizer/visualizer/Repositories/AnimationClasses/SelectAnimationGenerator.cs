@@ -1,5 +1,6 @@
 using visualizer.Exstensions;
 using visualizer.Models;
+using System.Text.RegularExpressions;
 
 namespace visualizer.Repositories.AnimationClasses;
 
@@ -109,33 +110,31 @@ public static class SelectAnimationGenerator
         else
         {
             //TODO: right now only supports count on specific columns
-            HandleAggregateSpecificColumns(fromTables, toTable, parameter, toColumnIndex, steps);
+            HandleAggregateSpecificColumns(fromTables, toTable, [parameter], toColumnIndex, steps);
         }
     }
 
     private static void HandleSumAndAvgAggregate(List<Table> fromTables, Table toTable,
         string parameter, int toColumnIndex, List<Action> steps)
     {
-        //TODO: right now only supports summing and avg on specific columns
-        HandleAggregateSpecificColumns(fromTables, toTable, parameter, toColumnIndex, steps);
+        HandleAggregateSpecificColumns(fromTables, toTable, ExtractReferencedColumns(parameter), toColumnIndex, steps);
     }
     
     private static void HandleMinAndMaxAggregate(List<Table> fromTables, Table toTable,
         string parameter, int toColumnIndex, List<Action> steps)
     {
-        //TODO: right now only supports min and max on specific columns
-        HandleAggregateSpecificColumns(fromTables, toTable, parameter, toColumnIndex, steps);
+        HandleAggregateSpecificColumns(fromTables, toTable, ExtractReferencedColumns(parameter), toColumnIndex, steps);
     }
 
     private static void HandleAggregateSpecificColumns(List<Table> fromTables, Table toTable,
-        string parameters, int toColumnIndex, List<Action> steps)
+        IEnumerable<string> columnNames, int toColumnIndex, List<Action> steps)
     {
         var fromColumnIndexes = new List<int>();
         try
         {
-            foreach (var param in parameters.Split(','))
+            foreach (var column in columnNames)
             {
-                fromColumnIndexes.Add(fromTables[0].IndexOfColumn(param));
+                fromColumnIndexes.Add(fromTables[0].IndexOfColumn(column));
             }
         }
         catch (ArgumentException e)
@@ -165,36 +164,32 @@ public static class SelectAnimationGenerator
         string column, int columnIndex, List<Action> steps,
         Func<int, Action> generateFromAnimation)
     {
-        var parts = column.Split('.', 2);
-        var tableName = parts.Length == 2 ? parts[0] : null;
-        var columnName = parts.Length == 2 ? parts[1] : parts[0];
+        var fromIndex = fromTables[0].IndexOfColumn(column);
+        var fromAnimation = generateFromAnimation(fromIndex);
+        steps.Add(tvm.CombineActions(
+        [
+            fromAnimation,
+            tvm.GenerateToggleVisibleColumn(toTable, columnIndex),
+            tvm.GenerateToggleHighlightColumn(toTable, columnIndex)
+        ]));
+        
+        steps.Add(tvm.CombineActions(
+        [
+            fromAnimation,
+            tvm.GenerateToggleHighlightColumn(toTable, columnIndex)
+        ]));
+    }
 
-        for (int i = 0; i < fromTables[0].ColumnNames.Count; i++)
+    private static IEnumerable<string> ExtractReferencedColumns(string expression)
+    {
+        var potenTialColumns = expression.Split(' ');
+        var columns = new List<string>();
+        const string pattern = @""".+""|\b.+";
+        foreach (var pc in potenTialColumns)
         {
-            var fromAnimation = generateFromAnimation(i);
-
-            if (fromTables[0].ColumnNames[i].Equals(columnName, StringComparison.InvariantCultureIgnoreCase) &&
-                (tableName == null ||
-                 fromTables[0].ColumnsOriginalTableNames[i]
-                     .Equals(tableName, StringComparison.InvariantCultureIgnoreCase)))
-            {
-                steps.Add(tvm.CombineActions(
-                [
-                    fromAnimation,
-                    tvm.GenerateToggleVisibleColumn(toTable, columnIndex),
-                    tvm.GenerateToggleHighlightColumn(toTable, columnIndex)
-                ]));
-
-                steps.Add(tvm.CombineActions(
-                [
-                    fromAnimation,
-                    tvm.GenerateToggleHighlightColumn(toTable, columnIndex)
-                ]));
-                return;
-            }
-
-            steps.Add(fromAnimation);
-            steps.Add(fromAnimation);
+            var match = Regex.Match(pc, pattern);
+            if (match.Success) columns.Add(match.Groups[0].Value.Trim());
         }
+        return columns.Where(value => !int.TryParse(value, out _));
     }
 }
