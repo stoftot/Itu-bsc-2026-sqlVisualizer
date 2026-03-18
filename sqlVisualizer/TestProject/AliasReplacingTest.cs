@@ -811,11 +811,11 @@ public class AliasReplacingTest
         Assert.Equal("""
                      SELECT product.price
                      FROM product
-                     """.Replace("\n", Environment.NewLine), first);
+                     """, first);
         Assert.Equal("""
                      SELECT price
                      FROM purchase
-                     """.Replace("\n", Environment.NewLine), second);
+                     """, second);
     }
 
     [Fact]
