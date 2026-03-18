@@ -13,9 +13,10 @@ public static class JoinAnimationGenerator
             throw new ArgumentException("Join animations can only be generated from two tables to one");
 
         var steps = new List<Action>();
+        var joiningTableName = ExtractSourceName(action.Clause);
 
-        var primaryTable = fromTables.First(t => t.Name != action.Clause.Split(' ')[0]);
-        var joiningTable = fromTables.First(t => t.Name == action.Clause.Split(' ')[0]);
+        var primaryTable = fromTables.First(t => t.Name != joiningTableName);
+        var joiningTable = fromTables.First(t => t.Name == joiningTableName);
 
         var currentResultIndex = 0;
         List<TableEntry> toToggle = [];
@@ -60,5 +61,17 @@ public static class JoinAnimationGenerator
         return p.Concat(j)
             .OrderBy(x => x)
             .SequenceEqual(r.OrderBy(x => x));
+    }
+
+    private static string ExtractSourceName(string clause)
+    {
+        var onIndex = clause.IndexOf(" ON ", StringComparison.OrdinalIgnoreCase);
+        var beforeOn = onIndex >= 0 ? clause[..onIndex].Trim() : clause.Trim();
+        var parts = beforeOn.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        if (parts.Length >= 2)
+            return parts[^1];
+
+        return parts[0];
     }
 }

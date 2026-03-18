@@ -36,9 +36,21 @@ public class TableGenerator(SQLExecutor sqlExecutor, TableOriginColumnsGenerator
     private void GenerateFromTablesJoin(List<Table> fromTables, SQLDecompositionComponent currentStep)
     {
         var joiningTable = sqlExecutor.Execute(currentStep.GenerateFromClauseFromJoin()).Result;
-        joiningTable.Name = currentStep.Clause.Split(' ')[0].Trim();
+        joiningTable.Name = ExtractSourceName(currentStep.Clause);
         tocg.GenerateTableOriginOnColumnsFromTableName(joiningTable);
         fromTables.Add(joiningTable);
+    }
+
+    private static string ExtractSourceName(string clause)
+    {
+        var onIndex = clause.IndexOf(" ON ", StringComparison.OrdinalIgnoreCase);
+        var beforeOn = onIndex >= 0 ? clause[..onIndex].Trim() : clause.Trim();
+        var parts = beforeOn.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        if (parts.Length >= 2)
+            return parts[^1];
+
+        return parts[0];
     }
 
     private void GenerateFromTablesHaving(List<Table> fromTables, SQLDecompositionComponent currStep, 
