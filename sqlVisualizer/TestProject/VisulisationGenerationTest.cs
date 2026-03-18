@@ -172,6 +172,12 @@ public class VisulisationGenerationTest : IClassFixture<DuckDbFixture>
                 JOIN user ON user.username = purchase.username
                 GROUP BY productname, user.email
                 """)]
+    [InlineData("""
+                SELECT "username", MAX("price")
+                FROM "purchase"
+                JOIN "product" ON "purchase".productname = product."productname"
+                GROUP BY "username"
+                """)]
     public void Combination(string query)
     {
         TestQuery(query);

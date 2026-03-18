@@ -541,13 +541,118 @@ public class AliasReplacingTest
                 GROUP BY username, role;
                 """ 
     )]
-    // [InlineData("""
-    //             xxx
-    //             """,
-    //     """
-    //             xxx
-    //             """ 
-    // )]
+    [InlineData("""
+                SELECT SUM(price) OVER (PARTITION BY category ORDER BY id) AS running_sum
+                FROM sales AS s
+                """,
+        """
+                SELECT SUM(price) OVER (PARTITION BY category ORDER BY id)
+                FROM sales
+                """ 
+    )]
+    [InlineData("""
+                SELECT price, SUM(price) OVER (PARTITION BY category) AS cat_total
+                FROM sales AS s
+                """,
+        """
+                SELECT price, SUM(price) OVER (PARTITION BY category)
+                FROM sales
+                """
+    )]
+    [InlineData("""
+                SELECT SUM("price") OVER (PARTITION BY "group" ORDER BY "id") AS total
+                FROM "sales" AS s
+                """,
+        """
+                SELECT SUM("price") OVER (PARTITION BY "group" ORDER BY "id")
+                FROM "sales"
+                """
+    )]
+    [InlineData("""
+                SELECT SUM(price * 2) OVER (PARTITION BY category) AS doubled_sum
+                FROM sales AS s
+                """,
+        """
+                SELECT SUM(price * 2) OVER (PARTITION BY category)
+                FROM sales
+                """
+    )]
+    [InlineData("""
+                SELECT SUM(s.price) OVER (PARTITION BY "category" ORDER BY s.id) AS total_sum
+                FROM sales AS s
+                """,
+        """
+                SELECT SUM(sales.price) OVER (PARTITION BY "category" ORDER BY sales.id)
+                FROM sales
+                """
+    )]
+    [InlineData("""
+                SELECT 
+                    SUM(price) OVER (PARTITION BY category) AS total,
+                    AVG(price) OVER (PARTITION BY category ORDER BY id) AS avg_price
+                FROM sales AS s
+                """,
+        """
+                SELECT 
+                    SUM(price) OVER (PARTITION BY category),
+                    AVG(price) OVER (PARTITION BY category ORDER BY id)
+                FROM sales
+                """
+    )]
+    [InlineData("""
+                SELECT ROW_NUMBER() OVER (PARTITION BY category ORDER BY id) AS rn
+                FROM sales AS s
+                """,
+        """
+                SELECT ROW_NUMBER() OVER (PARTITION BY category ORDER BY id)
+                FROM sales
+                """
+    )]
+    [InlineData("""
+                SELECT ROW_NUMBER() OVER (PARTITION BY "group" ORDER BY "user") AS r
+                FROM "123" AS "t1"
+                """,
+        """
+                SELECT ROW_NUMBER() OVER (PARTITION BY "group" ORDER BY "user")
+                FROM "123"
+                """
+    )]
+    [InlineData("""
+                SELECT SUM(price) OVER (ORDER BY id) AS running_total
+                FROM sales AS s
+                """,
+        """
+                SELECT SUM(price) OVER (ORDER BY id)
+                FROM sales
+                """
+    )]
+    [InlineData("""
+                SELECT SUM(price) OVER (PARTITION BY category) AS total
+                FROM sales AS s
+                """,
+        """
+                SELECT SUM(price) OVER (PARTITION BY category)
+                FROM sales
+                """
+    )]
+    [InlineData("""
+                SELECT SUM("price" + tax) OVER (PARTITION BY category ORDER BY "id") AS total_sum
+                FROM sales AS s
+                """,
+        """
+                SELECT SUM("price" + tax) OVER (PARTITION BY category ORDER BY "id")
+                FROM sales
+                """
+    )]
+    [InlineData("""
+                SELECT id, category, SUM(price) OVER (PARTITION BY category ORDER BY id) AS total
+                FROM sales AS s
+                """,
+        """
+                SELECT id, category, SUM(price) OVER (PARTITION BY category ORDER BY id)
+                FROM sales
+                """
+    )]
     // [InlineData("""
     //             xxx
     //             """,
