@@ -98,7 +98,7 @@ public class SQLExecutor(DuckDBConnection connection)
 
         foreach (var tableName in tables.Entries.Select(table => table.Values[0].Value))
         {
-            var table = await Execute("SHOW TABLE " + tableName);
+            var table = await Execute("SHOW TABLE " + '"' + tableName + '"');
             table.Name = tableName;
             database.Tables.Add(table);
         }
