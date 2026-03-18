@@ -17,6 +17,9 @@ public partial class Metrics : ComponentBase
 
     string[] StepLabels = [];
     List<ChartSeries<double>> StepData;
+    
+    string[] AnimationLabels = [];
+    List<ChartSeries<double>> AnimationData;
     protected override void OnInitialized()
     {
         _sessionId = Http.HttpContext?.Request.Cookies["session_id"] ?? "unknown";
@@ -49,20 +52,35 @@ public partial class Metrics : ComponentBase
     {
         // Optional: aggregate across all sessions
         var steps = MetricsHandler.GetTimeSpentByStep().OrderBy(a => a.Step).ToList();
-        var labels = new string[steps.Count];
-        var values = new double[steps.Count];
-
+        var stepCount = steps.Count;
+        
+        var labels = new string[stepCount];
+        var stepValues = new double[stepCount];
+        var animationValues = new double[stepCount];
         for (var i = 0; i < steps.Count; i++)
         {
             labels[i] = steps[i].Step;
-            values[i] = steps[i].TimeSpentMs / 1000.0;
+            stepValues[i] = steps[i].TimeSpentMs / 1000.0;
+            animationValues[i] = steps[i].AnimationMs / 1000.0;
         }
 
 
         StepLabels = labels;
         StepData = new()
         {
-            new() { Name = "Steps", Data = values },
+            new() { Name = "Steps", Data = stepValues },
         };
+        AnimationData = new()
+        {
+            new() { Name = "Animation Time", Data = animationValues },
+        };
+    }
+
+    int GetChartHeight(int itemCount)
+    {
+        const int baseHeight = 120;
+        const int heightPerItem = 35;
+
+        return Math.Max(300, baseHeight + itemCount * heightPerItem);
     }
 }

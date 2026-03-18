@@ -64,9 +64,17 @@ public partial class ToolBar : ComponentBase, IDisposable
         }
     }
 
-    async Task StepAnimationPrevious() => await HomeState.AnimateStepPrivious();
+    async Task StepAnimationPrevious()
+    { 
+        MetricsHandler.IncrementAction(HomeState.SessionId, ActionType.AnimationPrevious);
+        await HomeState.AnimateStepPrivious();
+    }
 
-    async Task StepAnimationNext() => await HomeState.AnimateStepNext();
+    async Task StepAnimationNext()
+    {
+        MetricsHandler.IncrementAction(HomeState.SessionId, ActionType.AnimationNext);
+        await HomeState.AnimateStepNext();
+    }
 
     public void Dispose()
     {
