@@ -8,25 +8,51 @@
 
 <MudText Typo="Typo.h4">Metrics Dashboard</MudText>
 
-<MudPaper Class="pa-4 mt-4">
-    <MudText Typo="Typo.h6">Time Spent per Step</MudText>
+<MudGrid Spacing="4">
 
-    <MudChart T="double"
-              ChartType="ChartType.Bar"
-              ChartLabels="@StepLabels"
-              ChartSeries="@StepData"
-              Width="100%"
-              Height="350px"/>
-</MudPaper>
-<MudPaper Class="pa-4 mt-4">
-    <MudText Typo="Typo.h6">Actions</MudText>
+    <!-- Time Spent per Step -->
+    <MudItem xs="12" md="6">
+        <MudPaper Class="pa-4">
+            <MudText Typo="Typo.h6" Class="mb-2">Time Spent per Step</MudText>
 
-    <MudChart T="double"
-              ChartType="ChartType.Bar"
-              ChartLabels="@ActionLabels"
-              ChartSeries="@ActionData"
-              Width="100%"
-              Height="350px"/>
-</MudPaper>
+            <MudChart T="double"
+                      ChartType="ChartType.Bar"
+                      ChartLabels="@StepLabels"
+                      ChartSeries="@StepData"
+                      Width="100%"
+                      Height="@($"{GetChartHeight(StepLabels.Length)}px")" />
+        </MudPaper>
+    </MudItem>
+
+    <MudItem xs="12" md="6">
+        <MudPaper Class="pa-4">
+            <MudText Typo="Typo.h6" Class="mb-2">Actions</MudText>
+
+            <MudChart T="double"
+                      ChartType="ChartType.Bar"
+                      ChartLabels="@StepLabels"
+                      ChartSeries="@AnimationData"
+                      Width="100%"
+                      Height="@($"{GetChartHeight(StepLabels.Length)}px")" />
+        </MudPaper>
+    </MudItem>
+    
+    <!-- Actions -->
+    <MudItem xs="12" md="6">
+        <MudPaper Class="pa-4">
+            <MudText Typo="Typo.h6" Class="mb-2">Actions</MudText>
+
+            <MudChart T="double"
+                      ChartType="ChartType.Bar"
+                      ChartLabels="@ActionLabels"
+                      ChartSeries="@ActionData"
+                      Width="100%"
+                      Height="@($"{GetChartHeight(ActionLabels.Length)}px")" />
+        </MudPaper>
+    </MudItem>
+
+    
+
+</MudGrid>
 
 
