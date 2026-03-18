@@ -84,7 +84,7 @@ public class SQLExecutor(DuckDBConnection connection)
 
         if (component.Keyword == SQLKeyword.FROM)
         {
-            table.Name = component.Clause.Split(' ')[0];
+            table.Name = component.Clause.Split(' ')[^1];
         }
 
         return table;
