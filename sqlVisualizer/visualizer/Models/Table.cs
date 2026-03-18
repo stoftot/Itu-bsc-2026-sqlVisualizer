@@ -102,7 +102,7 @@ public class Aggregation
     public required string Name { get; set; }
     public required string Value  { get; set; }
     
-    public string HexBackGroundColor { get; set; } = UtilColor.SecondaryHiglightColor;
+    public string HexBackGroundColor { get; set; } = UtilColor.SecondaryHighlightColor;
     public bool IsHighlighted { get; set; } = false;
     public void ToggleHighlight() => IsHighlighted = !IsHighlighted;
 }
