@@ -5,3 +5,8 @@
 .table-body-sm td {
     font-size: 0.75rem;
 }
+
+.aggregation-text-line {
+    font-size: 0.75rem;
+    text-align: left;
+}

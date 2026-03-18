@@ -15,12 +15,18 @@ public static class SelectAnimationGenerator
         SQLDecompositionComponent action)
     {
         var steps = new List<Action>();
-
-        //TODO: Figure out how we want to handle select *
+        
         if (action.Clause.Trim().Equals("*"))
-            return new Animation(steps);
+        {
+            var step = tvm.CombineActions([
+                tvm.GenerateToggleHighlightTables(fromTables),
+                tvm.GenerateToggleHighlightTable(toTable)
+            ]);
+            
+            return new Animation([step, step]);
+        }
 
-        steps.Add(tvm.HideTablesCellBased([toTable]));
+        steps.Add(tvm.HideTableCellBased(toTable));
         
         //TODO: regex dosen't support window functions with end parentheses inside the over, like "over (..)...)" 
         var windowFunctionMatch = Regex.Match(action.Clause, @"\s*[^,]+?\bover\s*[^)]+\)[^,]+", RegexOptions.IgnoreCase | RegexOptions.Singleline);
@@ -94,15 +100,15 @@ public static class SelectAnimationGenerator
         switch (keyword)
         {
             case SQLAggregateFunctionsKeyword.COUNT:
-                HandleCountAggregate(fromTables, toTable, parts[1].Replace(')', ' ').Trim(), toColumnIndex, steps);
+                HandleCountAggregate(fromTables, toTable, parts[1].Trim()[..^1], toColumnIndex, steps);
                 break;
             case SQLAggregateFunctionsKeyword.SUM:
             case SQLAggregateFunctionsKeyword.AVG:
-                HandleSumAndAvgAggregate(fromTables, toTable, parts[1].Replace(')', ' ').Trim(), toColumnIndex, steps);
+                HandleSumAndAvgAggregate(fromTables, toTable, parts[1].Trim()[..^1], toColumnIndex, steps);
                 break;
             case SQLAggregateFunctionsKeyword.MIN:
             case SQLAggregateFunctionsKeyword.MAX:
-                HandleMinAndMaxAggregate(fromTables, toTable, parts[1].Replace(')', ' ').Trim(), toColumnIndex, steps);
+                HandleMinAndMaxAggregate(fromTables, toTable, parts[1].Trim()[..^1], toColumnIndex, steps);
                 break;
             default:
                 throw new ArgumentOutOfRangeException();
@@ -133,54 +139,37 @@ public static class SelectAnimationGenerator
         }
         else
         {
-            throw new NotImplementedException();
+            //TODO: right now only supports count on specific columns
+            HandleAggregateSpecificColumns(fromTables, toTable, [parameter], toColumnIndex, steps);
         }
     }
 
     private static void HandleSumAndAvgAggregate(List<Table> fromTables, Table toTable,
         string parameter, int toColumnIndex, List<Action> steps)
     {
-        //TODO: right now only supports summing and avg on single columns
-        var fromColumnIndex = 0;
-        try
-        {
-             fromColumnIndex = fromTables[0].IndexOfColumn(parameter);
-        }
-        catch (ArgumentException e)
-        {
-            throw new NotSupportedException("The column wasn't found, and sum and avg only supports summing specific columns", e);
-        }
-
-        int i = 0;
-        foreach (var table in fromTables)
-        {
-            steps.Add(tvm.CombineActions(
-            [
-                tvm.GenerateToggleHighlightColumn(table, fromColumnIndex),
-                tvm.GenerateToggleVisibleCell(toTable, i, toColumnIndex),
-                tvm.GenerateToggleHighlightCell(toTable, i, toColumnIndex)
-            ]));
-
-            steps.Add(tvm.CombineActions(
-            [
-                tvm.GenerateToggleHighlightColumn(table, fromColumnIndex),
-                tvm.GenerateToggleHighlightCell(toTable, i++, toColumnIndex)
-            ]));
-        }
+        HandleAggregateSpecificColumns(fromTables, toTable, ExtractReferencedColumns(parameter), toColumnIndex, steps);
     }
     
     private static void HandleMinAndMaxAggregate(List<Table> fromTables, Table toTable,
         string parameter, int toColumnIndex, List<Action> steps)
     {
-        //TODO: right now only supports min and max on single columns
-        var fromColumnIndex = 0;
+        HandleAggregateSpecificColumns(fromTables, toTable, ExtractReferencedColumns(parameter), toColumnIndex, steps);
+    }
+
+    private static void HandleAggregateSpecificColumns(List<Table> fromTables, Table toTable,
+        IEnumerable<string> columnNames, int toColumnIndex, List<Action> steps)
+    {
+        var fromColumnIndexes = new List<int>();
         try
         {
-            fromColumnIndex = fromTables[0].IndexOfColumn(parameter);
+            foreach (var column in columnNames)
+            {
+                fromColumnIndexes.Add(fromTables[0].IndexOfColumn(column));
+            }
         }
         catch (ArgumentException e)
         {
-            throw new NotSupportedException("The column wasn't found, and min and max only supports summing specific columns", e);
+            throw new NotSupportedException("The column wasn't found, this method only handles a specific columns", e);
         }
 
         int i = 0;
@@ -188,14 +177,14 @@ public static class SelectAnimationGenerator
         {
             steps.Add(tvm.CombineActions(
             [
-                tvm.GenerateToggleHighlightColumn(table, fromColumnIndex),
+                tvm.GenerateToggleHighlightColumns(table, fromColumnIndexes),
                 tvm.GenerateToggleVisibleCell(toTable, i, toColumnIndex),
                 tvm.GenerateToggleHighlightCell(toTable, i, toColumnIndex)
             ]));
 
             steps.Add(tvm.CombineActions(
             [
-                tvm.GenerateToggleHighlightColumn(table, fromColumnIndex),
+                tvm.GenerateToggleHighlightColumns(table, fromColumnIndexes),
                 tvm.GenerateToggleHighlightCell(toTable, i++, toColumnIndex)
             ]));
         }
@@ -205,37 +194,33 @@ public static class SelectAnimationGenerator
         string column, int columnIndex, List<Action> steps,
         Func<int, Action> generateFromAnimation)
     {
-        var parts = column.Split('.', 2);
-        var tableName = parts.Length == 2 ? parts[0] : null;
-        var columnName = parts.Length == 2 ? parts[1] : parts[0];
+        var fromIndex = fromTables[0].IndexOfColumn(column);
+        var fromAnimation = generateFromAnimation(fromIndex);
+        steps.Add(tvm.CombineActions(
+        [
+            fromAnimation,
+            tvm.GenerateToggleVisibleColumn(toTable, columnIndex),
+            tvm.GenerateToggleHighlightColumn(toTable, columnIndex)
+        ]));
+        
+        steps.Add(tvm.CombineActions(
+        [
+            fromAnimation,
+            tvm.GenerateToggleHighlightColumn(toTable, columnIndex)
+        ]));
+    }
 
-        for (int i = 0; i < fromTables[0].ColumnNames.Count; i++)
+    private static IEnumerable<string> ExtractReferencedColumns(string expression)
+    {
+        var potenTialColumns = expression.Split(' ');
+        var columns = new List<string>();
+        const string pattern = @""".+""|\b.+";
+        foreach (var pc in potenTialColumns)
         {
-            var fromAnimation = generateFromAnimation(i);
-
-            if (fromTables[0].ColumnNames[i].Equals(columnName, StringComparison.InvariantCultureIgnoreCase) &&
-                (tableName == null ||
-                 fromTables[0].ColumnsOriginalTableNames[i]
-                     .Equals(tableName, StringComparison.InvariantCultureIgnoreCase)))
-            {
-                steps.Add(tvm.CombineActions(
-                [
-                    fromAnimation,
-                    tvm.GenerateToggleVisibleColumn(toTable, columnIndex),
-                    tvm.GenerateToggleHighlightColumn(toTable, columnIndex)
-                ]));
-
-                steps.Add(tvm.CombineActions(
-                [
-                    fromAnimation,
-                    tvm.GenerateToggleHighlightColumn(toTable, columnIndex)
-                ]));
-                return;
-            }
-
-            steps.Add(fromAnimation);
-            steps.Add(fromAnimation);
+            var match = Regex.Match(pc, pattern);
+            if (match.Success) columns.Add(match.Groups[0].Value.Trim());
         }
+        return columns.Where(value => !int.TryParse(value, out _));
     }
 
     private static void HandleWindowFunction(Table fromTable, Table toTable,

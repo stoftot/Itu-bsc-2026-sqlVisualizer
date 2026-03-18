@@ -3,7 +3,7 @@
 {
     @foreach (var table in Tables)
     {
-        <TableView
+        <TableView @key="@Guid.NewGuid()"
             Table="table"/>
     }
 }

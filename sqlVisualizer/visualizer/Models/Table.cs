@@ -1,4 +1,6 @@
-﻿namespace visualizer.Models;
+﻿using visualizer.Utility;
+
+namespace visualizer.Models;
 
 public class Table
 {
@@ -21,6 +23,7 @@ public class Table
     public required IReadOnlyList<TableEntry> Entries { get; init; }
     public const string RowIndexColumnName = "RowIndex";
 
+    public List<Aggregation> Aggregations { get; set; } = [];
     public Table DeepClone()
     {
         return new Table
@@ -38,7 +41,7 @@ public class Table
     {
         var parts = column.Trim().Split('.', 2);
         var tableName = parts.Length == 2 ? parts[0] : null;
-        var columnName = parts.Length == 2 ? parts[1] : parts[0];
+        var columnName = parts.Length == 2 ? parts[1].Replace("\"", "") : parts[0].Replace("\"", "");
 
         for (int i = 0; i < ColumnNames.Count; i++)
         {
@@ -92,4 +95,14 @@ public class Table
             Entries = entries
         };
     }
+}
+
+public class Aggregation
+{
+    public required string Name { get; set; }
+    public required string Value  { get; set; }
+    
+    public string HexBackGroundColor { get; set; } = UtilColor.SecondaryHiglightColor;
+    public bool IsHighlighted { get; set; } = false;
+    public void ToggleHighlight() => IsHighlighted = !IsHighlighted;
 }

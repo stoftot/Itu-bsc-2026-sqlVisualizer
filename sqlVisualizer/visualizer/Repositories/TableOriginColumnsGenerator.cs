@@ -25,6 +25,8 @@ public class TableOriginColumnsGenerator
                 DuplicateOriginOnColumnsToSingle(vis.FromTables, vis.ToTables[0]);
                 break;
             case SQLKeyword.HAVING:
+                //since fromTables are copied to toTables, they already have origin
+                break;
             case SQLKeyword.ORDER_BY:
             case SQLKeyword.LIMIT:
             case SQLKeyword.OFFSET:
@@ -109,20 +111,8 @@ public class TableOriginColumnsGenerator
                 continue;
             }
 
-            var parts = column.Split('.', 2);
-            var tableName = parts.Length == 2 ? parts[0] : null;
-            var columnName = parts.Length == 2 ? parts[1] : parts[0];
-
-            for (int i = 0; i < fromTable.ColumnNames.Count; i++)
-            {
-                if (fromTable.ColumnNames[i].Equals(columnName, StringComparison.InvariantCultureIgnoreCase) &&
-                    (tableName == null ||
-                     fromTable.ColumnsOriginalTableNames[i]
-                         .Equals(tableName, StringComparison.InvariantCultureIgnoreCase)))
-                {
-                    toTable.ColumnsOriginalTableNames.Add(fromTable.ColumnsOriginalTableNames[i]);
-                }
-            }
+            toTable.ColumnsOriginalTableNames
+                .Add(fromTable.ColumnsOriginalTableNames[fromTable.IndexOfColumn(column)]);
         }
     }
 }

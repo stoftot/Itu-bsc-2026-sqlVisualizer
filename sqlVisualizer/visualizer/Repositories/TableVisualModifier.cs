@@ -32,6 +32,24 @@ public class TableVisualModifier
         return table.Entries[row].Values[column].ToggleHighlight;
     }
 
+    public Action ChangeHighlightColourRow(Table table, int row, string hexColour)
+    {
+        var entry = table.Entries[row];
+        return () =>
+        {
+            entry.SetHighlightHexColor(hexColour);
+        };
+    }
+
+    public Action SetHighlightColourDefaultRow(Table table, int row)
+    {
+        var entry = table.Entries[row];
+        return () =>
+        {
+            entry.SetHighlightStyleDefault();
+        };
+    }
+    
     public void ChangeHighlightColourCells(Table table, int row, ICollection<int> columns, string hexColour)
     {
         foreach (var col in columns)
@@ -53,6 +71,9 @@ public class TableVisualModifier
             }
         };
     }
+
+    public Action GenerateToggleHighlightColumns(Table table, List<int> indexes)
+        => indexes.Select(i => GenerateToggleHighlightColumn(table, i)).ToOneAction();
 
     public Action GenerateToggleVisibleColumn(Table table, int index)
     {
@@ -81,16 +102,27 @@ public class TableVisualModifier
         return table.Entries[row].Values[column].ToggleVisible;
     }
 
-    public Action HideTablesCellBased(List<Table> tables)
+    public Action HideTableCellBased(Table table)
     {
         var hide = new List<Action>();
-        foreach (var table in tables)
-            for (int i = 0; i < table.ColumnNames.Count; i++)
-                hide.Add(GenerateToggleVisibleColumn(table, i));
-
+        for (int i = 0; i < table.ColumnNames.Count; i++)
+            hide.Add(GenerateToggleVisibleColumn(table, i));
         return hide.ToOneAction();
     }
+    public Action HideTablesCellBased(List<Table> tables) =>
+        tables.Select(HideTableCellBased).ToOneAction();
 
+    public Action GenerateToggleHighlightTable(Table table)
+        => table.Entries.Select(GenerateToggleHighlightRow).ToOneAction();
+    
+    public Action GenerateToggleHighlightTables(List<Table> tables) 
+        => tables.Select(GenerateToggleHighlightTable).ToOneAction();
+
+    public Action ToggleHighlightAggregations(Table table) =>
+        table.Aggregations
+            .Select(aggr => (Action)aggr.ToggleHighlight)
+            .ToOneAction();
+    
     public Action CombineActions(List<Action> a, List<Action> b)
     {
         //capture the list, so when its changed it doesn't apply to all functions

@@ -21,7 +21,13 @@ public class SQLExecutor(DuckDBConnection connection)
             var columnNames = new List<string>();
             for (var i = 0; i < reader.FieldCount; i++)
             {
-                columnNames.Add(reader.GetName(i));
+                var name = reader.GetName(i);
+                if (name.Equals("count_star()", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    name = "count()";
+                }
+                
+                columnNames.Add(name);
             }
 
             while (await reader.ReadAsync())
@@ -95,7 +101,7 @@ public class SQLExecutor(DuckDBConnection connection)
 
         if (component.Keyword == SQLKeyword.FROM)
         {
-            table.Name = component.Clause.Split(' ')[0].Trim();
+            table.Name = component.Clause.Split(' ')[^1];
         }
 
         return table;
@@ -148,7 +154,7 @@ public class SQLExecutor(DuckDBConnection connection)
 
         foreach (var tableName in tables.Entries.Select(table => table.Values[0].Value))
         {
-            var table = await Execute("SHOW TABLE " + tableName);
+            var table = await Execute("SHOW TABLE " + '"' + tableName + '"');
             table.Name = tableName;
             database.Tables.Add(table);
         }

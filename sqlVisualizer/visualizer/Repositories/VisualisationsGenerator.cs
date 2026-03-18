@@ -6,18 +6,17 @@ namespace visualizer.Repositories;
 
 public class VisualisationsGenerator(SQLDecomposer decomposer, TableGenerator tg, TableOriginColumnsGenerator tocg, AliasReplacer ar)
 {
-    
-
     public List<Visualisation> Generate(string query)
     {
         var visualisations = new List<Visualisation>();
         // query = ar.ReplaceAliases(query);
+        query = ar.RemoveSelectAliases(query);
         var steps = decomposer.Decompose(query);
 
         GenerateTablesWithOriginOnColumns(steps, visualisations);
         GenerateAnimations(visualisations);
         
-        // ar.InsertAliases(visualisations);
+        ar.InsertAliases(visualisations);
 
         return visualisations;
     }
@@ -39,7 +38,7 @@ public class VisualisationsGenerator(SQLDecomposer decomposer, TableGenerator tg
             currSteps.Add(currStep);
             
             //Generate from tables
-            tg.GenerateFromTablesWithOriginColumns(currStep, fromTables, prevToTables);
+            tg.GenerateFromTablesWithOriginColumns(currStep, fromTables, prevToTables, currSteps);
             
             ValidateOriginColumnsCount(fromTables, currStep);
             

@@ -30,6 +30,7 @@ public class MetricsHandler : IMetricsHandler
 
     public void IncrementAction(string sessionId, ActionType actionType)
     {
+        // TODO: Store Action with SQL Step to be able to correlate what actions users take in which steps 
         using var connection = new DuckDBConnection(_connectionString);
         connection.Open();
 

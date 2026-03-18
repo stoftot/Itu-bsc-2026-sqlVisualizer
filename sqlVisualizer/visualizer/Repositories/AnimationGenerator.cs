@@ -24,9 +24,9 @@ public static class AnimationGenerator
                 : WhereAnimationGenerator.Generate(fromTables[0], toTables[0], action),
             SQLKeyword.GROUP_BY =>
                 fromTables.Count > 1
-                    ? throw new ArgumentException("group by animations can only be generated from one tables")
+                    ? throw new ArgumentException("group by animations can only be generated from one table")
                     : GroupByAnimationGenerator.Generate(fromTables[0], toTables, action),
-            SQLKeyword.HAVING => throw new NotImplementedException(),
+            SQLKeyword.HAVING => HavingAnimationGenerator.Generate(fromTables, toTables, action),
             SQLKeyword.SELECT =>
                 toTables.Count > 1
                     ? throw new ArgumentException("select animations can only be generated to one table")

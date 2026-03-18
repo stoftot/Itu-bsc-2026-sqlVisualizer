@@ -50,6 +50,11 @@ public class VisulisationGenerationTest : IClassFixture<DuckDbFixture>
                 SELECT productname, username FROM purchase
                 where username LIKE 'M%'
                 """)]
+    [InlineData("""
+                SELECT * FROM shift
+                GROUP BY day, cashier
+                """
+        )]
     public void Where(string query)
     {
         TestQuery(query);
@@ -83,10 +88,38 @@ public class VisulisationGenerationTest : IClassFixture<DuckDbFixture>
     {
         TestQuery(query);
     }
+    
+    [Theory]
+    [InlineData("""
+                SELECT productname, count() 
+                FROM purchase 
+                GROUP BY productname
+                HAVING COUNT() > 2
+                """)]
+    [InlineData("""
+                SELECT productname, count() 
+                FROM purchase 
+                GROUP BY productname
+                HAVING COUNT() between 1 and 3
+                """)]
+    [InlineData("""
+                SELECT username, SUM(price)
+                FROM purchase
+                JOIN product ON purchase.productname = product.productname
+                GROUP BY username
+                HAVING SUM(price) > 1000 or SUM(price) < 500
+                """)]
+    public void Having(string query)
+    {
+        TestQuery(query);
+    }
 
     [Theory]
     [InlineData("""
                 SELECT coUnT() FROM purchase
+                """)]
+    [InlineData("""
+                SELECT COUNT(username) FROM purchase
                 """)]
     [InlineData("""
                 SELECT username, SUM(price)
@@ -112,9 +145,45 @@ public class VisulisationGenerationTest : IClassFixture<DuckDbFixture>
                 JOIN product ON purchase.productname = product.productname
                 GROUP BY username
                 """)]
+    [InlineData("""
+                SELECT username, SUM(price + 123)
+                FROM purchase
+                JOIN product ON purchase.productname = product.productname
+                GROUP BY username
+                """)]
+    [InlineData("""
+                SELECT username, AVG(price - 123)
+                FROM purchase
+                JOIN product ON purchase.productname = product.productname
+                GROUP BY username
+                """)]
+    [InlineData("""
+                SELECT username, Min(price / 123)
+                FROM purchase
+                JOIN product ON purchase.productname = product.productname
+                GROUP BY username
+                """)]
+    [InlineData("""
+                SELECT username, MAX(price * 123)
+                FROM purchase
+                JOIN product ON purchase.productname = product.productname
+                GROUP BY username
+                """)]
+    [InlineData("""
+                SELECT username, SUM(p1.price + p2.price), AVG(p1.price - p2.price), MIN(p1.price * p2.price), MAX(p1.price / p2.price)
+                FROM purchase
+                JOIN product p1 ON purchase.productname = p1.productname
+                JOIN product p2 ON purchase.productname = p2.productname
+                GROUP BY username
+                """)]
+    [InlineData("""
+                SELECT SUM("*" + "123"), "*", "321"."user" as U123
+                FROM "123" as "321"
+                group by "*", "user"
+                """)]
     public void AggreGateFunctions(string query)
     {
-        TestQuery(query);
+         TestQuery(query);
     }
 
     [Theory]
@@ -126,6 +195,12 @@ public class VisulisationGenerationTest : IClassFixture<DuckDbFixture>
                 SELECT productname, user.email, COUNT() FROM purchase
                 JOIN user ON user.username = purchase.username
                 GROUP BY productname, user.email
+                """)]
+    [InlineData("""
+                SELECT "username", MAX("price")
+                FROM "purchase"
+                JOIN "product" ON "purchase".productname = product."productname"
+                GROUP BY "username"
                 """)]
     public void Combination(string query)
     {
