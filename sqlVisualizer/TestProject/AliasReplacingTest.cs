@@ -811,10 +811,26 @@ public class AliasReplacingTest
         Assert.Equal("""
                      SELECT product.price
                      FROM product
-                     """, first);
+                     """.Replace("\n", Environment.NewLine), first);
         Assert.Equal("""
                      SELECT price
                      FROM purchase
-                     """, second);
+                     """.Replace("\n", Environment.NewLine), second);
+    }
+
+    [Fact]
+    public void RemoveSelectAliases_RemovesOnlySelectAliases()
+    {
+        var actual = new AliasReplacer().RemoveSelectAliases("""
+                                                            SELECT p.price AS price_alias, p.name display_name
+                                                            FROM product AS p
+                                                            WHERE p.price > 10
+                                                            """);
+
+        Assert.Equal("""
+                     SELECT p.price, p.name
+                     FROM product AS p
+                     WHERE p.price > 10
+                     """, actual);
     }
 }
