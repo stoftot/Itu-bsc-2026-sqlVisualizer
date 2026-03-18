@@ -8,5 +8,7 @@ public enum ActionType
     Select,
     GroupBy,
     Custom,
-    Join
+    Join,
+    AnimationNext,
+    AnimationPrevious,
 }
