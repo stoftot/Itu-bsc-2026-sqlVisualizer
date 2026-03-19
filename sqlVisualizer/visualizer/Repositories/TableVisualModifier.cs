@@ -123,7 +123,7 @@ public class TableVisualModifier
             .Select(aggr => (Action)aggr.ToggleHighlight)
             .ToOneAction();
     
-    public Action CombineActions(List<Action> a, List<Action> b)
+    public Action CombineActions(IEnumerable<Action> a, IEnumerable<Action> b)
     {
         //capture the list, so when its changed it doesn't apply to all functions
         var snapshot = a.ToList();
@@ -137,5 +137,15 @@ public class TableVisualModifier
     public Action CombineActions(IEnumerable<Action> actions)
     {
         return actions.ToOneAction();
+    }
+
+    public Action CombineActions(IEnumerable<IEnumerable<Action>> actions)
+    {
+        var snapShot = actions.ToList().Select(a => a.ToList()).ToList();
+
+        return () =>
+        {
+            snapShot.ForEach(a => a.ForEach(action => action()));
+        };
     }
 }
