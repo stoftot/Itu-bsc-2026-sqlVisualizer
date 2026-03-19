@@ -36,6 +36,27 @@ public class VisulisationGenerationTest : IClassFixture<DuckDbFixture>
     [InlineData("""
                 SELECT * FROM shift
                 """)]
+    [InlineData("""
+                SELECT shift.* FROM shift
+                """)]
+    [InlineData("""
+                SELECT product.*, purchase.*
+                FROM purchase
+                JOIN product  on purchase.productname = product.productname
+                """)]
+    [InlineData("""
+                SELECT "*"
+                FROM "123"
+                """)]
+    [InlineData("""
+                SELECT "123"."*"
+                FROM "123"
+                """)]
+    [InlineData("""
+                SELECT product.*, price, purchase.*
+                FROM purchase
+                JOIN product  on purchase.productname = product.productname
+                """)]
     public void Select(string query)
     {
         TestQuery(query);
