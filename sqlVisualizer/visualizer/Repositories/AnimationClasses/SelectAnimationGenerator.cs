@@ -52,20 +52,21 @@ public static class SelectAnimationGenerator
             columns = action.Clause.Split(',').Select(c => c.Trim()).ToList();
         }
 
-        var toColumnIndex = -1;
+        var toColumnIndex = 0;
         foreach (var column in columns)
         {
-            toColumnIndex++;
             // Handel window functions
             if (column.ToLower().Contains(" over "))
             {
                 HandleWindowFunction(fromTables[0], toTable, column, toColumnIndex, steps);
+                toColumnIndex++;
                 continue;
             }
             
             if (column.Contains('('))
             {
                 HandleAggregateColumn(fromTables, toTable, column, toColumnIndex, steps);
+                toColumnIndex++;
                 continue;
             }
             
@@ -73,7 +74,7 @@ public static class SelectAnimationGenerator
             {
                 Action FromAnimationGenerator(int i) => tvm.GenerateToggleHighlightColumn(fromTables[0], i);
 
-                HandleNormalSelect(fromTables, toTable, column, toColumnIndex, steps, FromAnimationGenerator);
+                toColumnIndex += HandleNormalSelect(fromTables, toTable, column, toColumnIndex, steps, FromAnimationGenerator);
             }
             else
             {
@@ -82,7 +83,7 @@ public static class SelectAnimationGenerator
                         .ToList()
                         .ToOneAction();
 
-                HandleNormalSelect(fromTables, toTable, column, toColumnIndex, steps, FromAnimationGenerator);
+                toColumnIndex += HandleNormalSelect(fromTables, toTable, column, toColumnIndex, steps, FromAnimationGenerator);
             }
         }
 
@@ -190,11 +191,40 @@ public static class SelectAnimationGenerator
         }
     }
     
-    private static void HandleNormalSelect(List<Table> fromTables, Table toTable,
+    private static int HandleNormalSelect(List<Table> fromTables, Table toTable,
         string column, int columnIndex, List<Action> steps,
         Func<int, Action> generateFromAnimation)
     {
         var fromIndex = fromTables[0].IndexOfColumn(column);
+        if (fromIndex == -1)
+        {
+            var fromIndexes = fromTables[0].IndexOfOriginTableColumns(column);
+            var fromAnimations = fromIndexes.Select(generateFromAnimation).ToList();
+            var numberOfColumns = fromIndexes.Count;
+            var visibleStep = new List<Action>();
+            var HighLightStep = new List<Action>();
+            
+            for (int i = 0; i < numberOfColumns; i++)
+            {
+                visibleStep.Add(tvm.GenerateToggleVisibleColumn(toTable, columnIndex+i));
+                HighLightStep.Add(tvm.GenerateToggleHighlightColumn(toTable, columnIndex+i));
+            }
+            
+            steps.Add(tvm.CombineActions(
+            [
+                fromAnimations,
+                visibleStep,
+                HighLightStep
+            ]));
+            
+            steps.Add(tvm.CombineActions(
+            [
+                fromAnimations,
+                HighLightStep
+            ]));
+            return numberOfColumns;
+        }
+
         var fromAnimation = generateFromAnimation(fromIndex);
         steps.Add(tvm.CombineActions(
         [
@@ -202,12 +232,14 @@ public static class SelectAnimationGenerator
             tvm.GenerateToggleVisibleColumn(toTable, columnIndex),
             tvm.GenerateToggleHighlightColumn(toTable, columnIndex)
         ]));
-        
+
         steps.Add(tvm.CombineActions(
         [
             fromAnimation,
             tvm.GenerateToggleHighlightColumn(toTable, columnIndex)
         ]));
+
+        return 1;
     }
 
     private static void HandleWindowFunction(Table fromTable, Table toTable,
