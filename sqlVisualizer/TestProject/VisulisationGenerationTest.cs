@@ -103,11 +103,24 @@ public class VisulisationGenerationTest : IClassFixture<DuckDbFixture>
                 HAVING COUNT() between 1 and 3
                 """)]
     [InlineData("""
+                SELECT productname, count() 
+                FROM purchase 
+                GROUP BY productname
+                HAVING COUNT() != 1 or COUNT(*) != 3
+                """)]
+    [InlineData("""
                 SELECT username, SUM(price)
                 FROM purchase
                 JOIN product ON purchase.productname = product.productname
                 GROUP BY username
                 HAVING SUM(price) > 1000 or SUM(price) < 500
+                """)]
+    [InlineData("""
+                SELECT username
+                FROM purchase pu
+                JOIN product pr ON pu.productname = pr.productname
+                GROUP BY username
+                HAVING SUM(price * 300) > 1000 or SUM(price + 100) < 500
                 """)]
     public void Having(string query)
     {
