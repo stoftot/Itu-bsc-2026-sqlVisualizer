@@ -65,6 +65,22 @@ public class Table
 
         throw new ArgumentException($"Column {column} not found in table {tableName}");
     }
+
+    public List<int> IndexOfOriginTableColumns(string columnOrTable)
+    {
+        var tableName = columnOrTable.Trim().Split('.', 2)[0];
+        var indexes = new List<int>();
+        for (int i = 0; i < ColumnsOriginalTableNames.Count; i++)
+        {
+            if (ColumnsOriginalTableNames[i].Equals(tableName, StringComparison.InvariantCultureIgnoreCase))
+                indexes.Add(i);
+        }
+        
+        if(indexes.Count == 0)
+            throw new ArgumentException($"origin table '{tableName}' not found");
+        
+        return indexes;
+    }
     
     public Table OrderBy(string column, bool ascending)
     {
