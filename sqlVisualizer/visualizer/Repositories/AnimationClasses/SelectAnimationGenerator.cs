@@ -1,6 +1,7 @@
 using visualizer.Exstensions;
 using visualizer.Models;
 using System.Text.RegularExpressions;
+using visualizer.Utility;
 
 namespace visualizer.Repositories.AnimationClasses;
 
@@ -117,13 +118,13 @@ public static class SelectAnimationGenerator
     private static void HandleSumAndAvgAggregate(List<Table> fromTables, Table toTable,
         string parameter, int toColumnIndex, List<Action> steps)
     {
-        HandleAggregateSpecificColumns(fromTables, toTable, ExtractReferencedColumns(parameter), toColumnIndex, steps);
+        HandleAggregateSpecificColumns(fromTables, toTable, UtilRegex.ExtractReferencedColumns(parameter), toColumnIndex, steps);
     }
     
     private static void HandleMinAndMaxAggregate(List<Table> fromTables, Table toTable,
         string parameter, int toColumnIndex, List<Action> steps)
     {
-        HandleAggregateSpecificColumns(fromTables, toTable, ExtractReferencedColumns(parameter), toColumnIndex, steps);
+        HandleAggregateSpecificColumns(fromTables, toTable, UtilRegex.ExtractReferencedColumns(parameter), toColumnIndex, steps);
     }
 
     private static void HandleAggregateSpecificColumns(List<Table> fromTables, Table toTable,
@@ -178,18 +179,5 @@ public static class SelectAnimationGenerator
             fromAnimation,
             tvm.GenerateToggleHighlightColumn(toTable, columnIndex)
         ]));
-    }
-
-    private static IEnumerable<string> ExtractReferencedColumns(string expression)
-    {
-        var potenTialColumns = expression.Split(' ');
-        var columns = new List<string>();
-        const string pattern = @""".+""|\b.+";
-        foreach (var pc in potenTialColumns)
-        {
-            var match = Regex.Match(pc, pattern);
-            if (match.Success) columns.Add(match.Groups[0].Value.Trim());
-        }
-        return columns.Where(value => !int.TryParse(value, out _));
     }
 }
