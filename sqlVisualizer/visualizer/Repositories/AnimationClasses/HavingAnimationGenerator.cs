@@ -14,23 +14,31 @@ public static class HavingAnimationGenerator
         var toTableIndex = 0;
         foreach (var fromTable in fromTables)
         {
-            var step = new List<Action> { tvm.ToggleHighlightAggregations(fromTable) };
+            var toggleAggregate = tvm.ToggleHighlightAggregations(fromTable);
+
+            steps.Add(toggleAggregate);
 
             if (toTableIndex < toTables.Count &&
                 fromTable.Entries.SequenceEqual(toTables[toTableIndex].Entries))
             {
-                step.Add(tvm.GenerateToggleHighlightTable(fromTable));
-                step.Add(tvm.GenerateToggleHighlightTable(toTables[toTableIndex]));
+                var step = new List<Action>()
+                {
+                    tvm.GenerateToggleHighlightTable(fromTable),
+                    tvm.GenerateToggleHighlightTable(toTables[toTableIndex])
+                };
 
-                
-                steps.Add(tvm.CombineActions([step.ToOneAction(), tvm.HideTableCellBased(toTables[toTableIndex])]));
-                
+                steps.Add(tvm.CombineActions(
+                    step,
+                    [tvm.HideTableCellBased(toTables[toTableIndex])]));
+
+                steps.Add(tvm.CombineActions(
+                    step,
+                    [toggleAggregate]));
+
                 toTableIndex++;
             }
             else
-                steps.Add(step.ToOneAction());
-
-            steps.Add(step.ToOneAction());
+                steps.Add(toggleAggregate);
         }
 
         return new Animation(steps);
