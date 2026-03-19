@@ -43,11 +43,11 @@ public class TableOriginColumnsGenerator
             GenerateTableOriginOnColumnsFromTableName(table);
         }
     }
-    
+
     public void GenerateTableOriginOnColumnsFromTableName(Table table)
     {
         table.ColumnsOriginalTableNames.AddRange(
-                Enumerable.Repeat(table.Name, table.ColumnNames.Count));
+            Enumerable.Repeat(table.Name, table.ColumnNames.Count));
     }
 
     public void DuplicateOriginOnColumnsToSingle(Table fromTable, Table toTable)
@@ -111,8 +111,20 @@ public class TableOriginColumnsGenerator
                 continue;
             }
 
-            toTable.ColumnsOriginalTableNames
-                .Add(fromTable.ColumnsOriginalTableNames[fromTable.IndexOfColumn(column)]);
+            var fromIndex = fromTable.IndexOfColumn(column);
+
+            if (fromIndex == -1)
+            {
+                var fromIndexes = fromTable.IndexOfOriginTableColumns(column);
+                foreach (var index in fromIndexes)
+                {
+                    toTable.ColumnsOriginalTableNames
+                        .Add(fromTable.ColumnsOriginalTableNames[index]);
+                }
+            }
+            else
+                toTable.ColumnsOriginalTableNames
+                    .Add(fromTable.ColumnsOriginalTableNames[fromIndex]);
         }
     }
 }
