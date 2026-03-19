@@ -37,11 +37,20 @@ public class Table
         };
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="column"></param>
+    /// <returns>The index of the column specified, -1 if the column is '*'</returns>
+    /// <exception cref="ArgumentException"></exception>
     public int IndexOfColumn(string column)
     {
         var parts = column.Trim().Split('.', 2);
         var tableName = parts.Length == 2 ? parts[0] : null;
-        var columnName = parts.Length == 2 ? parts[1].Replace("\"", "") : parts[0].Replace("\"", "");
+        var columnName = parts.Length == 2 ? parts[1] : parts[0];
+        
+        if (columnName.Equals("*")) return -1;
+        columnName = columnName.Replace("\"", "");
 
         for (int i = 0; i < ColumnNames.Count; i++)
         {
