@@ -72,7 +72,7 @@ public class QueryIllustrationViewBase : ComponentBase, IDisposable
         if (trackMetrics)
         {
             MetricsHandler.EnterStep(HomeState.SessionId, CurrStep.Component.Keyword);
-            MetricsHandler.PrintSessionTimings(HomeState.SessionId);
+            //MetricsHandler.PrintSessionTimings(HomeState.SessionId);
         }
 
         UpdateStepShown();

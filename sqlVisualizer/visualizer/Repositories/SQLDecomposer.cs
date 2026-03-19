@@ -29,6 +29,14 @@ public class SQLDecomposer
     public List<SQLDecompositionComponent>? Decompose(string sql)
     {
         List<SQLDecompositionComponent> result = [];
+        
+        sql = sql.ToLower().Replace("\nfrom ", " from ").Replace(";", "");
+        string selectSQL = sql.Split(" from ")[0].Replace("select ", "");
+        sql = "from " + sql.Split(" from ")[1];
+        
+        SQLDecompositionComponent selectClause = new SQLDecompositionComponent(SQLKeyword.SELECT, selectSQL);
+        result.Add(selectClause);
+        
         var keyWordsPresent = SupportedKeywords
             .Where(k => Regex.IsMatch(
                 sql,
@@ -54,7 +62,7 @@ public class SQLDecomposer
         result = result
             .OrderBy(c => c.Keyword.ExecutionPrecedence())
             .ToList();
-
+        
         return result.Count == 0 ? null : result;
     }
 

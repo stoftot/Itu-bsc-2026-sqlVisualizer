@@ -1,7 +1,9 @@
 ﻿using System.Drawing;
 using System.Text;
+using System.Text.RegularExpressions;
 using DuckDB.NET.Data;
 using visualizer.Models;
+using visualizer.Utility;
 
 namespace visualizer.Repositories;
 
@@ -55,6 +57,14 @@ public class SQLExecutor(DuckDBConnection connection)
                                                c.Keyword == SQLKeyword.GROUP_BY) &&
                                            components.All(c =>
                                                c.Keyword != SQLKeyword.ORDER_BY);
+        var containsWindowFunctionAndNotOrderBy =
+            Regex.Match(
+            components.FirstOrDefault(c => c.Keyword == SQLKeyword.SELECT
+                , new SQLDecompositionComponent(SQLKeyword.SELECT, "")).Clause,
+            UtilRegex.ContainsWindowFunctionPattern, RegexOptions.IgnoreCase | RegexOptions.Singleline)
+                .Success
+            && components.All(c => c.Keyword != SQLKeyword.ORDER_BY);
+            
         var queryBuilder = new StringBuilder();
         if (!containsSelect)
         {
@@ -65,6 +75,13 @@ public class SQLExecutor(DuckDBConnection connection)
         {
             var groupBy = components.First(c => c.Keyword == SQLKeyword.GROUP_BY);
             components.Add(new SQLDecompositionComponent(SQLKeyword.ORDER_BY, groupBy.Clause));
+        }
+
+        if (containsWindowFunctionAndNotOrderBy)
+        {
+            var selectComponent = components.First(c => c.Keyword == SQLKeyword.SELECT);
+            var columnsToOrderBy = GetWindowFunctionsColumnsToGroupBy(selectComponent.Clause);
+            components.Add(new SQLDecompositionComponent(SQLKeyword.ORDER_BY, columnsToOrderBy));
         }
 
         foreach (var component in components.OrderBy(c => c.Keyword.SyntaxPrecedence()))
@@ -88,6 +105,45 @@ public class SQLExecutor(DuckDBConnection connection)
         }
 
         return table;
+    }
+
+    private string GetWindowFunctionsColumnsToGroupBy(string selectClause)
+    {
+        var windowFunctionMatch = Regex.Match(selectClause,
+            UtilRegex.ExtractWindowFunctionFromSelectClausePattern, RegexOptions.IgnoreCase | RegexOptions.Singleline);
+        var windowFunction = windowFunctionMatch.Groups[0].Value;
+
+        var columnsPartitionByMatch = Regex.Match(windowFunction,
+            UtilRegex.ExtractColumnsFromPartitionByInWindowFunctionPattern,
+            RegexOptions.IgnoreCase | RegexOptions.Singleline);
+        var columnsOrderByMatch = Regex.Match(windowFunction,
+            UtilRegex.ExtractColumnsFromOrderByInWindowFunctionPattern,
+            RegexOptions.IgnoreCase | RegexOptions.Singleline);
+
+        var columns = new List<string>();
+
+        if (columnsPartitionByMatch.Success)
+        {
+            foreach (var column in columnsPartitionByMatch.Groups[1].Value.Split(','))
+            {
+                var c = column.Trim();
+                if (columns.Contains(c)) continue;
+                columns.Add(c);
+            }
+        }
+
+        if (columnsOrderByMatch.Success)
+        {
+            foreach (var column in columnsOrderByMatch.Groups[0].Value.Split(','))
+            {
+                var c = column.Trim();
+                if (columns.Contains(c)) continue;
+                // columns.Remove(c);
+                columns.Add(c);
+            }
+        }
+
+        return string.Join(",", columns);
     }
 
     public async Task<Database> GetDatabase()
