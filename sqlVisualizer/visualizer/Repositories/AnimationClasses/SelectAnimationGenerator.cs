@@ -258,6 +258,8 @@ public static class SelectAnimationGenerator
                 break;
             case "rank":
             case "row_number":
+            case "dense_rank":
+            case "ntile":
                 HandleRankingWindowFunction(fromTable, toTable, windowFunction, columnIndex, steps);
                 break;
             default:
@@ -340,7 +342,7 @@ public static class SelectAnimationGenerator
         }
     }
     
-    private static void HandleRankingWindowFunction(Table fromTable, Table toTable, WindowFunction windowFunction, 
+    private static void HandleRankingWindowFunction(Table fromTable, Table toTable, WindowFunction windowFunction,
         int columnIndex, List<Action> steps)
     {
         Table fromTableWithRowIndex = fromTable.DeepClone().AppendRowIndex();
@@ -374,6 +376,10 @@ public static class SelectAnimationGenerator
         int resultTableRowIndex = 0;
         List<List<int>> resultPartitions = sourcePartitions.Select(partition => partition.Select(_ => resultTableRowIndex++).ToList()).ToList();
 
+        List<int> orderColumnIndices = windowFunction.Orders
+            .Select(o => fromTable.IndexOfColumn(o.ColumnName))
+            .ToList();
+
         // Generating Animation
         for (int i = 0; i < sourcePartitions.Count; i++)
         {
@@ -382,7 +388,7 @@ public static class SelectAnimationGenerator
 
             // First, highlight all rows in this partition in the source table
             var partitionRowActions = sourcePartition
-                .Select(rowIdx => tvm.GenerateToggleHighlightCell(fromTable, rowIdx, fromTable.IndexOfColumn(windowFunction.Argument)))
+                .Select(rowIdx => tvm.GenerateToggleHighlightRow(fromTable.Entries[rowIdx]))
                 .ToList();
             steps.Add(tvm.CombineActions(partitionRowActions));
 
@@ -390,27 +396,33 @@ public static class SelectAnimationGenerator
             {
                 int sourceRowIndex = sourcePartition[j];
                 int resultRowIndex = resultPartition[j];
-                //tvm.ChangeHighlightColourCell(fromTable, sourceRowIndex, fromTable.IndexOfColumn(windowFunction.Argument), UtilColor.SecondaryHighlightColor);
+
+                tvm.ChangeHighlightColourCells(fromTable, sourceRowIndex, orderColumnIndices, UtilColor.SecondaryHighlightColor);
+                var sourceHighlightActions = orderColumnIndices
+                    .Select(colIdx => tvm.GenerateToggleHighlightCell(fromTable, sourceRowIndex, colIdx))
+                    .ToList();
+
                 steps.Add(tvm.CombineActions(
                 [
-                    //tvm.GenerateToggleHighlightCell(fromTable, sourceRowIndex, fromTable.IndexOfColumn(windowFunction.Argument)),
-                    tvm.GenerateToggleVisibleCell(toTable, resultRowIndex, columnIndex),
-                    tvm.GenerateToggleHighlightCell(toTable, resultRowIndex, columnIndex)
+                    sourceHighlightActions,
+                    [
+                        tvm.GenerateToggleVisibleCell(toTable, resultRowIndex, columnIndex),
+                        tvm.GenerateToggleHighlightCell(toTable, resultRowIndex, columnIndex)
+                    ]
                 ]));
             }
-            
-            // Unhighlight
-            /*var unhighlightSourceCells = sourcePartition
-                .Select(rowIdx => tvm.GenerateToggleHighlightCell(fromTable, rowIdx, fromTable.IndexOfColumn(windowFunction.Argument)))
-                .ToList();*/
-            
+
+            var unhighlightSourceCells = sourcePartition
+                .SelectMany(rowIdx => orderColumnIndices
+                    .Select(colIdx => tvm.GenerateToggleHighlightCell(fromTable, rowIdx, colIdx)))
+                .ToList();
+
             var unhighlightResultCells = resultPartition
                 .Select(rowIdx => tvm.GenerateToggleHighlightCell(toTable, rowIdx, columnIndex))
                 .ToList();
 
-            var unhighlightActions = partitionRowActions.Concat(unhighlightResultCells).ToList();//.Concat(unhighlightSourceCells).ToList();
-            
-            steps.Add(tvm.CombineActions(unhighlightActions));
+            steps.Add(tvm.CombineActions(
+                partitionRowActions.Concat(unhighlightSourceCells).Concat(unhighlightResultCells)));
         }
     }
 }
