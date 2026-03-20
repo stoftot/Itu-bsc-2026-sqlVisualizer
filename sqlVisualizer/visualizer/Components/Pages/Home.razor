@@ -5,15 +5,27 @@
 <PageTitle>Home</PageTitle>
 <div class="layout">
     <main>
-        <QueryIlustrationView @ref="QueryView" Query="@_query" />
+        @if (viewVisulisation)
+        {
+            <QueryIlustrationView @ref="QueryView" Query="@_query"/>
+        }
+        else
+        {
+            <TableView @key="@Guid.NewGuid()"
+                       Table="tableSelected"/>
+        }
     </main>
     
     <div class="toolbar">
-        <ToolBar />
+        <ToolBar 
+            RunQueryCallback="RunQueryCallback"
+            />
     </div>
 
     <div class="schema">
-        <SchemaView />
+        <SchemaView 
+            OnTableSelected="HandTabledSchemaTableSelected"
+        />
     </div>
 
     <div class="editor">
