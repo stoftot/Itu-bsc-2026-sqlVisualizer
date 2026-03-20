@@ -1,9 +1,26 @@
 ﻿<h4>Database Schema</h4>
 @foreach(var table in Database.Tables)
 {
-    <h5>@table.Name</h5>
-    @foreach (var tableEntry in table.Entries)
+    <h5 class="schema-table-header" @onclick="@(() => HandleTableClick(table))">@table.Name</h5>
+    @foreach (var (column, type) in table.ColumnNames.Zip(table.ColumnTypes))
     {
-        <h6>@tableEntry.Values[0].Value</h6>
+        <h6 class="schema-entry">@column - @type</h6>
     }
 }
+
+<style>
+    .schema-table-header {
+        font-weight: bold;
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .schema-table-header:hover {
+        text-decoration: underline;
+    }
+
+    .schema-entry {
+        font-style: italic;
+        cursor: default;
+    }
+</style>
