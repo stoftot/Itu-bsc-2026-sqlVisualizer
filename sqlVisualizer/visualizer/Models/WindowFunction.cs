@@ -8,9 +8,10 @@ public class WindowFunction
     public required string SQL { get; init; }
     public required string Function { get; init; }
     public required string Argument { get; init; }
+    public required string Extra { get; init; }
     public required List<string> PartitionNames { get; init; }
     public required List<Order> Orders { get; init; }
-    
+
     public static WindowFunction FromString(string windowFunction)
     {
         var match = UtilRegex.Match(windowFunction, UtilRegex.NamedWindowFunctionPattern);
@@ -19,6 +20,7 @@ public class WindowFunction
             SQL = windowFunction,
             Function = match.Groups["function"].Value,
             Argument = match.Groups["argument"].Value,
+            Extra = match.Groups["extra"].Success ? match.Groups["extra"].Value.Trim() : string.Empty,
             PartitionNames = match.Groups["partitions"].Success
                 ? match.Groups["partitions"].Value.Split(',').ToList()
                 : [],
