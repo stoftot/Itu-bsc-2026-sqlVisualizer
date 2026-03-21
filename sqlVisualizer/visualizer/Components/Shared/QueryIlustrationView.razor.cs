@@ -55,9 +55,7 @@ public class QueryIllustrationViewBase : ComponentBase, IDisposable
         }
         catch (Exception e)
         {
-            Console.WriteLine("Exception while generating visualisations: " + e);
             HomeState.ExceptionOccured = true;
-            Console.WriteLine(HomeState.ExceptionOccured);
             HomeState.ExceptionMessage = e.Message;
             Steps = [];
             HomeState.NotifyStateChanged();
