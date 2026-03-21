@@ -81,7 +81,8 @@ public class SQLExecutor(DuckDBConnection connection)
         {
             var selectComponent = components.First(c => c.Keyword == SQLKeyword.SELECT);
             var columnsToOrderBy = GetWindowFunctionsColumnsToGroupBy(selectComponent.Clause);
-            components.Add(new SQLDecompositionComponent(SQLKeyword.ORDER_BY, columnsToOrderBy));
+            if (!string.IsNullOrWhiteSpace(columnsToOrderBy))
+                components.Add(new SQLDecompositionComponent(SQLKeyword.ORDER_BY, columnsToOrderBy));
         }
 
         foreach (var component in components.OrderBy(c => c.Keyword.SyntaxPrecedence()))
