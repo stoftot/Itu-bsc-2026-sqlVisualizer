@@ -1,28 +1,98 @@
 .layout {
     height: 100%;
     display: grid;
-    grid: 1fr 56px 260px / 320px 1fr;
-    grid-template-areas: "main main" "toolbar toolbar" "schema editor";
+    grid: 48px 1fr 56px 260px 28px / 320px 1fr;
+    grid-template-areas:
+        "header header"
+        "schema   main"
+        "schema toolbar"
+        "schema editor"
+        "status status";
 }
 
+/* ── Header ─────────────────────────────────────────── */
+.app-header {
+    grid-area: header;
+    background: #1a2e4a;
+    color: #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+}
+
+.app-header__left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.app-header__title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+}
+
+.app-header__right {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.app-header__icon {
+    font-size: 1rem;
+    cursor: pointer;
+    opacity: 0.75;
+    transition: opacity 0.15s;
+}
+
+.app-header__icon:hover {
+    opacity: 1;
+}
+
+/* ── Main content ────────────────────────────────────── */
 main {
     grid-area: main;
     padding: 20px;
+    background: #f8fafc;
+    overflow: auto;
 }
 
+/* ── Toolbar ─────────────────────────────────────────── */
 .toolbar {
     grid-area: toolbar;
-    background: #E5E7EB;
+    background: #f1f5f9;
+    border-top: 1px solid #d1d5db;
+    border-bottom: 1px solid #d1d5db;
 }
 
+/* ── Schema sidebar ──────────────────────────────────── */
 .schema {
     grid-area: schema;
-    background: #F1F5F9;
-    overflow-y: scroll;
+    overflow-y: auto;
     height: 100%;
-    padding: 8px;
 }
 
+/* ── Editor ──────────────────────────────────────────── */
 .editor {
     grid-area: editor;
+}
+
+/* ── Status bar ──────────────────────────────────────── */
+.status-bar {
+    grid-area: status;
+    background: #111f30;
+    color: #64748b;
+    font-size: 0.65rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 12px;
+}
+
+.status-bar__dot {
+    color: #22c55e;
+    margin-right: 4px;
 }

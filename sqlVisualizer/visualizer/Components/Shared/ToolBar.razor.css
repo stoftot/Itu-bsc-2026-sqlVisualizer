@@ -1,8 +1,8 @@
-﻿.toolbar {
+.toolbar {
     height: 100%;
     width: 100%;
     display: flex;
-    padding: 8px;
+    padding: 0 12px;
     align-items: center;
 }
 
@@ -10,6 +10,7 @@
     width: 320px;
     align-items: center;
     display: flex;
+    gap: 8px;
 }
 
 .editor-part {
@@ -19,50 +20,99 @@
 }
 
 .sql-statements {
-    margin-right: 16px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid #d1d5db;
+    background: white;
+    font-size: 0.78rem;
+    color: #374151;
 }
 
 button {
     border: none;
-    border-radius: 5px;
+    border-radius: 4px;
+    cursor: pointer;
+    background: transparent;
 }
 
+button:disabled {
+    opacity: 0.35;
+    cursor: default;
+}
+
+/* Run Query / Play buttons */
 .text-button {
     display: flex;
     align-items: center;
-    padding-inline: 4px;
-    margin-left: 4px;
+    gap: 6px;
+    padding: 5px 12px;
+    background: #1a2e4a;
+    color: white;
+    border-radius: 4px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
 }
 
 .text-button__text {
     display: inline;
     margin-bottom: 0;
+    color: white;
 }
 
+.text-button .bi {
+    color: white;
+    font-size: 1rem;
+}
+
+.text-button:disabled {
+    background: #94a3b8;
+}
+
+/* Step navigation */
 .stepper {
     display: flex;
     align-items: center;
+    gap: 2px;
 }
 
 .stepper__step {
     margin-bottom: 0;
     margin-inline: 4px;
+    font-size: 0.75rem;
+    color: #94a3b8;
+    font-weight: 500;
 }
 
 .stepper__step--selected {
-    color: orange;
+    color: #1a2e4a;
+    font-weight: 700;
+    background: #dbeafe;
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+
+.stepper button {
+    padding: 2px 6px;
+    color: #374151;
+}
+
+.stepper button:hover:not(:disabled) {
+    background: #e5e7eb;
 }
 
 .bi {
-    font-size: 1.6em;
+    font-size: 1.2em;
 }
 
-.bi-play-fill {
-    color: green;
+/* override play icon color inside .text-button */
+.text-button .bi-play-fill,
+.text-button .bi-pause-fill {
+    color: white;
 }
 
 .animation-stepper {
-    margin-left: 40px;
+    margin-left: 32px;
 }
 
 .info-button {

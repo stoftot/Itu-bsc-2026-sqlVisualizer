@@ -1,26 +1,31 @@
-﻿<h4>Database Schema</h4>
-@foreach(var table in Database.Tables)
-{
-    <h5 class="schema-table-header" @onclick="@(() => HandleTableClick(table))">@table.Name</h5>
-    @foreach (var (column, type) in table.ColumnNames.Zip(table.ColumnTypes))
+<div class="schema-container">
+    <div class="schema-section-label">DATABASE</div>
+
+    <div class="schema-source-select">
+        <span class="schema-source-label">SELECTED SOURCE</span>
+        <select class="schema-source-dropdown">
+            <option>Custom</option>
+        </select>
+    </div>
+
+    @foreach(var table in Database.Tables)
     {
-        <h6 class="schema-entry">@column - @type</h6>
-    }
-}
-
-<style>
-    .schema-table-header {
-        font-weight: bold;
-        cursor: pointer;
-        user-select: none;
-    }
-
-    .schema-table-header:hover {
-        text-decoration: underline;
+        <div class="schema-table" @onclick="@(() => HandleTableClick(table))">
+            <i class="bi bi-table schema-table__icon"></i>
+            <span class="schema-table__name">@table.Name</span>
+        </div>
+        @foreach (var (column, type) in table.ColumnNames.Zip(table.ColumnTypes))
+        {
+            <div class="schema-column">
+                <span class="schema-column__name">@column</span>
+                <span class="schema-column__type">@type</span>
+            </div>
+        }
     }
 
-    .schema-entry {
-        font-style: italic;
-        cursor: default;
-    }
-</style>
+    <div class="schema-new-db">
+        <button class="schema-new-db-btn" disabled>
+            <i class="bi bi-plus"></i> NEW DATABASE
+        </button>
+    </div>
+</div>

@@ -4,6 +4,17 @@
 
 <PageTitle>Home</PageTitle>
 <div class="layout">
+    <header class="app-header">
+        <div class="app-header__left">
+            <span class="app-header__title">SQL VISUALIZER</span>
+        </div>
+        <div class="app-header__right">
+            <i class="bi bi-gear-fill app-header__icon"></i>
+            <i class="bi bi-moon-fill app-header__icon"></i>
+            <i class="bi bi-question-circle app-header__icon"></i>
+        </div>
+    </header>
+
     <main>
         @if (viewVisulisation)
         {
@@ -15,15 +26,15 @@
                        Table="tableSelected"/>
         }
     </main>
-    
+
     <div class="toolbar">
-        <ToolBar 
+        <ToolBar
             RunQueryCallback="RunQueryCallback"
             />
     </div>
 
     <div class="schema">
-        <SchemaView 
+        <SchemaView
             OnTableSelected="HandTabledSchemaTableSelected"
         />
     </div>
@@ -31,4 +42,9 @@
     <div class="editor">
         <EditorView />
     </div>
+
+    <footer class="status-bar">
+        <!-- <span><span class="status-bar__dot">●</span> CONNECTED: LOCAL_DB_01</span> -->
+        <span>V2.4.1-ACADEMIC</span>
+    </footer>
 </div>
