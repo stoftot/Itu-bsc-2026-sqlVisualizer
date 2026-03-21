@@ -11,9 +11,9 @@ public static class UtilRegex
     public const string SelectClausePattern = @"SELECT\s+(.*?)\s+FROM";
     public const string ExtractAliasForSelectClausePattern = @"\b(?!DISTINCT)\b([^,]+?)(?:\s)(?:as\s+|\s*)(.+?)(?:,|$)";
     public const string ContainsWindowFunctionPattern = @"(\s|\))\s*over\s*(\s|\()";
-    public const string ExtractWindowFunctionFromSelectClausePattern = @"\s*[^,]+?\bover\s*[^)]+\)[^,]+";
+    public const string ExtractWindowFunctionFromSelectClausePattern = @"\s*(?:[^,]|\([^)]*\))+?\bover\s*[^)]+\)[^,]*";
     public const string ExtractColumnsFromPartitionByInWindowFunctionPattern = @"PARTITION BY (.+?)\b\s+(?=[^,\s])";
-    public const string ExtractColumnsFromOrderByInWindowFunctionPattern = @"(?<=ORDER BY)(?:(?:.+?)\b\s+(?:desc|asc)?)+?(?=[^,\s])";
+    public const string ExtractColumnsFromOrderByInWindowFunctionPattern = @"(?<=ORDER BY\s)([^)]*?)(?=\s*\))";
     public const string NamedWindowFunctionPattern = @"(?<function>\w+)\((?<argument>\w*)(?:,\s*(?<extra>[^)]*))?\).*OVER\s+\(\s*(?:PARTITION BY (?<partitions>.+?)\b\s+(?=[^,\s]))?(?:ORDER BY (?<orders>.+?)\b\s+(?=[^,\s]))?";
     // public const string Pattern = "";
     // public const string Pattern = "";

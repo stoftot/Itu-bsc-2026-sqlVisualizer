@@ -28,15 +28,15 @@ public static class SelectAnimationGenerator
 
         steps.Add(tvm.HideTableCellBased(toTable));
         
-        //TODO: regex dosen't support window functions with end parentheses inside the over, like "over (..)...)" 
-        var windowFunctionMatch = Regex.Match(action.Clause, @"\s*[^,]+?\bover\s*[^)]+\)[^,]+", RegexOptions.IgnoreCase | RegexOptions.Singleline);
+        //TODO: regex dosen't support window functions with end parentheses inside the over, like "over (..)...)"
+        var windowFunctionMatch = Regex.Match(action.Clause, @"\s*(?:[^,]|\([^)]*\))+?\bover\s*[^)]+\)[^,]*", RegexOptions.IgnoreCase | RegexOptions.Singleline);
         List<string> columns;
-        
+
         if (windowFunctionMatch.Success)
         {
             var windowFunction = windowFunctionMatch.Groups[0].Value;
-            var clauseMinusWindow = Regex.Replace(action.Clause, 
-                @"\s*[^,]+?\bover\s*[^)]+\)[^,]+", "()");
+            var clauseMinusWindow = Regex.Replace(action.Clause,
+                @"\s*(?:[^,]|\([^)]*\))+?\bover\s*[^)]+\)[^,]*", "()");
             
             columns = clauseMinusWindow.Split(',').Select(c => c.Trim()).ToList();
             for (int i = 0; i < columns.Count; i++)
