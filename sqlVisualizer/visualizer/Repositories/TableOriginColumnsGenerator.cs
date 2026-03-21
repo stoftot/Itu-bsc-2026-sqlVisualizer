@@ -1,4 +1,5 @@
 ﻿using visualizer.Models;
+using visualizer.Utility;
 
 namespace visualizer.Repositories;
 
@@ -100,7 +101,7 @@ public class TableOriginColumnsGenerator
 
     private void GenerateTableOriginOnColumnsForSelectSpecificColumns(Table fromTable, Table toTable, string clause)
     {
-        var columnsSelected = clause.Split(',').Select(c => c.Trim()).ToList();
+        var columnsSelected = UtilRegex.SplitSelectColumns(clause);
 
         foreach (var column in columnsSelected)
         {
