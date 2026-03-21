@@ -1,0 +1,18 @@
+﻿@if (HomeState.ExceptionOccured)
+{
+    <!-- The Modal -->
+    <div class="modal" @onclick="ClosePopup">
+        <div class="modal-content" @onclick:stopPropagation="true">
+            <div class="error-header">
+                <h1>An error occurred</h1>
+                <span class="close" @onclick="ClosePopup">&times;</span>
+            </div>
+            
+            <div class="error-body">
+                <p>@HomeState.ExceptionMessage</p>
+            </div>
+    </div>
+    </div>
+} else {
+    <div>test</div>
+}

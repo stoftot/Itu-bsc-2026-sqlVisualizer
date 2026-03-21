@@ -1,0 +1,67 @@
+﻿
+/* Button */
+button {
+    border: none;
+    border-radius: 5px;
+}
+
+.bi {
+    font-size: 1.6em;
+}
+
+.error-header {
+    display: flex;
+    justify-content: space-between; /* pushes items apart */
+    align-items: center;
+
+    background-color: #0d2b45;
+    color: white;
+
+    padding: 16px 20px;
+}
+
+/* Modal */
+.modal {
+    display: block;
+    position: fixed; /* Stay in place */
+    z-index: 9999; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgb(0,0,0); /* Fallback color */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 15% auto; /* 15% from the top and centered */
+    border: 1px solid #888;
+    overflow: hidden;
+    width: 30%;
+}
+
+h3 {
+    margin-top: 16px;
+}
+
+.error-body {
+    padding: 20px;
+    color: #333;
+}
+
+/* The Close Button */
+.close {
+    font-size: 24px;
+    font-weight: bold;
+    cursor: pointer;
+    color: white;
+}
+
+.close:hover,
+.close:focus {
+    color: red;
+    text-decoration: none;
+    cursor: pointer;
+}
