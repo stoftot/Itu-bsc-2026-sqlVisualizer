@@ -49,7 +49,22 @@ public class QueryIllustrationViewBase : ComponentBase, IDisposable
 
     private async Task ReloadVisualisationsAsync(int stepIndex, int animationStepIndex, bool trackMetrics)
     {
-        Steps = VisualisationsGenerator.Generate(Query);
+        try
+        {
+            Steps = VisualisationsGenerator.Generate(Query);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine("Exception while generating visualisations: " + e);
+            HomeState.ExceptionOccured = true;
+            Console.WriteLine(HomeState.ExceptionOccured);
+            HomeState.ExceptionMessage = e.Message;
+            Steps = [];
+            HomeState.NotifyStateChanged();
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+        
         HomeState.Steps = Steps;
 
         if (Steps.Count == 0)
