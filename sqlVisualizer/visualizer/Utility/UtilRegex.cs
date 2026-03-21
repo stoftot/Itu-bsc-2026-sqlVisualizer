@@ -34,6 +34,28 @@ public static class UtilRegex
     // public const string Pattern = "";
     // public const string Pattern = "";
     
+    /// <summary>
+    /// Splits a SELECT clause by top-level commas (ignores commas inside parentheses).
+    /// </summary>
+    public static List<string> SplitSelectColumns(string clause)
+    {
+        var columns = new List<string>();
+        int depth = 0;
+        int start = 0;
+        for (int i = 0; i < clause.Length; i++)
+        {
+            if (clause[i] == '(') depth++;
+            else if (clause[i] == ')') depth--;
+            else if (clause[i] == ',' && depth == 0)
+            {
+                columns.Add(clause[start..i].Trim());
+                start = i + 1;
+            }
+        }
+        columns.Add(clause[start..].Trim());
+        return columns;
+    }
+
     public static Match Match(string input, string pattern)
     {
         return Regex.Match(input, pattern, RegexOptions.IgnoreCase | RegexOptions.Multiline);
