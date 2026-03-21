@@ -241,6 +241,42 @@ public class VisulisationGenerationTest : IClassFixture<DuckDbFixture>
         TestQuery(query);
     }
 
+    [Theory]
+    [InlineData("""
+                SELECT turbine_id, production_date, power_output,
+                       LAG(power_output) OVER (PARTITION BY turbine_id ORDER BY production_date)
+                FROM wind_turbine_production
+                """)]
+    [InlineData("""
+                SELECT turbine_id, production_date, power_output,
+                       LAG(power_output, 2) OVER (PARTITION BY turbine_id ORDER BY production_date)
+                FROM wind_turbine_production
+                """)]
+    [InlineData("""
+                SELECT turbine_id, production_date, power_output,
+                       LEAD(power_output) OVER (PARTITION BY turbine_id ORDER BY production_date)
+                FROM wind_turbine_production
+                """)]
+    [InlineData("""
+                SELECT turbine_id, production_date, power_output,
+                       FIRST_VALUE(power_output) OVER (PARTITION BY turbine_id ORDER BY production_date)
+                FROM wind_turbine_production
+                """)]
+    [InlineData("""
+                SELECT turbine_id, production_date, power_output,
+                       LAST_VALUE(power_output) OVER (PARTITION BY turbine_id ORDER BY production_date)
+                FROM wind_turbine_production
+                """)]
+    [InlineData("""
+                SELECT turbine_id, production_date, power_output,
+                       NTH_VALUE(power_output, 2) OVER (PARTITION BY turbine_id ORDER BY production_date)
+                FROM wind_turbine_production
+                """)]
+    public void ValueWindowFunctions(string query)
+    {
+        TestQuery(query);
+    }
+
     private void TestQuery(string query)
     {
         var visualisations = generator.Generate(query);
