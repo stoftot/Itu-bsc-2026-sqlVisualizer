@@ -6,8 +6,11 @@ public enum SQLKeyword
     JOIN,
     INNER_JOIN,
     LEFT_JOIN,
+    LEFT_OUTER_JOIN,
     RIGHT_JOIN,
+    RIGHT_OUTER_JOIN,
     FULL_JOIN,
+    FULL_OUTER_JOIN,
     WHERE,
     GROUP_BY,
     HAVING,
@@ -30,8 +33,11 @@ public static class SQLKeywordExtensions
             SQLKeyword.JOIN => "JOIN",
             SQLKeyword.INNER_JOIN => "INNER JOIN",
             SQLKeyword.LEFT_JOIN => "LEFT JOIN",
+            SQLKeyword.LEFT_OUTER_JOIN => "LEFT OUTER JOIN",
             SQLKeyword.RIGHT_JOIN => "RIGHT JOIN",
+            SQLKeyword.RIGHT_OUTER_JOIN => "RIGHT OUTER JOIN",
             SQLKeyword.FULL_JOIN => "FULL JOIN",
+            SQLKeyword.FULL_OUTER_JOIN => "FULL OUTER JOIN",
             SQLKeyword.GROUP_BY => "GROUP BY",
             SQLKeyword.HAVING => "HAVING",
             SQLKeyword.ORDER_BY => "ORDER BY",
@@ -48,8 +54,11 @@ public static class SQLKeywordExtensions
             SQLKeyword.JOIN => true,
             SQLKeyword.INNER_JOIN => true,
             SQLKeyword.LEFT_JOIN => true,
+            SQLKeyword.LEFT_OUTER_JOIN => true,
             SQLKeyword.RIGHT_JOIN => true,
+            SQLKeyword.RIGHT_OUTER_JOIN => true,
             SQLKeyword.FULL_JOIN => true,
+            SQLKeyword.FULL_OUTER_JOIN => true,
             _ => false,
         };
     }
@@ -67,14 +76,10 @@ public static class SQLKeywordExtensions
      */
     public static int ExecutionPrecedence(this SQLKeyword keyword)
     {
+        if (keyword.IsJoin()) return 1;
         return keyword switch
         {
             SQLKeyword.FROM => 0,
-            SQLKeyword.JOIN => 1,
-            SQLKeyword.INNER_JOIN => 1,
-            SQLKeyword.LEFT_JOIN => 1,
-            SQLKeyword.RIGHT_JOIN => 1,
-            SQLKeyword.FULL_JOIN => 1,
             SQLKeyword.WHERE => 2,
             SQLKeyword.GROUP_BY => 3,
             SQLKeyword.HAVING => 4,
@@ -88,16 +93,12 @@ public static class SQLKeywordExtensions
     
     public static int SyntaxPrecedence(this SQLKeyword keyword)
     {
+        if(keyword.IsJoin()) return 2;
         return keyword switch
         {
             SQLKeyword.SELECT => 0,
             // SQLKeyword.DISTINCT => 0,
             SQLKeyword.FROM => 1,
-            SQLKeyword.JOIN => 2,
-            SQLKeyword.INNER_JOIN => 2,
-            SQLKeyword.LEFT_JOIN => 2,
-            SQLKeyword.RIGHT_JOIN => 2,
-            SQLKeyword.FULL_JOIN => 2,
             SQLKeyword.WHERE => 3,
             SQLKeyword.GROUP_BY => 4,
             SQLKeyword.HAVING => 5,
