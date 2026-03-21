@@ -22,8 +22,11 @@ public class TableGenerator(SQLExecutor sqlExecutor, TableOriginColumnsGenerator
             case SQLKeyword.JOIN:
             case SQLKeyword.INNER_JOIN:
             case SQLKeyword.LEFT_JOIN:
+            case SQLKeyword.LEFT_OUTER_JOIN:
             case SQLKeyword.RIGHT_JOIN:
+            case SQLKeyword.RIGHT_OUTER_JOIN:
             case SQLKeyword.FULL_JOIN:
+            case SQLKeyword.FULL_OUTER_JOIN:
                 GenerateFromTablesJoin(fromTables, currStep);
                 break;
             case SQLKeyword.HAVING:
@@ -52,40 +55,40 @@ public class TableGenerator(SQLExecutor sqlExecutor, TableOriginColumnsGenerator
         return parts[0];
     }
 
-    private void GenerateFromTablesHaving(List<Table> fromTables, SQLDecompositionComponent currStep, 
+    private void GenerateFromTablesHaving(List<Table> fromTables, SQLDecompositionComponent currStep,
         List<SQLDecompositionComponent> currSteps)
     {
         //normalize so count(*) is treated as count()
         var clause = Regex.Replace(currStep.Clause, @"\b[^ ]+?\((?:|\*)\)", "COUNT()");
-        
+
         const string extractAggregationPattern = @"\b[^ ]+?\(.*?\)";
         var matches = Regex.Matches(clause, extractAggregationPattern,
             RegexOptions.IgnoreCase | RegexOptions.Singleline);
-        
+
         var aggregations = new List<string>();
-        
+
         foreach (Match match in matches)
         {
             if (!aggregations.Contains(match.Value)) aggregations.Add(match.Value);
         }
-        
+
         var selectStatement = new SQLDecompositionComponent(SQLKeyword.SELECT, string.Join(",", aggregations));
         var temp = currSteps.ToList();
         temp.Remove(temp.Last());
         temp.Add(selectStatement);
         var aggregationResults = sqlExecutor.Execute(temp).Result;
-        
-        if(fromTables.Count != aggregationResults.Entries.Count)
+
+        if (fromTables.Count != aggregationResults.Entries.Count)
             throw new ArgumentException("The number of aggregation results must match the number of grouped tables(\n" +
                                         $"aggregations: {aggregationResults.Entries.Count}\n" +
                                         $"grouped by tables: {fromTables.Count}\n)");
-        
+
         //Add aggregationResults to the respective group by tables
         for (int i = 0; i < fromTables.Count; i++)
         {
             var fromTable = fromTables[i];
             var aggregationResult = aggregationResults.Entries[i];
-            
+
             foreach (var (name, tableValue) in aggregationResults.ColumnNames.Zip(aggregationResult.Values))
             {
                 fromTable.Aggregations.Add(new Aggregation()
@@ -157,23 +160,23 @@ public class TableGenerator(SQLExecutor sqlExecutor, TableOriginColumnsGenerator
     {
         //normalize so count(*) is treated as count()
         var clause = Regex.Replace(currStep.Clause, @"\b[^ ]+?\((?:|\*)\)", "COUNT()");
-        
+
         const string extractAggregationPattern = @"\b[^ ]+?\(.*?\)";
         var matches = Regex.Matches(clause, extractAggregationPattern,
             RegexOptions.IgnoreCase | RegexOptions.Singleline);
-        
+
         var aggregations = new List<string>();
-        
+
         foreach (Match match in matches)
         {
             if (!aggregations.Contains(match.Value)) aggregations.Add(match.Value);
         }
-        
+
         var selectStatement = new SQLDecompositionComponent(SQLKeyword.SELECT, string.Join(",", aggregations));
         var temp = currSteps.ToList();
         temp.Add(selectStatement);
         var aggregationResults = sqlExecutor.Execute(temp).Result;
-        
+
         //filter out tables
         var aggregationIndex = 0;
         var startOfAggregation = fromTables[0].ColumnsOriginalTableNames.IndexOf("()");
@@ -182,19 +185,19 @@ public class TableGenerator(SQLExecutor sqlExecutor, TableOriginColumnsGenerator
             var aggregationValues = aggregationResults.Entries[aggregationIndex].Values
                 .Select(v => v.Value);
             // var fromValues = fromTable.Entries[0].Values.GetRange(startOfAggregation, fromTable.Entries[0].Values.Count - startOfAggregation);
-            if(fromTable.Aggregations.Count == 0) throw new ArgumentException("Aggregations cannot be empty");
+            if (fromTable.Aggregations.Count == 0) throw new ArgumentException("Aggregations cannot be empty");
             var fromValues = fromTable.Aggregations
                 .Select(a => a.Value);
-            
+
             if (aggregationValues.SequenceEqual(fromValues))
             {
                 toTables.Add(fromTable.DeepClone());
                 aggregationIndex++;
-                if(aggregationIndex >= aggregationResults.Entries.Count) break;
+                if (aggregationIndex >= aggregationResults.Entries.Count) break;
             }
         }
     }
-    
+
     private sealed class CompositeKey : IEquatable<CompositeKey>
     {
         private readonly object?[] _values;

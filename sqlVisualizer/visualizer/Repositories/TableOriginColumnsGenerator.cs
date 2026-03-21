@@ -12,8 +12,11 @@ public class TableOriginColumnsGenerator
             case SQLKeyword.JOIN:
             case SQLKeyword.INNER_JOIN:
             case SQLKeyword.LEFT_JOIN:
+            case SQLKeyword.LEFT_OUTER_JOIN:
             case SQLKeyword.RIGHT_JOIN:
+            case SQLKeyword.RIGHT_OUTER_JOIN:
             case SQLKeyword.FULL_JOIN:
+            case SQLKeyword.FULL_OUTER_JOIN:
                 DuplicateOriginOnColumnsToSingle(vis.FromTables, vis.ToTables[0]);
                 break;
             case SQLKeyword.SELECT:
