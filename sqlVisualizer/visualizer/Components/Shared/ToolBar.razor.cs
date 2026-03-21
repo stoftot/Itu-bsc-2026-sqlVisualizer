@@ -10,6 +10,9 @@ public partial class ToolBar : ComponentBase, IDisposable
     [Inject] public required IMetricsHandler MetricsHandler { get; init; }
     [Inject] public required IUserRepository UserRepository { get; init; }
     string _current = "Custom";
+    
+    [Parameter]
+    public EventCallback RunQueryCallback { get; set; }
 
     protected override void OnInitialized()
     {
@@ -37,6 +40,7 @@ public partial class ToolBar : ComponentBase, IDisposable
         var editorContent = await HomeState.Editor.GetValue();
         MetricsHandler.RecordQuery(HomeState.SessionId, editorContent);
         await HomeState.RunSQL(editorContent ?? "");
+        await RunQueryCallback.InvokeAsync();
     }
 
     async Task StepPrevious()

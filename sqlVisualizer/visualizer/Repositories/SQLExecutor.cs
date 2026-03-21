@@ -1,4 +1,5 @@
-﻿using System.Drawing;
+﻿using System.Data.Common;
+using System.Drawing;
 using System.Text;
 using System.Text.RegularExpressions;
 using DuckDB.NET.Data;
@@ -18,15 +19,17 @@ public class SQLExecutor(DuckDBConnection connection)
             await using var command = new DuckDBCommand(sql, connection);
             await using var reader = await command.ExecuteReaderAsync();
 
+            var schema = reader.GetColumnSchema();
             var columnNames = new List<string>();
-            for (var i = 0; i < reader.FieldCount; i++)
+
+            foreach (var col in schema)
             {
-                var name = reader.GetName(i);
+                var name = col.ColumnName;
                 if (name.Equals("count_star()", StringComparison.InvariantCultureIgnoreCase))
                 {
                     name = "count()";
                 }
-                
+
                 columnNames.Add(name);
             }
 
@@ -41,7 +44,7 @@ public class SQLExecutor(DuckDBConnection connection)
                 entries.Add(new TableEntry { Values = row });
             }
 
-            return new Table { ColumnNames = columnNames, Entries = entries.AsReadOnly() };
+            return new Table {ColumnNames = columnNames, Entries = entries.AsReadOnly() };
         }
         finally
         {
@@ -155,8 +158,16 @@ public class SQLExecutor(DuckDBConnection connection)
 
         foreach (var tableName in tables.Entries.Select(table => table.Values[0].Value))
         {
-            var table = await Execute("SHOW TABLE " + '"' + tableName + '"');
+            var table = await Execute("SELECT * FROM " + '"' + tableName + '"');
             table.Name = tableName;
+            
+            var columnTypes = await Execute($"""
+                                            SELECT data_type
+                                            FROM information_schema.columns
+                                            WHERE table_name = '{tableName}'
+                                            ORDER BY ordinal_position
+                                            """);
+            table.ColumnTypes = columnTypes.Entries.Select(e => e.Values[0].Value).ToList();
             database.Tables.Add(table);
         }
 

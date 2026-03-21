@@ -19,6 +19,7 @@ public class Table
     /// </summary>
     public List<string> ColumnsOriginalTableNames { get; private init; } = [];
 
+    public List<string> ColumnTypes { get; set; } = [];
     public required List<string> ColumnNames { get; init; }
     public required IReadOnlyList<TableEntry> Entries { get; init; }
     public const string RowIndexColumnName = "RowIndex";

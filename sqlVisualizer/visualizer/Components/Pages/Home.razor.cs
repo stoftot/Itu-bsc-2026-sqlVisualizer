@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Components;
 using visualizer.Components.Shared;
+using visualizer.Models;
 using visualizer.Repositories;
 
 namespace visualizer.Components.Pages;
@@ -10,6 +11,8 @@ public partial class Home : ComponentBase
     [Inject] public required HomeState HomeState { get; init; }
     private QueryIlustrationView QueryView = null!;
     private string _query = "";
+    protected bool viewVisulisation = true;
+    protected Table tableSelected = null;
 
     protected override void OnInitialized()
     {
@@ -26,5 +29,18 @@ public partial class Home : ComponentBase
             await InvokeAsync(StateHasChanged);
             await QueryView.Init();
         };
+    }
+
+    protected void HandTabledSchemaTableSelected(Table table)
+    {
+        viewVisulisation = false;
+        tableSelected = table;
+        StateHasChanged();
+    }
+
+    protected void RunQueryCallback()
+    {
+        viewVisulisation = true;
+        StateHasChanged();
     }
 }
