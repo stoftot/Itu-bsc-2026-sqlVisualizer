@@ -244,6 +244,68 @@ public class VisulisationGenerationTest : IClassFixture<DuckDbFixture>
     [Theory]
     [InlineData("""
                 SELECT turbine_id, production_date, power_output,
+                       SUM(power_output) OVER (PARTITION BY turbine_id ORDER BY production_date)
+                FROM wind_turbine_production
+                """)]
+    [InlineData("""
+                SELECT turbine_id, production_date, power_output,
+                       AVG(power_output) OVER (PARTITION BY turbine_id ORDER BY production_date)
+                FROM wind_turbine_production
+                """)]
+    [InlineData("""
+                SELECT turbine_id, production_date, power_output,
+                       MIN(power_output) OVER (PARTITION BY turbine_id ORDER BY production_date)
+                FROM wind_turbine_production
+                """)]
+    [InlineData("""
+                SELECT turbine_id, production_date, power_output,
+                       MAX(power_output) OVER (PARTITION BY turbine_id ORDER BY production_date)
+                FROM wind_turbine_production
+                """)]
+    [InlineData("""
+                SELECT turbine_id, production_date, power_output,
+                       COUNT(power_output) OVER (PARTITION BY turbine_id ORDER BY production_date)
+                FROM wind_turbine_production
+                """)]
+    [InlineData("""
+                SELECT turbine_id, production_date, power_output,
+                       SUM(power_output) OVER (ORDER BY production_date)
+                FROM wind_turbine_production
+                """)]
+    public void AggregateWindowFunctions(string query)
+    {
+        TestQuery(query);
+    }
+
+    [Theory]
+    [InlineData("""
+                SELECT turbine_id, production_date, power_output,
+                       ROW_NUMBER() OVER (PARTITION BY turbine_id ORDER BY production_date)
+                FROM wind_turbine_production
+                """)]
+    [InlineData("""
+                SELECT turbine_id, production_date, power_output,
+                       RANK() OVER (PARTITION BY turbine_id ORDER BY power_output DESC)
+                FROM wind_turbine_production
+                """)]
+    [InlineData("""
+                SELECT turbine_id, production_date, power_output,
+                       DENSE_RANK() OVER (PARTITION BY turbine_id ORDER BY power_output DESC)
+                FROM wind_turbine_production
+                """)]
+    [InlineData("""
+                SELECT turbine_id, power_output,
+                       NTILE(3) OVER (ORDER BY power_output)
+                FROM wind_turbine_production
+                """)]
+    public void RankingWindowFunctions(string query)
+    {
+        TestQuery(query);
+    }
+
+    [Theory]
+    [InlineData("""
+                SELECT turbine_id, production_date, power_output,
                        LAG(power_output) OVER (PARTITION BY turbine_id ORDER BY production_date)
                 FROM wind_turbine_production
                 """)]
