@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using visualizer.Models;
 
 namespace visualizer.Repositories.AnimationClasses;
@@ -5,8 +6,30 @@ namespace visualizer.Repositories.AnimationClasses;
 public static class JoinAnimationGenerator
 {
     private static TableVisualModifier tvm = new();
-    
+
     public static Animation Generate(List<Table> fromTables, Table toTable,
+        SQLDecompositionComponent action)
+    {
+        switch (action.Keyword)
+        {
+            case SQLKeyword.JOIN:
+            case SQLKeyword.INNER_JOIN:
+                return GenerateJoinAndInnerJoin(fromTables, toTable, action);
+            case SQLKeyword.LEFT_JOIN:
+            case SQLKeyword.LEFT_OUTER_JOIN:
+                throw new NotImplementedException();
+            case SQLKeyword.RIGHT_JOIN:
+            case SQLKeyword.RIGHT_OUTER_JOIN:
+                throw new NotImplementedException();
+            case SQLKeyword.FULL_JOIN:
+            case SQLKeyword.FULL_OUTER_JOIN:
+                throw new NotImplementedException();
+            default:
+                throw new NotImplementedException("not supported keyword: " + action.Keyword);
+        }
+    }
+
+    private static Animation GenerateJoinAndInnerJoin(List<Table> fromTables, Table toTable,
         SQLDecompositionComponent action)
     {
         if (fromTables.Count != 2)
@@ -51,7 +74,7 @@ public static class JoinAnimationGenerator
 
         return new Animation(steps);
     }
-    
+
     private static bool AreJoinEquivalentToResult(TableEntry primary, TableEntry joining, TableEntry result)
     {
         var p = primary.Values.Select(tv => tv.Value).ToList();
