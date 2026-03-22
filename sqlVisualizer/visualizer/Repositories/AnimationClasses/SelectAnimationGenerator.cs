@@ -7,8 +7,6 @@ namespace visualizer.Repositories.AnimationClasses;
 
 public static class SelectAnimationGenerator
 {
-    record Partition(List<int> RowIndices, List<int> Values);
-    
     private static TableVisualModifier tvm = new();
 
     public static Animation Generate(List<Table> fromTables, Table toTable,
@@ -53,14 +51,8 @@ public static class SelectAnimationGenerator
         }
 
         var toColumnIndex = 0;
-        var resetHightlightStyle = tvm.CombineActions(
-        [
-            tvm.SetTablesHighlightStyleDefault(fromTables),
-            tvm.SetTableHighlightStyleDefault(toTable)
-        ]);
         foreach (var column in columns)
         {
-            // steps.Add(resetHightlightStyle);
             // Handel window functions
             if (column.ToLower().Contains(" over "))
             {
