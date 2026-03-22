@@ -44,30 +44,41 @@ public class QueryIllustrationViewBase : ComponentBase, IDisposable
     public async Task Init()
     {
         await CancelAnimationPlaybackAsync();
-        await ReloadVisualisationsAsync(stepIndex: 0, animationStepIndex: 0, trackMetrics: true);
-    }
-
-    private async Task ReloadVisualisationsAsync(int stepIndex, int animationStepIndex, bool trackMetrics)
-    {
-        Steps = VisualisationsGenerator.Generate(Query);
-        HomeState.Steps = Steps;
-
+        try
+        {
+            Steps = VisualisationsGenerator.Generate(Query);
+        }
+        catch (Exception e)
+        {
+            HomeState.ExceptionOccured = true;
+            HomeState.ExceptionMessage = e.Message;
+            Steps = [];
+            HomeState.NotifyStateChanged();
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+        
         if (Steps.Count == 0)
         {
             _indexOfStepToHighlight = 0;
             HomeState.CurrentStepIndex = 0;
             FromTables = [];
             ToTables = [];
-            RefreshAnimationState();
-            await InvokeAsync(StateHasChanged);
+            await RefreshCurrentViewAsync();
             return;
         }
 
+        HomeState.Steps = Steps;
+        await SelectStepAsync(stepIndex: 0, trackMetrics: true);
+    }
+
+    private async Task SelectStepAsync(int stepIndex, bool trackMetrics)
+    {
+        if(Steps.Count == 0) return;
+        
         _indexOfStepToHighlight = Math.Clamp(stepIndex, 0, Steps.Count - 1);
         HomeState.CurrentStepIndex = _indexOfStepToHighlight;
-
-        var animation = CurrStep.Animation;
-        animation.ReplayTo(Math.Clamp(animationStepIndex, 0, animation.StepCount));
+        ResetCurrentAnimation();
 
         if (trackMetrics)
         {
@@ -75,9 +86,18 @@ public class QueryIllustrationViewBase : ComponentBase, IDisposable
             //MetricsHandler.PrintSessionTimings(HomeState.SessionId);
         }
 
-        UpdateStepShown();
-        RefreshAnimationState();
-        await InvokeAsync(StateHasChanged);
+        await RefreshCurrentViewAsync();
+    }
+
+    private void ResetCurrentAnimation()
+    {
+        CurrStep.Animation.Reset();
+    }
+
+    private void ReplayCurrentAnimationTo(int animationStepIndex)
+    {
+        ResetCurrentAnimation();
+        CurrStep.Animation.ReplayTo(Math.Clamp(animationStepIndex, 0, CurrStep.Animation.StepCount));
     }
 
     private void UpdateStepShown()
@@ -108,6 +128,13 @@ public class QueryIllustrationViewBase : ComponentBase, IDisposable
         HomeState.CurrentAnimationStepIndex = animation.CurrentStepIndex;
         HomeState.CurrentAnimationStepCount = animation.StepCount;
         HomeState.NotifyStateChanged();
+    }
+
+    private async Task RefreshCurrentViewAsync()
+    {
+        UpdateStepShown();
+        RefreshAnimationState();
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task PlayAnimationAsync(CancellationToken cancellationToken)
@@ -201,7 +228,8 @@ public class QueryIllustrationViewBase : ComponentBase, IDisposable
 
         if (CurrStep.Animation.IsComplete)
         {
-            await ReloadVisualisationsAsync(IndexOfStepToHighlight, animationStepIndex: 0, trackMetrics: false);
+            ResetCurrentAnimation();
+            await RefreshCurrentViewAsync();
         }
 
         await StartAnimationPlaybackAsync();
@@ -216,16 +244,9 @@ public class QueryIllustrationViewBase : ComponentBase, IDisposable
     {
         await CancelAnimationPlaybackAsync();
 
-        if (Steps.Count == 0 || !CurrStep.Animation.TryStepForward())
-        {
-            RefreshAnimationState();
-            await InvokeAsync(StateHasChanged);
-            return;
-        }
+        CurrStep.Animation.TryStepForward();
+        await RefreshCurrentViewAsync();
 
-        UpdateStepShown();
-        RefreshAnimationState();
-        await InvokeAsync(StateHasChanged);
     }
 
     private async Task OnAnimateStepPrevious()
@@ -239,9 +260,8 @@ public class QueryIllustrationViewBase : ComponentBase, IDisposable
             return;
         }
 
-        await ReloadVisualisationsAsync(IndexOfStepToHighlight,
-            animationStepIndex: CurrStep.Animation.CurrentStepIndex - 1,
-            trackMetrics: false);
+        ReplayCurrentAnimationTo(CurrStep.Animation.CurrentStepIndex - 1);
+        await RefreshCurrentViewAsync();
     }
 
     private async Task OnNextStep()
@@ -251,7 +271,7 @@ public class QueryIllustrationViewBase : ComponentBase, IDisposable
         if (IndexOfStepToHighlight >= Steps.Count - 1) return;
 
         await CancelAnimationPlaybackAsync();
-        await ReloadVisualisationsAsync(IndexOfStepToHighlight + 1, animationStepIndex: 0, trackMetrics: true);
+        await SelectStepAsync(IndexOfStepToHighlight + 1, trackMetrics: true);
     }
 
     private async Task OnPreviousStep()
@@ -261,7 +281,7 @@ public class QueryIllustrationViewBase : ComponentBase, IDisposable
         if (IndexOfStepToHighlight <= 0) return;
 
         await CancelAnimationPlaybackAsync();
-        await ReloadVisualisationsAsync(IndexOfStepToHighlight - 1, animationStepIndex: 0, trackMetrics: true);
+        await SelectStepAsync(IndexOfStepToHighlight - 1, trackMetrics: true);
     }
 
     public void Dispose()

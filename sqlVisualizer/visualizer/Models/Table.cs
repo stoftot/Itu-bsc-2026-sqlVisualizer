@@ -131,4 +131,6 @@ public class Aggregation
     public string HexBackGroundColor { get; set; } = UtilColor.SecondaryHighlightColor;
     public bool IsHighlighted { get; set; } = false;
     public void ToggleHighlight() => IsHighlighted = !IsHighlighted;
+    
+    public void ResetStyleAndVisual() => IsHighlighted = false;
 }

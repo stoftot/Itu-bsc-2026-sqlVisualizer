@@ -12,7 +12,7 @@ public static class AnimationGenerator
     private static TableVisualModifier tvm = new();
     public static Animation Generate(List<Table> fromTables, List<Table> toTables, SQLDecompositionComponent action)
     {
-        return action.Keyword switch
+        var animation = action.Keyword switch
         {
             SQLKeyword.FROM => throw new NotImplementedException(),
             SQLKeyword.JOIN or SQLKeyword.INNER_JOIN or 
@@ -21,21 +21,30 @@ public static class AnimationGenerator
                 SQLKeyword.FULL_JOIN or SQLKeyword.FULL_OUTER_JOIN 
                 => JoinAnimationGenerator.Generate(fromTables, toTables[0], action),
             SQLKeyword.WHERE => fromTables.Count > 1 && toTables.Count > 1
-                ? throw new ArgumentException("where animation can only be generated from one table to another")
+                ? throw new ArgumentException("WHERE animation can only be generated from one table to another")
                 : WhereAnimationGenerator.Generate(fromTables[0], toTables[0], action),
             SQLKeyword.GROUP_BY =>
                 fromTables.Count > 1
-                    ? throw new ArgumentException("group by animations can only be generated from one table")
+                    ? throw new ArgumentException("GROUP BY animations can only be generated from one table")
                     : GroupByAnimationGenerator.Generate(fromTables[0], toTables, action),
             SQLKeyword.HAVING => HavingAnimationGenerator.Generate(fromTables, toTables, action),
             SQLKeyword.SELECT =>
                 toTables.Count > 1
-                    ? throw new ArgumentException("select animations can only be generated to one table")
+                    ? throw new ArgumentException("SELECT animations can only be generated to one table")
                     : SelectAnimationGenerator.Generate(fromTables, toTables[0], action),
-            SQLKeyword.ORDER_BY => throw new NotImplementedException(),
-            SQLKeyword.LIMIT => throw new NotImplementedException(),
-            SQLKeyword.OFFSET => throw new NotImplementedException(),
+            SQLKeyword.ORDER_BY => throw new NotImplementedException("ORDER BY animations are not yet supported"),
+            SQLKeyword.LIMIT => throw new NotImplementedException("LIMIT animations are not yet supported"),
+            SQLKeyword.OFFSET => throw new NotImplementedException("OFFSET animations are not yet supported"),
             _ => throw new ArgumentOutOfRangeException()
         };
+
+        animation.ResetStep =
+            tvm.CombineActions(
+            [
+                tvm.ResetTables(fromTables.ToList()),
+                tvm.ResetTables(toTables.ToList())
+            ]);
+        
+        return animation;
     }
 }
