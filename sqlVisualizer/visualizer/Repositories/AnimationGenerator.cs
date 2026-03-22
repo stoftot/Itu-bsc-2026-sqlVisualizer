@@ -12,7 +12,7 @@ public static class AnimationGenerator
     private static TableVisualModifier tvm = new();
     public static Animation Generate(List<Table> fromTables, List<Table> toTables, SQLDecompositionComponent action)
     {
-        return action.Keyword switch
+        var animation = action.Keyword switch
         {
             SQLKeyword.FROM => throw new NotImplementedException(),
             SQLKeyword.JOIN or SQLKeyword.INNER_JOIN => JoinAnimationGenerator.Generate(fromTables, toTables[0], action),
@@ -36,5 +36,14 @@ public static class AnimationGenerator
             SQLKeyword.OFFSET => throw new NotImplementedException(),
             _ => throw new ArgumentOutOfRangeException()
         };
+
+        animation.ResetStep =
+            tvm.CombineActions(
+            [
+                tvm.ResetTables(fromTables.ToList()),
+                tvm.ResetTables(toTables.ToList())
+            ]);
+        
+        return animation;
     }
 }
