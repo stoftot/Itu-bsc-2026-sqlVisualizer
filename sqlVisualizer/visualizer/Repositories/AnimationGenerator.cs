@@ -14,7 +14,7 @@ public static class AnimationGenerator
     {
         var animation = action.Keyword switch
         {
-            SQLKeyword.FROM => throw new NotImplementedException(),
+            SQLKeyword.FROM => throw new NotImplementedException("FROM animations are not yet supported"),
             SQLKeyword.JOIN or SQLKeyword.INNER_JOIN or 
                 SQLKeyword.LEFT_JOIN or SQLKeyword.LEFT_OUTER_JOIN or 
                 SQLKeyword.RIGHT_JOIN or SQLKeyword.RIGHT_OUTER_JOIN or 
