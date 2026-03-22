@@ -57,6 +57,16 @@ public class QueryIllustrationViewBase : ComponentBase, IDisposable
             await InvokeAsync(StateHasChanged);
             return;
         }
+        
+        if (Steps.Count == 0)
+        {
+            _indexOfStepToHighlight = 0;
+            HomeState.CurrentStepIndex = 0;
+            FromTables = [];
+            ToTables = [];
+            await RefreshCurrentViewAsync();
+            return;
+        }
 
         HomeState.Steps = Steps;
         await SelectStepAsync(stepIndex: 0, trackMetrics: true);
@@ -64,6 +74,7 @@ public class QueryIllustrationViewBase : ComponentBase, IDisposable
 
     private async Task SelectStepAsync(int stepIndex, bool trackMetrics)
     {
+        if(Steps.Count == 0) return;
         
         _indexOfStepToHighlight = Math.Clamp(stepIndex, 0, Steps.Count - 1);
         HomeState.CurrentStepIndex = _indexOfStepToHighlight;
