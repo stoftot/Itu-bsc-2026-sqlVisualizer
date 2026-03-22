@@ -53,8 +53,14 @@ public static class SelectAnimationGenerator
         }
 
         var toColumnIndex = 0;
+        var resetHightlightStyle = tvm.CombineActions(
+        [
+            tvm.SetTablesHighlightStyleDefault(fromTables),
+            tvm.SetTableHighlightStyleDefault(toTable)
+        ]);
         foreach (var column in columns)
         {
+            // steps.Add(resetHightlightStyle);
             // Handel window functions
             if (column.ToLower().Contains(" over "))
             {
@@ -325,9 +331,9 @@ public static class SelectAnimationGenerator
             {
                 int sourceRowIndex = sourcePartition[j];
                 int resultRowIndex = resultPartition[j];
-                tvm.ChangeHighlightColourCell(fromTable, sourceRowIndex, fromTable.IndexOfColumn(windowFunction.Argument), UtilColor.SecondaryHighlightColor);
                 steps.Add(tvm.CombineActions(
                 [
+                    tvm.ChangeHighlightColourCell(fromTable, sourceRowIndex, fromTable.IndexOfColumn(windowFunction.Argument), UtilColor.SecondaryHighlightColor),
                     tvm.GenerateToggleHighlightCell(fromTable, sourceRowIndex, fromTable.IndexOfColumn(windowFunction.Argument)),
                     tvm.GenerateToggleVisibleCell(toTable, resultRowIndex, columnIndex),
                     tvm.GenerateToggleHighlightCell(toTable, resultRowIndex, columnIndex)
@@ -494,7 +500,7 @@ public static class SelectAnimationGenerator
 
                 if (srcRowIndex.HasValue && highlightedSourceRows.Add(srcRowIndex.Value))
                 {
-                    tvm.ChangeHighlightColourCell(fromTable, srcRowIndex.Value, argColumnIndex, UtilColor.SecondaryHighlightColor);
+                    revealStep.Add(tvm.ChangeHighlightColourCell(fromTable, srcRowIndex.Value, argColumnIndex, UtilColor.SecondaryHighlightColor));
                     revealStep.Add(tvm.GenerateToggleHighlightCell(fromTable, srcRowIndex.Value, argColumnIndex));
                 }
 
