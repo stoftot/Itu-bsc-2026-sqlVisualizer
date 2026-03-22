@@ -44,23 +44,27 @@ public class QueryIllustrationViewBase : ComponentBase, IDisposable
     public async Task Init()
     {
         await CancelAnimationPlaybackAsync();
-        Steps = VisualisationsGenerator.Generate(Query);
+        try
+        {
+            Steps = VisualisationsGenerator.Generate(Query);
+        }
+        catch (Exception e)
+        {
+            HomeState.ExceptionOccured = true;
+            HomeState.ExceptionMessage = e.Message;
+            Steps = [];
+            HomeState.NotifyStateChanged();
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
         HomeState.Steps = Steps;
         await SelectStepAsync(stepIndex: 0, trackMetrics: true);
     }
 
     private async Task SelectStepAsync(int stepIndex, bool trackMetrics)
     {
-        if (Steps.Count == 0)
-        {
-            _indexOfStepToHighlight = 0;
-            HomeState.CurrentStepIndex = 0;
-            FromTables = [];
-            ToTables = [];
-            await RefreshCurrentViewAsync();
-            return;
-        }
-
+        
         _indexOfStepToHighlight = Math.Clamp(stepIndex, 0, Steps.Count - 1);
         HomeState.CurrentStepIndex = _indexOfStepToHighlight;
         ResetCurrentAnimation();

@@ -14,26 +14,26 @@ public static class AnimationGenerator
     {
         var animation = action.Keyword switch
         {
-            SQLKeyword.FROM => throw new NotImplementedException(),
+            SQLKeyword.FROM => throw new NotImplementedException("FROM animations are not yet supported"),
             SQLKeyword.JOIN or SQLKeyword.INNER_JOIN => JoinAnimationGenerator.Generate(fromTables, toTables[0], action),
-            SQLKeyword.LEFT_JOIN => throw new NotImplementedException(),
-            SQLKeyword.RIGHT_JOIN => throw new NotImplementedException(),
-            SQLKeyword.FULL_JOIN => throw new NotImplementedException(),
+            SQLKeyword.LEFT_JOIN => throw new NotImplementedException("LEFT JOIN animations are not yet supported"),
+            SQLKeyword.RIGHT_JOIN => throw new NotImplementedException("RIGHT JOIN animations are not yet supported"),
+            SQLKeyword.FULL_JOIN => throw new NotImplementedException("FULL JOIN animations are not yet supported"),
             SQLKeyword.WHERE => fromTables.Count > 1 && toTables.Count > 1
-                ? throw new ArgumentException("where animation can only be generated from one table to another")
+                ? throw new ArgumentException("WHERE animation can only be generated from one table to another")
                 : WhereAnimationGenerator.Generate(fromTables[0], toTables[0], action),
             SQLKeyword.GROUP_BY =>
                 fromTables.Count > 1
-                    ? throw new ArgumentException("group by animations can only be generated from one table")
+                    ? throw new ArgumentException("GROUP BY animations can only be generated from one table")
                     : GroupByAnimationGenerator.Generate(fromTables[0], toTables, action),
             SQLKeyword.HAVING => HavingAnimationGenerator.Generate(fromTables, toTables, action),
             SQLKeyword.SELECT =>
                 toTables.Count > 1
-                    ? throw new ArgumentException("select animations can only be generated to one table")
+                    ? throw new ArgumentException("SELECT animations can only be generated to one table")
                     : SelectAnimationGenerator.Generate(fromTables, toTables[0], action),
-            SQLKeyword.ORDER_BY => throw new NotImplementedException(),
-            SQLKeyword.LIMIT => throw new NotImplementedException(),
-            SQLKeyword.OFFSET => throw new NotImplementedException(),
+            SQLKeyword.ORDER_BY => throw new NotImplementedException("ORDER BY animations are not yet supported"),
+            SQLKeyword.LIMIT => throw new NotImplementedException("LIMIT animations are not yet supported"),
+            SQLKeyword.OFFSET => throw new NotImplementedException("OFFSET animations are not yet supported"),
             _ => throw new ArgumentOutOfRangeException()
         };
 
