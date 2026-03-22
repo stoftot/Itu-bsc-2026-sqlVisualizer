@@ -4,7 +4,8 @@ public class Animation(IReadOnlyList<Action> steps)
 {
     private int _currentStepIndex;
     private IReadOnlyList<Action> Steps { get; } = steps;
-
+    public Action ResetStep { get; set; } = () => {};
+    
     public int CurrentStepIndex => _currentStepIndex;
     public int StepCount => Steps.Count;
     public bool CanStepForward => _currentStepIndex < Steps.Count;
@@ -35,5 +36,9 @@ public class Animation(IReadOnlyList<Action> steps)
         }
     }
 
-    public void Reset() => _currentStepIndex = 0;
+    public void Reset()
+    {
+        _currentStepIndex = 0;
+        ResetStep();
+    }
 }
