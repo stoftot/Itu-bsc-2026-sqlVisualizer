@@ -114,20 +114,40 @@ public class TableVisualModifier
 
     public Action SetTableHighlightStyleDefault(Table table)
     {
-        return () => table.Entries.Select<TableEntry, Action>(entry =>
-            entry.Values.Select<TableValue, Action>(v =>
-                v.SetHighlightStyleDefault).ToOneAction());
+        return () =>
+        {
+            foreach (var entry in table.Entries)
+            {
+                entry.SetHighlightStyleDefault();
+                foreach (var value in entry.Values)
+                {
+                    value.SetHighlightStyleDefault();
+                }
+            }
+        };
     }
     
-    public Action ResetTable(Table table)
-    {
-        return () => table.Entries.Select<TableEntry, Action>(entry =>
-            entry.Values.Select<TableValue, Action>(v =>
-                v.ResetStyleAndVisual).ToOneAction());
-    }
-
     public Action ResetTables(List<Table> tables)
         => tables.Select(ResetTable).ToOneAction();
+    public Action ResetTable(Table table)
+    {
+        return () =>
+        {
+            foreach (var entry in table.Entries)
+            {
+                entry.ResetStyleAndVisual();
+                foreach (var value in entry.Values)
+                {
+                    value.ResetStyleAndVisual();
+                }
+            }
+
+            foreach (var aggregation in table.Aggregations)
+            {
+                aggregation.ResetStyleAndVisual();
+            }
+        };
+    }
     public Action CombineActions(IEnumerable<Action> a, IEnumerable<Action> b)
     {
         //capture the list, so when its changed it doesn't apply to all functions
