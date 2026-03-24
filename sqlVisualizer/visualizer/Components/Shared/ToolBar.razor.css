@@ -1,8 +1,9 @@
 .toolbar {
-    height: 100%;
-    width: 100%;
+    background: #f1f5f9;
+    border-top: 1px solid #d1d5db;
+    border-bottom: 1px solid #d1d5db;
     display: flex;
-    padding: 0 12px;
+    padding: 6px 12px;
     align-items: center;
 }
 

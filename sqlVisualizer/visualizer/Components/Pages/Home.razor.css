@@ -25,9 +25,3 @@
     border-top: 1px solid #d1d5db;
     border-bottom: 1px solid #d1d5db;
 }
-
-/* ── Editor ──────────────────────────────────────────── */
-.editor {
-    grid-area: editor;
-    height: 220px;
-}
