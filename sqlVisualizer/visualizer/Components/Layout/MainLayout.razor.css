@@ -1,5 +1,66 @@
 
+/* ── Header ─────────────────────────────────────────── */
+.app-header {
+    grid-area: header;
+    background: #1a2e4a;
+    color: #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+}
 
+.app-header__left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.app-header__title {
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    padding: 20px 0;
+}
+
+.app-header__right {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.app-header__icon {
+    font-size: 1rem;
+    cursor: pointer;
+    opacity: 0.75;
+    transition: opacity 0.15s;
+}
+
+.app-header__icon:hover {
+    opacity: 1;
+}
+
+/* ── Status bar ──────────────────────────────────────── */
+.status-bar {
+    grid-area: status;
+    background: #f8fafc;
+    color: #64748b;
+    font-size: 0.65rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 12px;
+    border-top: 1px solid rgb(226, 232, 240);
+}
+
+.status-bar__dot {
+    color: #22c55e;
+    margin-right: 4px;
+}
+
+/* ── Error ───────────────────────────────────────────── */
 #blazor-error-ui {
     background: lightyellow;
     bottom: 0;
