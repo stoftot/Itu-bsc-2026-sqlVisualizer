@@ -1,7 +1,7 @@
 .layout {
     height: 100%;
     display: grid;
-    grid: 48px 1fr 56px 260px 28px / 320px 1fr;
+    grid: 56px 1fr 56px 260px 26px / 320px 1fr;
     grid-template-areas:
         "header header"
         "schema   main"
