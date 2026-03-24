@@ -69,7 +69,6 @@ main {
 /* ── Schema sidebar ──────────────────────────────────── */
 .schema {
     grid-area: schema;
-    overflow-y: auto;
     height: 100%;
 }
 
