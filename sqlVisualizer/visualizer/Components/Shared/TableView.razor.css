@@ -10,3 +10,11 @@
     font-size: 0.75rem;
     text-align: left;
 }
+
+.border-top-left-radius {
+    border-top-left-radius: 6px;
+}
+
+.cell {
+    padding: 6px 8px;
+}

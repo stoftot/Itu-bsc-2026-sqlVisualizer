@@ -14,7 +14,7 @@
 /* ── View ────────────────────────────────────────────── */
 .view {
     flex-grow: 1;
-    padding: 20px;
+    padding: 32px 96px;
     background: #f8fafc;
     overflow: auto;
 }

@@ -1,22 +1,21 @@
 ﻿@rendermode InteractiveServer
 @inherits QueryIllustrationViewBase
-<div class="container">
-    <div class="row">
-        <div class="@(ShowAggregation ? "col-7" : "col-5")">
-            <TableOchestra
-                Tables="@FromTables"
-            />
-        </div>
 
-        @if (!ShowAggregation)
-        {
-            <div class="col-2"></div>
-        }
+<div class="row">
+    <div class="@(ShowAggregation ? "col-7" : "col-5")">
+        <h3>Source Table</h3>
+        <TableOchestra
+            Tables="@FromTables"/>
+    </div>
 
-        <div class="col-5">
-            <TableOchestra
-                Tables="ToTables"
-            />
-        </div>
+    @if (!ShowAggregation)
+    {
+        <div class="col-2"></div>
+    }
+
+    <div class="col-5">
+        <h3>Result</h3>
+        <TableOchestra
+            Tables="ToTables"/>
     </div>
 </div>
