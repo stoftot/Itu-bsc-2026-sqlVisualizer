@@ -18,3 +18,7 @@
 .cell {
     padding: 6px 8px;
 }
+
+.header-cell {
+    background-color: rgb(26, 46, 74);
+}

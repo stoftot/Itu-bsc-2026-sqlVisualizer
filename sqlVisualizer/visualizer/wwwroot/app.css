@@ -5,8 +5,9 @@ html, body {
     flex-direction: column;
 }
 
-#my-code-editor{
+#my-code-editor {
     height: 220px;
+    padding-top: 8px;
 }
 
 a, .btn-link {
