@@ -116,7 +116,7 @@
 .schema-new-db-btn {
     width: 100%;
     background: transparent;
-    color: #475569;
+    color: rgb(112, 127, 148);
     border: 2px dashed rgb(226, 232, 240);
     border-radius: 6px;
     padding: 12px;
