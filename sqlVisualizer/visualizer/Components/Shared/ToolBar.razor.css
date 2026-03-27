@@ -14,10 +14,16 @@
     gap: 8px;
 }
 
-.editor-part {
-    flex-grow: 1;
-    align-items: center;
+.sql-statements-box {
     display: flex;
+    flex-direction: column;
+}
+.sql-statements-label {
+    font-size: 0.58rem;
+    font-weight: 700;
+    color: #64748b;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
 }
 
 .sql-statements {
@@ -70,11 +76,20 @@ button:disabled {
     background: #94a3b8;
 }
 
+.editor-part {
+    flex-grow: 1;
+    align-items: center;
+    display: flex;
+}
+
 /* Step navigation */
 .stepper {
     display: flex;
     align-items: center;
     gap: 2px;
+    background-color: #ffffff;
+    border-radius: 6px;
+    padding: 4px;
 }
 
 .stepper__step {
