@@ -103,6 +103,10 @@ public class VisulisationGenerationTest : IClassFixture<DuckDbFixture>
                 FULL JOIN purchase ON product.productname = purchase.productname
                 """)]
     [InlineData("""
+                SELECT * FROM product
+                FULL JOIN user ON product.productname = user.username
+                """)]
+    [InlineData("""
                 SELECT product.productname, purchase.purchasetime, user.username FROM product
                 JOIN purchase ON product.productname = purchase.productname
                 JOIN user on purchase.username = user.username
