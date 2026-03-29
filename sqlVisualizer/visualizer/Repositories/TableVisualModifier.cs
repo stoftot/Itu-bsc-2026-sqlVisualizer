@@ -38,6 +38,18 @@ public class TableVisualModifier
         return () => { entry.SetHighlightHexColor(hexColour); };
     }
 
+    public Action ChangeHighlightColourColumns(Table table, IList<int> columns, string hexColour) 
+        => columns.Select(i => ChangeHighlightColourColumn(table, i, hexColour)).ToOneAction();
+    public Action ChangeHighlightColourColumn(Table table, int column, string hexColour)
+    {
+        var actions = new List<Action>();
+        for (int i = 0; i < table.Entries.Count; i++)
+        {
+            actions.Add(ChangeHighlightColourCell(table, i, column, hexColour));
+        }
+        return actions.ToOneAction();
+    }
+    
     public Action ChangeHighlightColourCells(Table table, int row, ICollection<int> columns, string hexColour)
         => columns.Select(col => ChangeHighlightColourCell(table, row, col, hexColour)).ToOneAction();
 
