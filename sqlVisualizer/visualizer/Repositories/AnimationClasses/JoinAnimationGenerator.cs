@@ -190,13 +190,12 @@ public static class JoinAnimationGenerator
 
     private static bool AreJoinEquivalentToResult(TableEntry primary, TableEntry joining, TableEntry result)
     {
-        var p = primary.Values.Select(tv => tv.Value).ToList();
-        var j = joining.Values.Select(tv => tv.Value).ToList();
-        var r = result.Values.Select(tv => tv.Value).ToList();
+        var p = primary.Values.ToList();
+        var j = joining.Values.ToList();
+        var r = result.Values.ToList();
 
         return p.Concat(j)
-            .OrderBy(x => x)
-            .SequenceEqual(r.OrderBy(x => x));
+            .SequenceEqual(r);
     }
 
     private static string ExtractSourceName(string clause)
