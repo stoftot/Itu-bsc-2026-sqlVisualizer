@@ -50,6 +50,7 @@ public class QueryIllustrationViewBase : ComponentBase, IDisposable
         }
         catch (Exception e)
         {
+            Console.WriteLine(e.ToString());
             HomeState.ExceptionOccured = true;
             HomeState.ExceptionMessage = e.Message;
             Steps = [];
