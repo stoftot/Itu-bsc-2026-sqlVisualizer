@@ -15,6 +15,7 @@ public static class UtilRegex
     public const string ExtractColumnsFromPartitionByInWindowFunctionPattern = @"PARTITION BY (.+?)\b\s+(?=[^,\s])";
     public const string ExtractColumnsFromOrderByInWindowFunctionPattern = @"(?<=ORDER BY\s)([^)]*?)(?=\s*\))";
     public const string NamedWindowFunctionPattern = @"(?<function>\w+)\((?<argument>\w*)(?:,\s*(?<extra>[^)]*))?\).*OVER\s+\(\s*(?:PARTITION BY (?<partitions>.+?)\b\s+(?=[^,\s]))?(?:ORDER BY (?<orders>.+?)\b\s+(?=[^,\s]))?";
+    public const string MatchWordsButNotNumbers = @"(?<!\d)[a-zæøå_'""]\S+";
     // public const string Pattern = "";
     // public const string Pattern = "";
     // public const string Pattern = "";
@@ -31,8 +32,22 @@ public static class UtilRegex
     // public const string Pattern = "";
     // public const string Pattern = "";
     // public const string Pattern = "";
-    // public const string Pattern = "";
-    // public const string Pattern = "";
+    
+    public static readonly HashSet<string> joinConditionKeywordsBaseParts = new (StringComparer.OrdinalIgnoreCase)
+    {
+        "AND",
+        "OR",
+        "NOT",
+        "BETWEEN",
+        "IN",
+        "LIKE",
+        "ILIKE",
+        "IS",
+        "NULL",
+        "DISTINCT",
+        "FROM",
+        "EXISTS"
+    };
     
     /// <summary>
     /// Splits a SELECT clause by top-level commas (ignores commas inside parentheses).
