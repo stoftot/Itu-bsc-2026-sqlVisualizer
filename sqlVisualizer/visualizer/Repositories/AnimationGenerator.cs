@@ -19,7 +19,9 @@ public static class AnimationGenerator
                 SQLKeyword.LEFT_JOIN or SQLKeyword.LEFT_OUTER_JOIN or 
                 SQLKeyword.RIGHT_JOIN or SQLKeyword.RIGHT_OUTER_JOIN or 
                 SQLKeyword.FULL_JOIN or SQLKeyword.FULL_OUTER_JOIN 
-                => JoinAnimationGenerator.Generate(fromTables, toTables[0], action),
+                => fromTables.Count != 2
+                ?  throw new ArgumentException("JOIN animations can only be generated from two tables to one")
+                : JoinAnimationGenerator.Generate(fromTables, toTables[0], action),
             SQLKeyword.WHERE => fromTables.Count > 1 && toTables.Count > 1
                 ? throw new ArgumentException("WHERE animation can only be generated from one table to another")
                 : WhereAnimationGenerator.Generate(fromTables[0], toTables[0], action),
