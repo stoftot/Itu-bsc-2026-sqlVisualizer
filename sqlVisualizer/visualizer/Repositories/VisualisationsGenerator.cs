@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using System.Text.RegularExpressions;
 using Visualizer;
 using visualizer.Models;
 
@@ -9,6 +10,7 @@ public class VisualisationsGenerator(SQLDecomposer decomposer, TableGenerator tg
     public List<Visualisation> Generate(string query)
     {
         var visualisations = new List<Visualisation>();
+        query = Regex.Replace(query, "[ ]{2,}", " ");
         // query = ar.ReplaceAliases(query);
         query = ar.RemoveSelectAliases(query);
         var steps = decomposer.Decompose(query);
