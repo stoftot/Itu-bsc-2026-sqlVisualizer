@@ -67,17 +67,16 @@ public class SQLExecutor(DuckDBConnection connection)
             UtilRegex.ContainsWindowFunctionPattern, RegexOptions.IgnoreCase | RegexOptions.Singleline)
                 .Success
             && components.All(c => c.Keyword != SQLKeyword.ORDER_BY);
+        
+        var containsJoinAndNotOrderBy = components.Any(c =>
+                                            c.Keyword.IsJoin()) &&
+                                        components.All(c =>
+                                            c.Keyword != SQLKeyword.ORDER_BY);
             
         var queryBuilder = new StringBuilder();
         if (!containsSelect)
         {
             queryBuilder.Append("SELECT * ");
-        }
-
-        if (containsGroupByAndNotOrderBy)
-        {
-            var groupBy = components.First(c => c.Keyword == SQLKeyword.GROUP_BY);
-            components.Add(new SQLDecompositionComponent(SQLKeyword.ORDER_BY, groupBy.Clause));
         }
 
         if (containsWindowFunctionAndNotOrderBy)
@@ -86,6 +85,39 @@ public class SQLExecutor(DuckDBConnection connection)
             var columnsToOrderBy = GetWindowFunctionsColumnsToGroupBy(selectComponent.Clause);
             if (!string.IsNullOrWhiteSpace(columnsToOrderBy))
                 components.Add(new SQLDecompositionComponent(SQLKeyword.ORDER_BY, columnsToOrderBy));
+        }
+        else if (containsGroupByAndNotOrderBy)
+        {
+            var groupBy = components.First(c => c.Keyword == SQLKeyword.GROUP_BY);
+            components.Add(new SQLDecompositionComponent(SQLKeyword.ORDER_BY, groupBy.Clause));
+        }
+        else if (containsJoinAndNotOrderBy)
+        {
+            var lastJoin = components.Last(c => c.Keyword.IsJoin());
+            var table = "";
+            
+            switch (lastJoin.Keyword)
+            {
+                case SQLKeyword.JOIN:
+                case SQLKeyword.INNER_JOIN:
+                case SQLKeyword.LEFT_JOIN:
+                case SQLKeyword.LEFT_OUTER_JOIN:
+                    //extract from table
+                    var fromComponent = components.First(c => c.Keyword == SQLKeyword.FROM);
+                    table = fromComponent.Clause.Trim().Split(' ').Last();
+                    
+                    break;
+                case SQLKeyword.RIGHT_JOIN:
+                case SQLKeyword.RIGHT_OUTER_JOIN:
+                    //extract joining table
+                    table = UtilRegex.Match(lastJoin.Clause, ".*(?=ON)")
+                        .Value.Trim().Split(' ').Last();
+                    break;
+                case SQLKeyword.FULL_JOIN:
+                case SQLKeyword.FULL_OUTER_JOIN:
+                    break;
+            }
+            components.Add(new SQLDecompositionComponent(SQLKeyword.ORDER_BY, table+".rowid"));
         }
 
         foreach (var component in components.OrderBy(c => c.Keyword.SyntaxPrecedence()))
