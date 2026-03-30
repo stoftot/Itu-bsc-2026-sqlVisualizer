@@ -130,8 +130,3 @@ button:disabled {
 .animation-stepper {
     margin-left: 32px;
 }
-
-.info-button {
-    margin-left: auto;
-    justify-self: end;
-}
