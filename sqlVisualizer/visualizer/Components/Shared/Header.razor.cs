@@ -9,7 +9,6 @@ public partial class Header : ComponentBase
 
     private void ToggleSidebar()
     {
-        Console.WriteLine("Toggling sidebar");
         HomeState.ViewSidebar = !HomeState.ViewSidebar;
         HomeState.NotifyStateChanged();
     }
