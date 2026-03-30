@@ -10,6 +10,43 @@ namespace visualizer.Repositories;
 
 public class SQLExecutor(DuckDBConnection connection)
 {
+    private async Task<Table> Execute(string sql, string connectionString)
+    {
+        Console.WriteLine($"Connection String: {connectionString}");
+        await using var temporaryConnection = new DuckDBConnection(connectionString);
+        var entries = new List<TableEntry>();
+        await temporaryConnection.OpenAsync();
+        await using var command = new DuckDBCommand(sql, temporaryConnection);
+        await using var reader = await command.ExecuteReaderAsync();
+
+        var schema = reader.GetColumnSchema();
+        var columnNames = new List<string>();
+
+        foreach (var col in schema)
+        {
+            var name = col.ColumnName;
+            if (name.Equals("count_star()", StringComparison.InvariantCultureIgnoreCase))
+            {
+                name = "count()";
+            }
+
+            columnNames.Add(name);
+        }
+
+        while (await reader.ReadAsync())
+        {
+            var row = new List<TableValue>();
+            for (var i = 0; i < reader.FieldCount; i++)
+            {
+                row.Add(new TableValue { Value = reader.GetValue(i).ToString() ?? "NULL" });
+            }
+
+            entries.Add(new TableEntry { Values = row });
+        }
+
+        return new Table {ColumnNames = columnNames, Entries = entries.AsReadOnly() };
+    }
+    
     private async Task<Table> Execute(string sql)
     {
         try
@@ -150,15 +187,15 @@ public class SQLExecutor(DuckDBConnection connection)
         return string.Join(",", columns);
     }
 
-    public async Task<Database> GetDatabase()
+    public async Task<Database> GetDatabase(string connectionString)
     {
         var database = new Database()
             { Name = "Standard", Tables = [] };
-        var tables = await Execute("SHOW TABLES");
+        var tables = await Execute("SHOW TABLES", connectionString);
 
         foreach (var tableName in tables.Entries.Select(table => table.Values[0].Value))
         {
-            var table = await Execute("SELECT * FROM " + '"' + tableName + '"');
+            var table = await Execute("SELECT * FROM " + '"' + tableName + '"', connectionString);
             table.Name = tableName;
             
             var columnTypes = await Execute($"""
@@ -166,7 +203,7 @@ public class SQLExecutor(DuckDBConnection connection)
                                             FROM information_schema.columns
                                             WHERE table_name = '{tableName}'
                                             ORDER BY ordinal_position
-                                            """);
+                                            """, connectionString);
             table.ColumnTypes = columnTypes.Entries.Select(e => e.Values[0].Value).ToList();
             database.Tables.Add(table);
         }

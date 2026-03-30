@@ -16,7 +16,7 @@ public partial class SchemaView : ComponentBase
 
     protected override void OnInitialized()
     {
-        Database = SQLExecutor.GetDatabase().Result;
+        Database = SQLExecutor.GetDatabase("Data Source=data/database.db").Result;
         StateHasChanged();
         HomeState.StateChanged += OnHomeStateChanged;
     }
@@ -32,7 +32,16 @@ public partial class SchemaView : ComponentBase
 
     private void DatabaseChanged(ChangeEventArgs e)
     {
+        Console.WriteLine($"{e.Value}: {e.Value}");
         HomeState.SelectedDatabase = e.Value!.ToString()!;
+        if (string.Equals(HomeState.SelectedDatabase, "Example Database"))
+        {
+            Database = SQLExecutor.GetDatabase("Data Source=data/database.db").Result;
+        }
+        else
+        {
+            Database = SQLExecutor.GetDatabase("Data Source=data/"+HomeState.SessionId+"/"+HomeState.SelectedDatabase).Result;
+        }
         HomeState.NotifyStateChanged();
     }
 
