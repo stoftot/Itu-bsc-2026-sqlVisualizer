@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Forms;
 using visualizer.Repositories;
 using visualizer.Models;
 
@@ -20,5 +21,14 @@ public partial class SchemaView : ComponentBase
     private async Task HandleTableClick(Table table)
     {
         await OnTableSelected.InvokeAsync(table);
+    }
+    
+    private void LoadFiles(InputFileChangeEventArgs e)
+    {
+            var files = e.GetMultipleFiles();
+            foreach (var file in files)
+            {
+                Console.WriteLine($"File selected: {file.Name}");
+            }
     }
 }

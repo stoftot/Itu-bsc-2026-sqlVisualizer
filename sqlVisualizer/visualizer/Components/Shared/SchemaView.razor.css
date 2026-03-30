@@ -1,4 +1,4 @@
-.schema-container {
+﻿.schema-container {
     display: flex;
     flex-direction: column;
     border-right: 1px solid rgb(226, 232, 240);
@@ -122,10 +122,10 @@
     padding: 12px;
     font-size: 0.9rem;
     font-weight: 700;
-    cursor: not-allowed;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 4px;
     letter-spacing: 0.05em;
+    cursor: pointer;
 }

@@ -1,4 +1,4 @@
-<aside class="schema-container">
+﻿<aside class="schema-container">
     <div class="schema-db-box">
         <div class="schema-section-label">DATABASE</div>
         <div class="schema-source-select">
@@ -33,8 +33,8 @@
     </div>
 
     <div class="schema-new-db">
-        <button class="schema-new-db-btn" disabled>
-            <i class="bi bi-plus"></i> NEW DATABASE
-        </button>
+        <label class="schema-new-db-btn"><i class="bi bi-plus"></i> NEW DATABASE
+            <InputFile hidden OnChange="LoadFiles" />
+        </label>
     </div>
 </aside>
