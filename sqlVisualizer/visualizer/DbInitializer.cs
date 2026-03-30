@@ -296,13 +296,13 @@ public class DbInitializer(IConfiguration config)
             """
             CREATE TABLE IF NOT EXISTS user_queries (
                 session_id TEXT PRIMARY KEY, query TEXT
-            )
+            );
             
             CREATE TABLE IF NOT EXISTS user_databases (
                 session_id string, 
                 database_path string,
                 PRIMARY KEY (session_id, database_path)
-            )
+            );
             """;
         tableCmd.ExecuteNonQuery();
     }
