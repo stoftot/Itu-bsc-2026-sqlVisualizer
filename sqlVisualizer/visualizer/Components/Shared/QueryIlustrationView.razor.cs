@@ -32,7 +32,7 @@ public class QueryIllustrationViewBase : ComponentBase, IDisposable
         HomeState.AnimatePlay = OnAnimatePlay;
         HomeState.AnimatePause = OnAnimatePause;
         HomeState.AnimateStepNext = OnAnimateStepNext;
-        HomeState.AnimateStepPrivious = OnAnimateStepPrevious;
+        HomeState.AnimateStepPrevious = OnAnimateStepPrevious;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)

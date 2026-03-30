@@ -71,7 +71,7 @@ public partial class ToolBar : ComponentBase, IDisposable
     async Task StepAnimationPrevious()
     { 
         MetricsHandler.IncrementAction(HomeState.SessionId, ActionType.AnimationPrevious);
-        await HomeState.AnimateStepPrivious();
+        await HomeState.AnimateStepPrevious();
     }
 
     async Task StepAnimationNext()

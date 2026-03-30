@@ -13,13 +13,14 @@ public class HomeState
     public Func<Task> AnimatePlay { get; set; } = () => Task.CompletedTask;
     public Func<Task> AnimatePause { get; set; } = () => Task.CompletedTask;
     public Func<Task> AnimateStepNext { get; set; } = () => Task.CompletedTask;
-    public Func<Task> AnimateStepPrivious { get; set; } = () => Task.CompletedTask;
+    public Func<Task> AnimateStepPrevious { get; set; } = () => Task.CompletedTask;
     public List<Visualisation> Steps { get; set; } = [];
     public int CurrentStepIndex { get; set; } = 0;
     public int CurrentAnimationStepIndex { get; set; } = 0;
     public int CurrentAnimationStepCount { get; set; } = 0;
     public bool IsAnimationPlaying { get; set; }
     public bool IsAnimationPaused => !IsAnimationPlaying && CurrentAnimationStepIndex > 0 && CurrentAnimationStepIndex < CurrentAnimationStepCount;
+    public bool ViewSidebar { get; set; } = true;
     public event Action? StateChanged;
     public void NotifyStateChanged() => StateChanged?.Invoke();
     public List<Query> Queries = [
