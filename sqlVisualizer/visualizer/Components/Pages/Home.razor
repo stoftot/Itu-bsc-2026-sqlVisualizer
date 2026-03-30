@@ -5,7 +5,10 @@
 <PageTitle>Home</PageTitle>
 <div class="layout">
     
-    <SchemaView OnTableSelected="HandTabledSchemaTableSelected" />
+    @if (HomeState.ViewSidebar)
+    {
+        <SchemaView OnTableSelected="HandTabledSchemaTableSelected" />
+    }
     
     <main class="main-content">
         <div class="view">
