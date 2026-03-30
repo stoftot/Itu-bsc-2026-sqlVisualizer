@@ -9,4 +9,12 @@ public class DummyUserRepository : IUserRepository
     {
         return null;
     }
+
+    public void SaveUserDatabaseName(string sessionId, string databaseName)
+    { }
+
+    public List<string> GetUserDatabaseNames(string sessionId)
+    {
+        return ["Example Database"];
+    }
 }

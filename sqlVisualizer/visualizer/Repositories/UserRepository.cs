@@ -5,6 +5,8 @@ public interface IUserRepository
 {
     void SaveUserQuery(string sessionId, string query);
     string? GetUserQuery(string sessionId);
+    void SaveUserDatabaseName(string sessionId, string databaseName);
+    List<string> GetUserDatabaseNames(string sessionId);
 }
 
 public class UserRepository(string connectionString) : IUserRepository
