@@ -4,7 +4,10 @@
         <div class="schema-source-select">
             <span class="schema-source-label">SELECTED SOURCE</span>
             <select class="schema-source-dropdown">
-                <option>Example Database</option>
+                @for (int i = 0; i < HomeState.DatabaseNames.Count; i++)
+                {
+                    <option value="@i">@HomeState.DatabaseNames[i]</option>
+                }
             </select>
         </div>
     </div>
