@@ -25,6 +25,7 @@ public class HomeState
     public bool ViewSidebar { get; set; } = true;
     public event Action? StateChanged;
     public void NotifyStateChanged() => StateChanged?.Invoke();
+    public string SelectedDatabase { get; set; } = "Example Database";
     public List<String> DatabaseNames = ["Example Database"];
     public List<Query> Queries = [
         new()

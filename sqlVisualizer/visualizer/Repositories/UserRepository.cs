@@ -63,7 +63,7 @@ public class UserRepository(string connectionString) : IUserRepository
         using var reader = command.ExecuteReader();
         
         var result = new List<string>();
-        if (reader.Read())
+        while (reader.Read())
         {
             result.Add(reader.GetString(0));
         }

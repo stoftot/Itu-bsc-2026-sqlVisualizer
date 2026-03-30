@@ -1,12 +1,15 @@
-﻿<aside class="schema-container">
+﻿@rendermode InteractiveServer
+
+<aside class="schema-container">
     <div class="schema-db-box">
         <div class="schema-section-label">DATABASE</div>
         <div class="schema-source-select">
             <span class="schema-source-label">SELECTED SOURCE</span>
-            <select class="schema-source-dropdown">
-                @for (int i = 0; i < HomeState.DatabaseNames.Count; i++)
+            <select class="schema-source-dropdown" @onclick="GetDatabaseNames">
+                <option value="Example Database">Example Database</option>
+                @foreach (string name in HomeState.DatabaseNames)
                 {
-                    <option value="@i">@HomeState.DatabaseNames[i]</option>
+                    <option value="@name">@name</option>
                 }
             </select>
         </div>

@@ -18,6 +18,22 @@ public partial class SchemaView : ComponentBase
     {
         Database = SQLExecutor.GetDatabase().Result;
         StateHasChanged();
+        HomeState.StateChanged += OnHomeStateChanged;
+    }
+
+    private void OnHomeStateChanged() => _ = InvokeAsync(StateHasChanged);
+
+    private void GetDatabaseNames()
+    {
+        HomeState.DatabaseNames = UserRepository.GetUserDatabaseNames(HomeState.SessionId);
+        HomeState.NotifyStateChanged();
+        StateHasChanged();
+    }
+
+    private void DatabaseChanged(ChangeEventArgs e)
+    {
+        HomeState.SelectedDatabase = e.Value!.ToString()!;
+        HomeState.NotifyStateChanged();
     }
 
     private async Task HandleTableClick(Table table)
@@ -36,6 +52,11 @@ public partial class SchemaView : ComponentBase
         await sourceFileStream.CopyToAsync(targetFileStream);
         targetFileStream.Close();
         UserRepository.SaveUserDatabaseName(HomeState.SessionId, file.Name);
-        //Console.WriteLine($"{file.Name} saved to {filePath}");
+        Console.WriteLine($"{file.Name} saved to {filePath}");
+    }
+    
+    public void Dispose()
+    {
+        HomeState.StateChanged -= OnHomeStateChanged;
     }
 }
