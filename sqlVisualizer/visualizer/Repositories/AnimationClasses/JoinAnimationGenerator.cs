@@ -123,7 +123,7 @@ public static class JoinAnimationGenerator
         List<Action> deToggle = [];
         for(int primaryRow = 0; primaryRow < primaryTable.Entries.Count; primaryRow++)
         {
-            var currentResultIndexSnapshot = currentResultIndex;
+            var foundMatcInJoiningTable = false;
             
             var primaryEntry = primaryTable.Entries[primaryRow];
             var primaryToggle = tvm.CombineActions(
@@ -150,6 +150,7 @@ public static class JoinAnimationGenerator
                         primaryEntry, joiningEntry, toTable.Entries[currentResultIndex]
                     ))
                 {
+                    foundMatcInJoiningTable = true;
                     toToggle.AddRange(
                     [
                         tvm.GenerateToggleVisibleCellsInRow(toTable.Entries[currentResultIndex]),
@@ -165,7 +166,7 @@ public static class JoinAnimationGenerator
                 deToggle.Clear();
             }
 
-            if (currentResultIndexSnapshot == currentResultIndex)
+            if (!foundMatcInJoiningTable)
             {
                steps.Add(tvm.CombineActions(toToggle,
                    [
