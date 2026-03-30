@@ -19,6 +19,8 @@ public class HomeState
     public int CurrentAnimationStepIndex { get; set; } = 0;
     public int CurrentAnimationStepCount { get; set; } = 0;
     public bool IsAnimationPlaying { get; set; }
+    public bool ExceptionOccured { get; set; }
+    public string ExceptionMessage { get; set; } = "";
     public bool IsAnimationPaused => !IsAnimationPlaying && CurrentAnimationStepIndex > 0 && CurrentAnimationStepIndex < CurrentAnimationStepCount;
     public bool ViewSidebar { get; set; } = true;
     public event Action? StateChanged;

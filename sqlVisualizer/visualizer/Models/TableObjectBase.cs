@@ -15,16 +15,29 @@ public abstract class TableObjectBase
     {
         if (string.IsNullOrWhiteSpace(HighlightStyle))
         {
-            SetHighlightStyleDefault();
+            SetHighlightColorDefault();
         }
 
         return HighlightStyle;
     }
     
-    public void SetHighlightStyleDefault() => SetHighlightHexColor(UtilColor.PrimaryHighlightColor);
+    public void SetHighlightColorDefault() => SetHighlightHexColor(UtilColor.PrimaryHighlightColor);
     public void SetHighlightStyleSecondary() => SetHighlightHexColor(UtilColor.SecondaryHighlightColor);
     
 
     public void SetHighlightHexColor(string hexColor) =>
         HighlightStyle = $"background-color: {hexColor};";
+
+    public void SetHighlightStyleDefault()
+    {
+        SetHighlightColorDefault();
+        IsHighlighted = true;
+    }
+    
+    public void ResetStyleAndVisual()
+    {
+        IsHighlighted = false;
+        IsVisible = true;
+        SetHighlightColorDefault();
+    }
 }
