@@ -8,6 +8,7 @@ namespace visualizer.Components.Shared;
 public partial class SchemaView : ComponentBase
 {
     [Inject] SQLExecutor SQLExecutor { get; init; }
+    [Inject] public required HomeState HomeState { get; init; }
     public required Database Database { get; set; }
     [Parameter]
     public EventCallback<Table> OnTableSelected { get; set; }
@@ -23,12 +24,16 @@ public partial class SchemaView : ComponentBase
         await OnTableSelected.InvokeAsync(table);
     }
     
-    private void LoadFiles(InputFileChangeEventArgs e)
+    private async Task LoadFiles(InputFileChangeEventArgs e)
     {
-            var files = e.GetMultipleFiles();
-            foreach (var file in files)
-            {
-                Console.WriteLine($"File selected: {file.Name}");
-            }
+        Directory.CreateDirectory("data/" + HomeState.SessionId);
+            
+        var file = e.File;
+        var filePath = Path.Combine("data", HomeState.SessionId, file.Name);
+        await using var sourceFileStream = file.OpenReadStream();
+        await using var targetFileStream = new FileStream(filePath, FileMode.Create);
+        await sourceFileStream.CopyToAsync(targetFileStream);
+        targetFileStream.Close();
+        Console.WriteLine($"{file.Name} saved to {filePath}");
     }
 }
