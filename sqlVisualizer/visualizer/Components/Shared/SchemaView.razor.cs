@@ -24,7 +24,7 @@ public partial class SchemaView : ComponentBase
         await OnTableSelected.InvokeAsync(table);
     }
     
-    private async Task LoadFiles(InputFileChangeEventArgs e)
+    private async Task LoadFile(InputFileChangeEventArgs e)
     {
         Directory.CreateDirectory("data/" + HomeState.SessionId);
             
