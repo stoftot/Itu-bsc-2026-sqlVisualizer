@@ -37,4 +37,34 @@ public class UserRepository(string connectionString) : IUserRepository
         }
         return null;
     }
+    
+    public void SaveUserDatabasePath(string sessionId, string databasePath)
+    {
+        using var connection = new DuckDBConnection(connectionString);
+        connection.Open();
+        using var command = connection.CreateCommand();
+        
+        command.CommandText = "INSERT OR REPLACE INTO user_databases (session_id, database_path) VALUES ($sessionId, $databasePath)";
+        command.Parameters.Add(new DuckDBParameter("sessionId", sessionId));
+        command.Parameters.Add(new DuckDBParameter("databasePath", databasePath));
+        command.ExecuteNonQuery();
+    }
+    
+    public List<string> GetUserDatabasePaths(string sessionId)
+    {
+        using var connection = new DuckDBConnection(connectionString);
+        connection.Open();
+        using var command = connection.CreateCommand();
+        
+        command.CommandText = "SELECT database_path FROM user_databases WHERE session_id = $sessionId";
+        command.Parameters.Add(new DuckDBParameter("sessionId", sessionId));
+        using var reader = command.ExecuteReader();
+        
+        var result = new List<string>();
+        if (reader.Read())
+        {
+            result.Add(reader.GetString(0));
+        }
+        return result;
+    }
 }
