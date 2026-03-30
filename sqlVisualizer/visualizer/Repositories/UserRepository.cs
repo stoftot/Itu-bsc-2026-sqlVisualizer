@@ -38,19 +38,19 @@ public class UserRepository(string connectionString) : IUserRepository
         return null;
     }
     
-    public void SaveUserDatabasePath(string sessionId, string databasePath)
+    public void SaveUserDatabaseName(string sessionId, string databaseName)
     {
         using var connection = new DuckDBConnection(connectionString);
         connection.Open();
         using var command = connection.CreateCommand();
         
-        command.CommandText = "INSERT OR REPLACE INTO user_databases (session_id, database_path) VALUES ($sessionId, $databasePath)";
+        command.CommandText = "INSERT OR REPLACE INTO user_databases (session_id, database_path) VALUES ($sessionId, $databaseName)";
         command.Parameters.Add(new DuckDBParameter("sessionId", sessionId));
-        command.Parameters.Add(new DuckDBParameter("databasePath", databasePath));
+        command.Parameters.Add(new DuckDBParameter("databaseName", databaseName));
         command.ExecuteNonQuery();
     }
     
-    public List<string> GetUserDatabasePaths(string sessionId)
+    public List<string> GetUserDatabaseNames(string sessionId)
     {
         using var connection = new DuckDBConnection(connectionString);
         connection.Open();

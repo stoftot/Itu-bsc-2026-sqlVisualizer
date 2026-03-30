@@ -9,6 +9,7 @@ public partial class SchemaView : ComponentBase
 {
     [Inject] SQLExecutor SQLExecutor { get; init; }
     [Inject] public required HomeState HomeState { get; init; }
+    [Inject] public UserRepository UserRepository { get; init; }
     public required Database Database { get; set; }
     [Parameter]
     public EventCallback<Table> OnTableSelected { get; set; }
@@ -34,6 +35,7 @@ public partial class SchemaView : ComponentBase
         await using var targetFileStream = new FileStream(filePath, FileMode.Create);
         await sourceFileStream.CopyToAsync(targetFileStream);
         targetFileStream.Close();
+        UserRepository.SaveUserDatabaseName(HomeState.SessionId, file.Name);
         Console.WriteLine($"{file.Name} saved to {filePath}");
     }
 }
