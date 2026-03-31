@@ -214,4 +214,66 @@ public class DuckDbSQLDecomposerTest
         var precedences = components.Select(c => c.Keyword.ExecutionPrecedence()).ToList();
         Assert.Equal(precedences.OrderBy(x => x).ToList(), precedences);
     }
+
+    // ── WITH clause (CTEs) ────────────────────────────────────────────────────
+    //
+    // WITH clauses define named subqueries (CTEs) referenced in FROM.
+    // The keywords inside the CTE body are at depth > 0 and must not be
+    // treated as outer clause boundaries.
+
+    [Fact]
+    public void WithClause_DetectedAsWithComponent()
+    {
+        var sql = """
+                  WITH recent AS (SELECT day FROM shift WHERE day > '2025-01-01')
+                  SELECT day FROM recent
+                  """;
+        var components = Decompose(sql);
+
+        Assert.Contains(components, c => c.Keyword == SQLKeyword.WITH);
+    }
+
+    [Fact]
+    public void WithClause_InnerKeywordsNotTreatedAsBoundaries()
+    {
+        var sql = """
+                  WITH recent AS (SELECT day FROM shift WHERE day > '2025-01-01')
+                  SELECT day FROM recent WHERE day > '2025-06-01'
+                  """;
+        var components = Decompose(sql);
+
+        // Exactly one FROM — the inner one inside the CTE is at depth 1
+        Assert.Single(components, c => c.Keyword == SQLKeyword.FROM);
+        // Exactly one WHERE at the outer level
+        Assert.Single(components, c => c.Keyword == SQLKeyword.WHERE);
+    }
+
+    [Fact]
+    public void WithClause_ClauseTextContainsCTEDefinition()
+    {
+        var sql = """
+                  WITH recent AS (SELECT day FROM shift)
+                  SELECT day FROM recent
+                  """;
+        var components = Decompose(sql);
+
+        var withComponent = components.Single(c => c.Keyword == SQLKeyword.WITH);
+        Assert.Contains("recent", withComponent.Clause, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("AS", withComponent.Clause, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void WithClause_WithComesBeforeFromInExecutionOrder()
+    {
+        var sql = """
+                  WITH recent AS (SELECT day FROM shift)
+                  SELECT day FROM recent
+                  """;
+        var components = Decompose(sql);
+
+        var withPrecedence = components.Single(c => c.Keyword == SQLKeyword.WITH).Keyword.ExecutionPrecedence();
+        var fromPrecedence = components.Single(c => c.Keyword == SQLKeyword.FROM).Keyword.ExecutionPrecedence();
+
+        Assert.True(withPrecedence < fromPrecedence);
+    }
 }

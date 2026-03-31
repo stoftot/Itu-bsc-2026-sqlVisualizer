@@ -23,15 +23,21 @@ public class VisualisationsGenerator(ISQLDecomposer decomposer, TableGenerator t
 
     private void GenerateTablesWithOriginOnColumns(List<SQLDecompositionComponent> steps, List<Visualisation> visualisations)
     {
+        // WITH is execution context (CTEs), not a visualisation step — extract it up front.
+        var withComponent = steps.FirstOrDefault(s => s.Keyword == SQLKeyword.WITH);
+        if (withComponent != null) steps.Remove(withComponent);
+
         var intialStep = steps.First();
         steps.Remove(intialStep);
 
         var fromTables = new List<Table>();
         var toTables = new List<Table>();
         var prevToTables = new List<Table>();
-        List<SQLDecompositionComponent> currSteps = [intialStep];
+        List<SQLDecompositionComponent> currSteps = withComponent != null
+            ? [withComponent, intialStep]
+            : [intialStep];
 
-        tg.GenerateTablesIntialStepWithOriginColumns(fromTables, intialStep);
+        tg.GenerateTablesIntialStepWithOriginColumns(fromTables, intialStep, currSteps);
 
         foreach (var currStep in steps)
         {

@@ -103,6 +103,10 @@ public class DuckDbSQLDecomposer : ISQLDecomposer
 
             switch (upper)
             {
+                case "WITH":
+                    boundaries.Add((t.Start, t.End, SQLKeyword.WITH));
+                    break;
+
                 case "SELECT":
                     boundaries.Add((t.Start, t.End, SQLKeyword.SELECT));
                     break;
