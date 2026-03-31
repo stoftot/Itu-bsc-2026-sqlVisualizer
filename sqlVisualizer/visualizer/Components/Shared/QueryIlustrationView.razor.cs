@@ -33,6 +33,7 @@ public class QueryIllustrationViewBase : ComponentBase, IDisposable
         HomeState.AnimatePause = OnAnimatePause;
         HomeState.AnimateStepNext = OnAnimateStepNext;
         HomeState.AnimateStepPrevious = OnAnimateStepPrevious;
+        HomeState.SelectStep = OnSelectStep;
     }
     protected override async Task OnParametersSetAsync()
     {
@@ -300,6 +301,12 @@ public class QueryIllustrationViewBase : ComponentBase, IDisposable
 
         ReplayCurrentAnimationTo(CurrStep.Animation.CurrentStepIndex - 1);
         await RefreshCurrentViewAsync();
+    }
+    
+    private async Task OnSelectStep(int stepIndex)
+    {
+        await CancelAnimationPlaybackAsync();
+        await SelectStepAsync(stepIndex, trackMetrics: true);
     }
 
     private async Task OnNextStep()
