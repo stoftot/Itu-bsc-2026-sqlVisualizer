@@ -251,6 +251,7 @@ public class DbInitializer(IConfiguration config)
             
             CREATE SEQUENCE IF NOT EXISTS queries_written_id_seq START 1;
             CREATE SEQUENCE IF NOT EXISTS time_spent_id_seq START 1;
+            CREATE SEQUENCE IF NOT EXISTS action_keyword_metrics_id_seq START 1;
             -- ACTIONS
             CREATE TABLE IF NOT EXISTS button_action_counts (
                 session_id      VARCHAR NOT NULL,
@@ -280,6 +281,23 @@ public class DbInitializer(IConfiguration config)
                 event_ts        TIMESTAMP NOT NULL,
                                                   
                 PRIMARY KEY (id, session_id)
+            );
+
+            CREATE TABLE IF NOT EXISTS action_keyword_metrics (
+                id BIGINT DEFAULT nextval('action_keyword_metrics_id_seq'),
+                session_id VARCHAR NOT NULL,
+                action_type VARCHAR NOT NULL,
+                sql_keyword VARCHAR NOT NULL,
+                count    BIGINT  NOT NULL DEFAULT 0,
+                UNIQUE (session_id, action_type, sql_keyword)
+            );
+
+            CREATE TABLE IF NOT EXISTS keyword_animation_view_percentage (
+                sql_keyword VARCHAR NOT NULL,
+                total_percentage_sum DOUBLE NOT NULL DEFAULT 0,
+                view_count BIGINT NOT NULL DEFAULT 0,
+                
+                PRIMARY KEY (sql_keyword)
             );
             """;
         tableCmd.ExecuteNonQuery();

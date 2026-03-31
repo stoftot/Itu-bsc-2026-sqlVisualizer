@@ -8,7 +8,7 @@
 
 <MudText Typo="Typo.h4">Metrics Dashboard</MudText>
 
-<MudGrid Spacing="4">
+<MudGrid Spacing="8">
 
     <!-- Time Spent per Step -->
     <MudItem xs="12" md="6">
@@ -26,7 +26,7 @@
 
     <MudItem xs="12" md="6">
         <MudPaper Class="pa-4">
-            <MudText Typo="Typo.h6" Class="mb-2">Actions</MudText>
+            <MudText Typo="Typo.h6" Class="mb-2">Animation Timings</MudText>
 
             <MudChart T="double"
                       ChartType="ChartType.Bar"
@@ -51,8 +51,39 @@
         </MudPaper>
     </MudItem>
 
-    
+    <!-- Animation View Percentage -->
+    <MudItem xs="12" md="6">
+        <MudPaper Class="pa-4">
+            <MudText Typo="Typo.h6" Class="mb-2">Average Animation Completion per Keyword</MudText>
 
+            <MudChart T="double"
+                      ChartType="ChartType.Bar"
+                      ChartLabels="@AnimationViewPercentageLabels"
+                      ChartSeries="@AnimationViewPercentageData"
+                      Width="100%"
+                      Height="@($"{GetChartHeight(AnimationViewPercentageLabels.Length)}px")" />
+        </MudPaper>
+    </MudItem>
+
+    @for (int i = 0; i < ActionKeywordData.Count; i++)
+    {
+        int index = i;
+        @if (ActionKeywordData[i] != null && ActionKeywordData[i].Count > 0 && i < ActionKeywordLabels.Count)
+        {
+            <MudItem xs="12" md="6">
+                <MudPaper Class="pa-4">
+                    <MudText Typo="Typo.h6" Class="mb-2">Actions for @ActionKeywordData[index][0].Name</MudText>
+
+                    <MudChart T="double"
+                              ChartType="ChartType.Bar"
+                              ChartLabels="@ActionKeywordLabels[index]"
+                              ChartSeries="@ActionKeywordData[index]"
+                              Width="100%"
+                              Height="@($"{GetChartHeight(ActionKeywordLabels[index].Length)}px")"/>
+                </MudPaper>
+            </MudItem>
+        }
+    }
 </MudGrid>
 
 

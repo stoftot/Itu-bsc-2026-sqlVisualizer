@@ -34,7 +34,11 @@ public class QueryIllustrationViewBase : ComponentBase, IDisposable
         HomeState.AnimateStepNext = OnAnimateStepNext;
         HomeState.AnimateStepPrevious = OnAnimateStepPrevious;
     }
-
+    protected override async Task OnParametersSetAsync()
+    {
+        TryRecordAnimationViewPercentage();
+        await base.OnParametersSetAsync();
+    }
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
@@ -74,6 +78,7 @@ public class QueryIllustrationViewBase : ComponentBase, IDisposable
 
     private async Task SelectStepAsync(int stepIndex, bool trackMetrics)
     {
+        TryRecordAnimationViewPercentage();
         if(Steps.Count == 0) return;
         
         _indexOfStepToHighlight = Math.Clamp(stepIndex, 0, Steps.Count - 1);
@@ -83,7 +88,6 @@ public class QueryIllustrationViewBase : ComponentBase, IDisposable
         if (trackMetrics)
         {
             MetricsHandler.EnterStep(HomeState.SessionId, CurrStep.Component.Keyword);
-            //MetricsHandler.PrintSessionTimings(HomeState.SessionId);
         }
 
         await RefreshCurrentViewAsync();
@@ -147,6 +151,12 @@ public class QueryIllustrationViewBase : ComponentBase, IDisposable
                 RefreshAnimationState();
                 await InvokeAsync(StateHasChanged);
                 await Task.Delay(AnimationDelayMs, cancellationToken);
+            }
+            // Animation completed naturally
+            if (_animationMetricsRunning && CurrStep.Animation.IsComplete)
+            {
+                RecordAnimationViewPercentage(100);
+                _animationMetricsRunning = false;
             }
         }
         catch (OperationCanceledException)
@@ -213,16 +223,38 @@ public class QueryIllustrationViewBase : ComponentBase, IDisposable
         _animationMetricsRunning = true;
     }
 
+    private double GetCurrentAnimationPercentage()
+    {
+        if (Steps.Count == 0) return 0;
+        return CurrStep.Animation.StepCount == 0 ? 0 : (double)CurrStep.Animation.CurrentStepIndex / CurrStep.Animation.StepCount * 100;
+    }
+    
+    private void RecordAnimationViewPercentage(double percentage)
+    {
+        if (Steps.Count == 0) return;
+        MetricsHandler.RecordAnimationViewPercentage(HomeState.SessionId, CurrStep.Component.Keyword, percentage);
+    }
+
     private void StopAnimationMetricsIfRunning()
     {
         if (!_animationMetricsRunning) return;
+        MetricsHandler.EnterStep(HomeState.SessionId, CurrStep.Component.Keyword);
         MetricsHandler.StopAnimation(HomeState.SessionId);
         _animationMetricsRunning = false;
     }
 
+    private void TryRecordAnimationViewPercentage()
+    {
+        if (Steps.Count == 0) return;
+
+        if (CurrStep.Animation.CurrentStepIndex == 0) return;
+        Console.WriteLine("animation percentage " + GetCurrentAnimationPercentage());
+        var percentage = GetCurrentAnimationPercentage();
+        RecordAnimationViewPercentage(percentage);
+    }
+
     private async Task OnAnimatePlay()
     {
-        MetricsConfig.AnimateButtonClicks.Add(1);
 
         if (Steps.Count == 0) return;
 
@@ -245,6 +277,12 @@ public class QueryIllustrationViewBase : ComponentBase, IDisposable
         await CancelAnimationPlaybackAsync();
 
         CurrStep.Animation.TryStepForward();
+        
+        if (CurrStep.Animation.IsComplete)
+        {
+            RecordAnimationViewPercentage(100);
+        }
+        
         await RefreshCurrentViewAsync();
 
     }
@@ -266,8 +304,8 @@ public class QueryIllustrationViewBase : ComponentBase, IDisposable
 
     private async Task OnNextStep()
     {
-        MetricsConfig.NextButtonClicks.Add(1);
-
+        TryRecordAnimationViewPercentage();
+        
         if (IndexOfStepToHighlight >= Steps.Count - 1) return;
 
         await CancelAnimationPlaybackAsync();
@@ -276,7 +314,7 @@ public class QueryIllustrationViewBase : ComponentBase, IDisposable
 
     private async Task OnPreviousStep()
     {
-        MetricsConfig.PrevButtonClicks.Add(1);
+        TryRecordAnimationViewPercentage();
 
         if (IndexOfStepToHighlight <= 0) return;
 
@@ -288,6 +326,5 @@ public class QueryIllustrationViewBase : ComponentBase, IDisposable
     {
         _animationCancellationTokenSource?.Cancel();
         _animationCancellationTokenSource?.Dispose();
-        StopAnimationMetricsIfRunning();
     }
 }
