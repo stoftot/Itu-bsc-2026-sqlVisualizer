@@ -34,7 +34,6 @@ public partial class SchemaView : ComponentBase, IDisposable
 
     private void DatabaseChanged(ChangeEventArgs e)
     {
-        Console.WriteLine($"{e.Value}: {e.Value}");
         HomeState.SelectedDatabase = e.Value!.ToString()!;
         if (string.Equals(HomeState.SelectedDatabase, "Example Database"))
         {
