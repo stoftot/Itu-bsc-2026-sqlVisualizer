@@ -43,6 +43,11 @@ public partial class ToolBar : ComponentBase, IDisposable
         await RunQueryCallback.InvokeAsync();
     }
 
+    async Task SelectStep(int index)
+    {
+        await HomeState.SelectStep(index);
+    }
+    
     async Task StepPrevious()
     {
         MetricsHandler.IncrementAction(HomeState.SessionId, ActionType.Previous);

@@ -31,13 +31,14 @@
             
             @for (int i = 0; i < HomeState.Steps.Count; i++)
             {
+                int index = i;
                 @if (i == HomeState.CurrentStepIndex)
                 {
-                    <p class="stepper__step stepper__step--selected">@HomeState.Steps[i].Component.Keyword.ToSQLString()</p>
+                    <button class="stepper__step stepper__step--selected" @onclick="async () => await SelectStep(index)">@HomeState.Steps[index].Component.Keyword.ToSQLString()</button>
                 }
                 else
                 {
-                    <p class="stepper__step">@HomeState.Steps[i].Component.Keyword.ToSQLString()</p>
+                    <button class="stepper__step" @onclick="async () => await SelectStep(index)">@HomeState.Steps[index].Component.Keyword.ToSQLString()</button>
                 }
             }
             <button @onclick="StepNext"
