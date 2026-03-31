@@ -16,7 +16,10 @@ public interface IMetricsHandler
     void PrintSessionTimings(string sessionId);
     IEnumerable<ActionCountDto> GetActionCounts();
     IEnumerable<StepTimeDto> GetTimeSpentByStep();
-
+    void RecordActionKeyword(string sessionId, ActionType actionType, string sqlKeyword);
+    List<ActionKeywordMetric> GetActionKeywordMetrics();
+    void RecordAnimationViewPercentage(string sessionId, SQLKeyword keyword, double percentage);
+    IEnumerable<ActionCountDto> GetAnimationViewPercentages();
 }
 
 public class MetricsHandler : IMetricsHandler
@@ -67,6 +70,79 @@ public class MetricsHandler : IMetricsHandler
 
         command.ExecuteNonQuery();
     }
+    
+    public void RecordActionKeyword(
+        string sessionId,
+        ActionType actionType,
+        string sqlKeyword)
+    {
+        using var connection = new DuckDBConnection(_connectionString);
+        connection.Open();
+
+        using var command = connection.CreateCommand();
+        command.CommandText = @"
+        INSERT INTO action_keyword_metrics (session_id, action_type, sql_keyword, count)
+        VALUES ($sessionId, $actionType, $sqlKeyword, 1)
+        ON CONFLICT (session_id, action_type, sql_keyword)
+        DO UPDATE SET count = action_keyword_metrics.count + 1;
+    ";
+
+        command.Parameters.Add(new DuckDBParameter("sessionId", sessionId));
+        command.Parameters.Add(new DuckDBParameter("actionType", actionType.ToString()));
+        command.Parameters.Add(new DuckDBParameter("sqlKeyword", sqlKeyword));
+            
+        command.ExecuteNonQuery();
+    }
+    
+    public List<ActionKeywordMetric> GetActionKeywordMetrics()
+    {
+        using var connection = new DuckDBConnection(_connectionString);
+        connection.Open();
+
+        using var command = connection.CreateCommand();
+        command.CommandText = @"
+        SELECT action_type, sql_keyword, count
+        FROM action_keyword_metrics
+    ";
+
+        using var reader = command.ExecuteReader();
+
+        var result = new List<ActionKeywordMetric>();
+
+        while (reader.Read())
+        {
+            result.Add(new ActionKeywordMetric
+            {
+                ActionType = reader.GetString(0),
+                SqlKeyword = reader.GetString(1),
+                Count = reader.GetInt64(2)
+            });
+        }
+
+        return result;
+    }
+    
+    public void RecordAnimationViewPercentage(string sessionId, SQLKeyword keyword, double percentage)
+    {
+        using var connection = new DuckDBConnection(_connectionString);
+        connection.Open();
+
+        using var command = connection.CreateCommand();
+        command.CommandText = @"
+        INSERT INTO keyword_animation_view_percentage (sql_keyword, total_percentage_sum, view_count)
+        VALUES ($sqlKeyword, $percentage, 1)
+        ON CONFLICT (sql_keyword)
+        DO UPDATE SET 
+            total_percentage_sum = keyword_animation_view_percentage.total_percentage_sum + $percentage,
+            view_count = keyword_animation_view_percentage.view_count + 1;
+    ";
+
+        command.Parameters.Add(new DuckDBParameter("sqlKeyword", keyword.ToString()));
+        command.Parameters.Add(new DuckDBParameter("percentage", percentage));
+            
+        command.ExecuteNonQuery();
+    }
+    
     public void PrintQueries(string sessionId)
     {
         using var connection = new DuckDBConnection(_connectionString);
@@ -132,7 +208,7 @@ public class MetricsHandler : IMetricsHandler
         {
             var now = DateTime.UtcNow;
             
-            if (state.CurrentStep is not null && !string.Equals(state.CurrentStep, step.ToString(), StringComparison.Ordinal))
+            if (state.CurrentStep is not null)
             {
                 SaveTimings(sessionId, state, now);
             }
@@ -307,6 +383,29 @@ public class MetricsHandler : IMetricsHandler
             yield return new ActionCountDto(
                 reader.GetString(0),
                 reader.GetInt64(1)
+            );
+        }
+    }
+    
+    public IEnumerable<ActionCountDto> GetAnimationViewPercentages()
+    {
+        using var connection = new DuckDBConnection(_connectionString);
+        connection.Open();
+
+        using var command = connection.CreateCommand();
+        command.CommandText = @"
+        SELECT sql_keyword, total_percentage_sum / view_count as average_percentage
+        FROM keyword_animation_view_percentage
+        ORDER BY sql_keyword;
+    ";
+
+        using var reader = command.ExecuteReader();
+
+        while (reader.Read())
+        {
+            yield return new ActionCountDto(
+                reader.GetString(0),
+                (long)reader.GetDouble(1)
             );
         }
     }

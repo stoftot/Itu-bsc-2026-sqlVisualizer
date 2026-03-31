@@ -20,12 +20,22 @@ public partial class Metrics : ComponentBase
     
     string[] AnimationLabels = [];
     List<ChartSeries<double>> AnimationData;
-    protected override void OnInitialized()
+    
+    string[] AnimationViewPercentageLabels = [];
+    List<ChartSeries<double>> AnimationViewPercentageData;
+    
+    List<string[]> ActionKeywordLabels = [];
+    List<List<ChartSeries<double>>> ActionKeywordData = [];
+    
+    protected override Task OnInitializedAsync()
     {
         _sessionId = Http.HttpContext?.Request.Cookies["session_id"] ?? "unknown";
         LoadActionMetrics();
         LoadTimeMetrics();
-        StateHasChanged();
+        LoadActionKeywordMetrics();
+        LoadAnimationViewPercentageMetrics();
+        InvokeAsync(StateHasChanged);
+        return base.OnInitializedAsync();
     }
     void LoadActionMetrics()
     {
@@ -46,6 +56,39 @@ public partial class Metrics : ComponentBase
             new() { Name = "Actions", Data = values },
         };
 
+    }
+    
+    void LoadActionKeywordMetrics()
+    {
+        var keywordCounts = MetricsHandler.GetActionKeywordMetrics().GroupBy(a => a.SqlKeyword).ToList();
+    
+        ActionKeywordLabels.Clear();
+        ActionKeywordData.Clear();
+    
+        for (var i = 0; i < keywordCounts.Count; i++)
+        {
+            var group = keywordCounts[i];
+            var actions = group.ToList();
+        
+            // Skip if no actions for this keyword
+            if (actions.Count == 0)
+                continue;
+        
+            var subLabels = new string[actions.Count];
+            var subValues = new double[actions.Count];
+        
+            for (var j = 0; j < actions.Count; j++)
+            {
+                subLabels[j] = actions[j].ActionType.ToString();
+                subValues[j] = actions[j].Count;
+            }
+        
+            ActionKeywordLabels.Add(subLabels);
+            ActionKeywordData.Add(new List<ChartSeries<double>>
+            {
+                new() { Name = group.Key, Data = subValues }
+            });
+        }
     }
 
     void LoadTimeMetrics()
@@ -73,6 +116,25 @@ public partial class Metrics : ComponentBase
         AnimationData = new()
         {
             new() { Name = "Animation Time", Data = animationValues },
+        };
+    }
+
+    void LoadAnimationViewPercentageMetrics()
+    {
+        var animationPercentages = MetricsHandler.GetAnimationViewPercentages().OrderBy(a => a.ActionName).ToList();
+        var labels = new string[animationPercentages.Count];
+        var values = new double[animationPercentages.Count];
+
+        for (var i = 0; i < animationPercentages.Count; i++)
+        {
+            labels[i] = animationPercentages[i].ActionName;
+            values[i] = animationPercentages[i].Count;
+        }
+
+        AnimationViewPercentageLabels = labels;
+        AnimationViewPercentageData = new()
+        {
+            new() { Name = "Average Completion %", Data = values },
         };
     }
 

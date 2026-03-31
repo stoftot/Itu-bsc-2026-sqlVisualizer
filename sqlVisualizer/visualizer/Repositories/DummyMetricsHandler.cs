@@ -37,4 +37,24 @@ public class DummyMetricsHandler : IMetricsHandler
     {
         throw new NotImplementedException();
     }
+
+    public void RecordActionKeyword(string sessionId, ActionType actionType, string sqlKeyword)
+    {
+        throw new NotImplementedException();
+    }
+
+    public List<ActionKeywordMetric> GetActionKeywordMetrics()
+    {
+        throw new NotImplementedException();
+    }
+
+    public void RecordAnimationViewPercentage(string sessionId, SQLKeyword keyword, double percentage)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IEnumerable<ActionCountDto> GetAnimationViewPercentages()
+    {
+        throw new NotImplementedException();
+    }
 }
