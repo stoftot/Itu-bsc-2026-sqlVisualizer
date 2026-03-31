@@ -8,6 +8,7 @@ public class HomeState
     public required string SessionId;
     public required StandaloneCodeEditor Editor { get; set; }
     public Func<string, Task> RunSQL { get; set; } = _ => Task.CompletedTask;
+    public Func<int, Task> SelectStep { get; set; } = _ => Task.CompletedTask;
     public Func<Task> NextStep { get; set; } = () => Task.CompletedTask;
     public Func<Task> PreviousStep { get; set; } = () => Task.CompletedTask;
     public Func<Task> AnimatePlay { get; set; } = () => Task.CompletedTask;
