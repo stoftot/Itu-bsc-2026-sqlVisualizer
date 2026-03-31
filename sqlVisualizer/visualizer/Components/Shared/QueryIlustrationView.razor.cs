@@ -311,8 +311,6 @@ public class QueryIllustrationViewBase : ComponentBase, IDisposable
 
     private async Task OnNextStep()
     {
-        TryRecordAnimationViewPercentage();
-        
         if (IndexOfStepToHighlight >= Steps.Count - 1) return;
 
         await CancelAnimationPlaybackAsync();
@@ -321,8 +319,6 @@ public class QueryIllustrationViewBase : ComponentBase, IDisposable
 
     private async Task OnPreviousStep()
     {
-        TryRecordAnimationViewPercentage();
-
         if (IndexOfStepToHighlight <= 0) return;
 
         await CancelAnimationPlaybackAsync();
