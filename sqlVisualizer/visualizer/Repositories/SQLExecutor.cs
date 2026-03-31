@@ -1,5 +1,4 @@
 ﻿using System.Data.Common;
-using System.Drawing;
 using System.Text;
 using System.Text.RegularExpressions;
 using DuckDB.NET.Data;
@@ -8,12 +7,28 @@ using visualizer.Utility;
 
 namespace visualizer.Repositories;
 
-public class SQLExecutor(DuckDBConnection connection)
+public class SQLExecutor
 {
-    private async Task<Table> Execute(string sql, string connectionString)
+    private readonly ICurrentDatabaseContext _databaseContext;
+
+    public SQLExecutor(ICurrentDatabaseContext databaseContext)
     {
-        Console.WriteLine($"Connection String: {connectionString}");
-        await using var temporaryConnection = new DuckDBConnection(connectionString);
+        _databaseContext = databaseContext;
+    }
+
+    // Backward-compatible constructor used by existing tests.
+    public SQLExecutor(DuckDBConnection connection)
+    {
+        _databaseContext = new CurrentDatabaseContext
+        {
+            ActiveConnectionString = connection.ConnectionString
+        };
+    }
+
+    private async Task<Table> Execute(string sql, string? connectionString = null)
+    {
+        var resolvedConnectionString = connectionString ?? _databaseContext.ActiveConnectionString;
+        await using var temporaryConnection = new DuckDBConnection(resolvedConnectionString);
         var entries = new List<TableEntry>();
         await temporaryConnection.OpenAsync();
         await using var command = new DuckDBCommand(sql, temporaryConnection);
@@ -47,48 +62,6 @@ public class SQLExecutor(DuckDBConnection connection)
         return new Table {ColumnNames = columnNames, Entries = entries.AsReadOnly() };
     }
     
-    private async Task<Table> Execute(string sql)
-    {
-        try
-        {
-            var entries = new List<TableEntry>();
-            await connection.OpenAsync();
-            await using var command = new DuckDBCommand(sql, connection);
-            await using var reader = await command.ExecuteReaderAsync();
-
-            var schema = reader.GetColumnSchema();
-            var columnNames = new List<string>();
-
-            foreach (var col in schema)
-            {
-                var name = col.ColumnName;
-                if (name.Equals("count_star()", StringComparison.InvariantCultureIgnoreCase))
-                {
-                    name = "count()";
-                }
-
-                columnNames.Add(name);
-            }
-
-            while (await reader.ReadAsync())
-            {
-                var row = new List<TableValue>();
-                for (var i = 0; i < reader.FieldCount; i++)
-                {
-                    row.Add(new TableValue { Value = reader.GetValue(i).ToString() ?? "NULL" });
-                }
-
-                entries.Add(new TableEntry { Values = row });
-            }
-
-            return new Table {ColumnNames = columnNames, Entries = entries.AsReadOnly() };
-        }
-        finally
-        {
-            await connection.CloseAsync();
-        }
-    }
-
     public async Task<Table> Execute(IEnumerable<SQLDecompositionComponent> sqlDecompositionComponents)
     {
         var components = sqlDecompositionComponents.ToList();
@@ -187,7 +160,7 @@ public class SQLExecutor(DuckDBConnection connection)
         return string.Join(",", columns);
     }
 
-    public async Task<Database> GetDatabase(string connectionString)
+    public async Task<Database> GetDatabase(string? connectionString = null)
     {
         var database = new Database()
             { Name = "Standard", Tables = [] };

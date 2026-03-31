@@ -5,9 +5,10 @@ using visualizer.Models;
 
 namespace visualizer.Components.Shared;
 
-public partial class SchemaView : ComponentBase
+public partial class SchemaView : ComponentBase, IDisposable
 {
-    [Inject] SQLExecutor SQLExecutor { get; init; }
+    [Inject] public required SQLExecutor SQLExecutor { get; init; }
+    [Inject] public required ICurrentDatabaseContext CurrentDatabaseContext { get; init; }
     [Inject] public required HomeState HomeState { get; init; }
     [Inject] public required IUserRepository UserRepository { get; init; }
     public required Database Database { get; set; }
@@ -16,7 +17,8 @@ public partial class SchemaView : ComponentBase
 
     protected override void OnInitialized()
     {
-        Database = SQLExecutor.GetDatabase("Data Source=data/database.db").Result;
+        CurrentDatabaseContext.ActiveConnectionString = "Data Source=data/database.db";
+        Database = SQLExecutor.GetDatabase().Result;
         StateHasChanged();
         HomeState.StateChanged += OnHomeStateChanged;
     }
@@ -36,12 +38,15 @@ public partial class SchemaView : ComponentBase
         HomeState.SelectedDatabase = e.Value!.ToString()!;
         if (string.Equals(HomeState.SelectedDatabase, "Example Database"))
         {
-            Database = SQLExecutor.GetDatabase("Data Source=data/database.db").Result;
+            CurrentDatabaseContext.ActiveConnectionString = "Data Source=data/database.db";
         }
         else
         {
-            Database = SQLExecutor.GetDatabase("Data Source=data/"+HomeState.SessionId+"/"+HomeState.SelectedDatabase).Result;
+            var safeFileName = Path.GetFileName(HomeState.SelectedDatabase);
+            CurrentDatabaseContext.ActiveConnectionString = $"Data Source=data/{HomeState.SessionId}/{safeFileName}";
         }
+
+        Database = SQLExecutor.GetDatabase().Result;
         HomeState.NotifyStateChanged();
     }
 
@@ -55,13 +60,13 @@ public partial class SchemaView : ComponentBase
         Directory.CreateDirectory("data/" + HomeState.SessionId);
             
         var file = e.File;
-        var filePath = Path.Combine("data", HomeState.SessionId, file.Name);
+        var safeFileName = Path.GetFileName(file.Name);
+        var filePath = Path.Combine("data", HomeState.SessionId, safeFileName);
         await using var sourceFileStream = file.OpenReadStream();
         await using var targetFileStream = new FileStream(filePath, FileMode.Create);
         await sourceFileStream.CopyToAsync(targetFileStream);
         targetFileStream.Close();
-        UserRepository.SaveUserDatabaseName(HomeState.SessionId, file.Name);
-        Console.WriteLine($"{file.Name} saved to {filePath}");
+        UserRepository.SaveUserDatabaseName(HomeState.SessionId, safeFileName);
     }
     
     public void Dispose()

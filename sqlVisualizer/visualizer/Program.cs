@@ -1,4 +1,3 @@
-using DuckDB.NET.Data;
 using MudBlazor.Services;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -54,13 +53,7 @@ builder.Services.AddOpenTelemetry().WithMetrics(metrics =>
         ).AddPrometheusExporter();
 });
 
-builder.Services.AddScoped<DuckDBConnection>(sp =>
-{
-    var config = sp.GetRequiredService<IConfiguration>();
-    var connString = config.GetConnectionString("Default");
-    return new DuckDBConnection(connString ?? throw new ArgumentNullException(nameof(connString)));
-});
-
+builder.Services.AddScoped<ICurrentDatabaseContext, CurrentDatabaseContext>();
 builder.Services.AddScoped<SQLExecutor>();
 builder.Services.AddScoped<SQLDecomposer>();
 builder.Services.AddScoped<TableGenerator>();
