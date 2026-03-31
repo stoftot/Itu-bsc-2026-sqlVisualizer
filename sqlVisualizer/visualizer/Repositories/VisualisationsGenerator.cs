@@ -4,7 +4,7 @@ using visualizer.Models;
 
 namespace visualizer.Repositories;
 
-public class VisualisationsGenerator(SQLDecomposer decomposer, TableGenerator tg, TableOriginColumnsGenerator tocg, AliasReplacer ar)
+public class VisualisationsGenerator(ISQLDecomposer decomposer, TableGenerator tg, TableOriginColumnsGenerator tocg, AliasReplacer ar)
 {
     public List<Visualisation> Generate(string query)
     {
