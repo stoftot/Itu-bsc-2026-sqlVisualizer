@@ -3,15 +3,18 @@
 
 <div class="toolbar">
     <div class="schema-part">
-        <div class="sql-statements-box">
-            <span class="sql-statements-label">Selected query</span>
-            <select class="sql-statements" @onchange="SelectChanged">
-                @for (int i = 0; i < HomeState.Queries.Count; i++)
-                {
-                    <option value="@i">@HomeState.Queries[i].Type</option>
-                }
-            </select>
-        </div>
+        @if (HomeState.SelectedDatabase == "Example Database")
+        {
+            <div class="sql-statements-box">
+                <span class="sql-statements-label">Example queries</span>
+                <select class="sql-statements" @onchange="SelectChanged">
+                    @for (int i = 0; i < HomeState.Queries.Count; i++)
+                    {
+                        <option value="@i">@HomeState.Queries[i].Type</option>
+                    }
+                </select>
+            </div>
+        }
 
         <button @onclick="RunQuery" class="text-button">
             <p class="text-button__text">Run Query</p>
