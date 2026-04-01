@@ -248,7 +248,7 @@ public class QueryIllustrationViewBase : ComponentBase, IDisposable
     {
         if (Steps.Count == 0) return;
 
-        if (CurrStep.Animation.CurrentStepIndex == 0) return;
+        //if (CurrStep.Animation.CurrentStepIndex == 0) return;
         var percentage = GetCurrentAnimationPercentage();
         RecordAnimationViewPercentage(percentage);
     }
