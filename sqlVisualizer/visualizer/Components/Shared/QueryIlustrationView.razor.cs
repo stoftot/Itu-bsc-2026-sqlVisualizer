@@ -79,7 +79,6 @@ public class QueryIllustrationViewBase : ComponentBase, IDisposable
 
     private async Task SelectStepAsync(int stepIndex, bool trackMetrics)
     {
-        TryRecordAnimationViewPercentage();
         if(Steps.Count == 0) return;
         
         _indexOfStepToHighlight = Math.Clamp(stepIndex, 0, Steps.Count - 1);
@@ -246,9 +245,9 @@ public class QueryIllustrationViewBase : ComponentBase, IDisposable
 
     private void TryRecordAnimationViewPercentage()
     {
-        if (Steps.Count == 0) return;
+        if (Steps.Count == 0 || IndexOfStepToHighlight >= Steps.Count) return;
 
-        //if (CurrStep.Animation.CurrentStepIndex == 0) return;
+        if (CurrStep.Animation.CurrentStepIndex == 0) return;
         var percentage = GetCurrentAnimationPercentage();
         RecordAnimationViewPercentage(percentage);
     }
@@ -304,6 +303,7 @@ public class QueryIllustrationViewBase : ComponentBase, IDisposable
     
     private async Task OnSelectStep(int stepIndex)
     {
+        TryRecordAnimationViewPercentage();
         await CancelAnimationPlaybackAsync();
         await SelectStepAsync(stepIndex, trackMetrics: true);
     }
@@ -312,6 +312,7 @@ public class QueryIllustrationViewBase : ComponentBase, IDisposable
     {
         if (IndexOfStepToHighlight >= Steps.Count - 1) return;
 
+        TryRecordAnimationViewPercentage();
         await CancelAnimationPlaybackAsync();
         await SelectStepAsync(IndexOfStepToHighlight + 1, trackMetrics: true);
     }
@@ -320,6 +321,7 @@ public class QueryIllustrationViewBase : ComponentBase, IDisposable
     {
         if (IndexOfStepToHighlight <= 0) return;
 
+        TryRecordAnimationViewPercentage();
         await CancelAnimationPlaybackAsync();
         await SelectStepAsync(IndexOfStepToHighlight - 1, trackMetrics: true);
     }
