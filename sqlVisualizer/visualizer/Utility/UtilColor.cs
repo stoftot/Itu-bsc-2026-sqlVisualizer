@@ -5,4 +5,6 @@ public static class UtilColor
     // Highlighting
     public const string PrimaryHighlightColor = "#FFF3CD";
     public const string SecondaryHighlightColor = "#cdebff";
+    public const string GreenHighlightColor = "#D8F5D0";
+    public const string RedHighlightColor = "#FFD6D6";
 }
