@@ -32,7 +32,9 @@ public static class AnimationGenerator
                     ? throw new ArgumentException("SELECT animations can only be generated to one table")
                     : SelectAnimationGenerator.Generate(fromTables, toTables[0], action),
             SQLKeyword.ORDER_BY => throw new NotImplementedException("ORDER BY animations are not yet supported"),
-            SQLKeyword.LIMIT => throw new NotImplementedException("LIMIT animations are not yet supported"),
+            SQLKeyword.LIMIT => fromTables.Count > 1 && toTables.Count > 1
+                ? throw new ArgumentException("LIMIT animation can only be generated from one table to another")
+                : LimitAnimationGenerator.Generate(fromTables[0], toTables[0], action),
             SQLKeyword.OFFSET => throw new NotImplementedException("OFFSET animations are not yet supported"),
             _ => throw new ArgumentOutOfRangeException()
         };
