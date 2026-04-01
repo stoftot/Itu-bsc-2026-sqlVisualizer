@@ -11,7 +11,7 @@ public class VisulisationGenerationTest : IClassFixture<DuckDbFixture>
     public VisulisationGenerationTest(DuckDbFixture fixture)
     {
         generator = new VisualisationsGenerator(
-            new SQLDecomposer(),
+            new DuckDbSQLDecomposer(),
             new TableGenerator(new SQLExecutor(fixture.CreateConnection()), new TableOriginColumnsGenerator()),
             new TableOriginColumnsGenerator(),
             new AliasReplacer());

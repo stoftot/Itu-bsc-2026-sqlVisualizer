@@ -55,7 +55,7 @@ builder.Services.AddOpenTelemetry().WithMetrics(metrics =>
 
 builder.Services.AddScoped<ICurrentDatabaseContext, CurrentDatabaseContext>();
 builder.Services.AddScoped<SQLExecutor>();
-builder.Services.AddScoped<SQLDecomposer>();
+builder.Services.AddScoped<ISQLDecomposer, DuckDbSQLDecomposer>();
 builder.Services.AddScoped<TableGenerator>();
 builder.Services.AddScoped<TableOriginColumnsGenerator>();
 builder.Services.AddScoped<AliasReplacer>();

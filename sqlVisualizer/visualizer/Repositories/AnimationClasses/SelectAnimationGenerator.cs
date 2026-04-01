@@ -9,6 +9,50 @@ public static class SelectAnimationGenerator
 {
     private static TableVisualModifier tvm = new();
 
+    /// <summary>
+    /// Splits a SQL clause into individual columns by splitting on top-level commas
+    /// (commas not inside parentheses).
+    /// </summary>
+    /// <param name="clause">The SQL clause to split</param>
+    /// <returns>A list of column expressions, trimmed</returns>
+    private static List<string> SplitClauseIntoColumns(string clause)
+    {
+        var columns = new List<string>();
+        var currentColumn = new System.Text.StringBuilder();
+        int parenDepth = 0;
+
+        foreach (char c in clause)
+        {
+            if (c == '(')
+            {
+                parenDepth++;
+                currentColumn.Append(c);
+            }
+            else if (c == ')')
+            {
+                parenDepth--;
+                currentColumn.Append(c);
+            }
+            else if (c == ',' && parenDepth == 0)
+            {
+                columns.Add(currentColumn.ToString().Trim());
+                currentColumn.Clear();
+            }
+            else
+            {
+                currentColumn.Append(c);
+            }
+        }
+
+        // Add the last column
+        if (currentColumn.Length > 0)
+        {
+            columns.Add(currentColumn.ToString().Trim());
+        }
+
+        return columns;
+    }
+
     public static Animation Generate(List<Table> fromTables, Table toTable,
         SQLDecompositionComponent action)
     {
@@ -26,29 +70,7 @@ public static class SelectAnimationGenerator
 
         steps.Add(tvm.HideTableCellBased(toTable));
         
-        //TODO: regex dosen't support window functions with end parentheses inside the over, like "over (..)...)"
-        var windowFunctionMatch = Regex.Match(action.Clause, @"\s*(?:[^,]|\([^)]*\))+?\bover\s*[^)]+\)[^,]*", RegexOptions.IgnoreCase | RegexOptions.Singleline);
-        List<string> columns;
-
-        if (windowFunctionMatch.Success)
-        {
-            var windowFunction = windowFunctionMatch.Groups[0].Value;
-            var clauseMinusWindow = Regex.Replace(action.Clause,
-                @"\s*(?:[^,]|\([^)]*\))+?\bover\s*[^)]+\)[^,]*", "()");
-            
-            columns = clauseMinusWindow.Split(',').Select(c => c.Trim()).ToList();
-            for (int i = 0; i < columns.Count; i++)
-            {
-                if (!columns[i].Equals("()")) continue;
-                
-                columns[i] = windowFunction;
-                break;
-            }
-        }
-        else
-        {
-            columns = action.Clause.Split(',').Select(c => c.Trim()).ToList();
-        }
+        var columns = SplitClauseIntoColumns(action.Clause);
 
         var toColumnIndex = 0;
         foreach (var column in columns)

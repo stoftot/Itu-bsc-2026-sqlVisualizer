@@ -79,6 +79,15 @@ public class SQLExecutor
             && components.All(c => c.Keyword != SQLKeyword.ORDER_BY);
             
         var queryBuilder = new StringBuilder();
+
+        // WITH must come before SELECT *, so output it first.
+        var withComponent = components.FirstOrDefault(c => c.Keyword == SQLKeyword.WITH);
+        if (withComponent != null)
+        {
+            queryBuilder.Append(withComponent.ToExecutableClause());
+            queryBuilder.Append(' ');
+        }
+
         if (!containsSelect)
         {
             queryBuilder.Append("SELECT * ");
@@ -98,7 +107,7 @@ public class SQLExecutor
                 components.Add(new SQLDecompositionComponent(SQLKeyword.ORDER_BY, columnsToOrderBy));
         }
 
-        foreach (var component in components.OrderBy(c => c.Keyword.SyntaxPrecedence()))
+        foreach (var component in components.Where(c => c.Keyword != SQLKeyword.WITH).OrderBy(c => c.Keyword.SyntaxPrecedence()))
         {
             queryBuilder.Append(component.ToExecutableClause());
             queryBuilder.Append(' ');
