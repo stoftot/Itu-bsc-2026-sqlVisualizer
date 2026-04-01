@@ -14,6 +14,42 @@ public class DbInitializer(IConfiguration config)
         var tableCmd = connection.CreateCommand();
         tableCmd.CommandText =
             """
+            drop table if exists "123";
+            -- Table with coffee types
+            DROP TABLE IF EXISTS coffee_sales;
+            DROP TABLE IF EXISTS coffee_types;
+            CREATE TABLE coffee_types (
+                coffee_id INTEGER PRIMARY KEY,
+                coffee_name TEXT
+            );
+            
+            -- Table with sales transactions
+            
+            CREATE TABLE coffee_sales (
+                sale_id INTEGER PRIMARY KEY,
+                coffee_id INTEGER,
+                quantity INTEGER,
+                price_per_unit DOUBLE,
+                sale_date DATE,
+                FOREIGN KEY (coffee_id) REFERENCES coffee_types(coffee_id)
+            );
+
+            -- Insert coffee types
+            INSERT INTO coffee_types VALUES
+            (1, 'Espresso'),
+            (2, 'Latte'),
+            (3, 'Cappuccino'),
+            (4, 'Americano');
+            
+            -- Insert sales data
+            INSERT INTO coffee_sales VALUES
+            (1, 1, 2, 3.00, '2026-01-01'),
+            (2, 2, 1, 4.50, '2026-01-01'),
+            (3, 1, 1, 3.00, '2026-01-02'),
+            (4, 3, 3, 4.00, '2026-01-02'),
+            (5, 2, 2, 4.50, '2026-01-03'),
+            (6, 4, 1, 2.50, '2026-01-03');
+
             -- EMPLOYEES
             DROP tABLE IF EXISTS employees;
             CREATE TABLE employees (
