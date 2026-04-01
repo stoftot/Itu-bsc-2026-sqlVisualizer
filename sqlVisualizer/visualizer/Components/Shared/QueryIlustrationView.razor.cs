@@ -155,9 +155,7 @@ public class QueryIllustrationViewBase : ComponentBase, IDisposable
             // Animation completed naturally
             if (_animationMetricsRunning && CurrStep.Animation.IsComplete)
             {
-                MetricsHandler.StopAnimation(HomeState.SessionId);
                 RecordAnimationViewPercentage(100);
-                _animationMetricsRunning = false;
             }
         }
         catch (OperationCanceledException)
@@ -239,6 +237,7 @@ public class QueryIllustrationViewBase : ComponentBase, IDisposable
     private void StopAnimationMetricsIfRunning()
     {
         if (!_animationMetricsRunning) return;
+        MetricsHandler.StopAnimation(HomeState.SessionId);
         MetricsHandler.EnterStep(HomeState.SessionId, CurrStep.Component.Keyword);
         _animationMetricsRunning = false;
     }
