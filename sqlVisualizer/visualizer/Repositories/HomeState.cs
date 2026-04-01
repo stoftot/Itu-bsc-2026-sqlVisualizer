@@ -21,6 +21,9 @@ public class HomeState
     public bool IsAnimationPlaying { get; set; }
     public bool ExceptionOccured { get; set; }
     public string ExceptionMessage { get; set; } = "";
+    public string CurrentEditorQuery { get; set; } = "";
+    public string LastVisualizedQuery { get; set; } = "";
+    public bool IsShowingLatestVisualisation => NormalizeSql(CurrentEditorQuery) == NormalizeSql(LastVisualizedQuery);
     public bool IsAnimationPaused => !IsAnimationPlaying && CurrentAnimationStepIndex > 0 && CurrentAnimationStepIndex < CurrentAnimationStepCount;
     public bool ViewSidebar { get; set; } = true;
     public event Action? StateChanged;
@@ -53,4 +56,9 @@ public class HomeState
                   "GROUP BY productname",
         }
     ];
+
+    private static string NormalizeSql(string sql)
+    {
+        return sql.Replace("\r\n", "\n");
+    }
 }

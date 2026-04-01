@@ -11,12 +11,21 @@ public partial class EditorView : ComponentBase
 
     private StandaloneEditorConstructionOptions EditorConstructionOptions(StandaloneCodeEditor editor)
     {
+        var initialQuery = UserRepository.GetUserQuery(sessionId: HomeState.SessionId) ?? HomeState.Queries[0].SQL;
+        HomeState.CurrentEditorQuery = initialQuery;
+
         return new StandaloneEditorConstructionOptions
         {
             AutomaticLayout = true,
             Language = "sql",
-            Value = UserRepository.GetUserQuery(sessionId: HomeState.SessionId) ?? HomeState.Queries[0].SQL,
+            Value = initialQuery,
             Minimap = new EditorMinimapOptions {Enabled =  false}
         };
+    }
+
+    private async Task OnDidChangeModelContent(ModelContentChangedEvent _)
+    {
+        HomeState.CurrentEditorQuery = await HomeState.Editor.GetValue() ?? string.Empty;
+        HomeState.NotifyStateChanged();
     }
 }

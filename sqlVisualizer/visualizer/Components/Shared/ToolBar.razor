@@ -16,7 +16,7 @@
             </div>
         }
 
-        <button @onclick="RunQuery" class="text-button">
+        <button @onclick="RunQuery" class="text-button" disabled="@HomeState.IsShowingLatestVisualisation">
             <p class="text-button__text">Run Query</p>
             <i class="bi bi-play-fill"></i>
         </button>
