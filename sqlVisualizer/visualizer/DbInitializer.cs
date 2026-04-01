@@ -14,6 +14,37 @@ public class DbInitializer(IConfiguration config)
         var tableCmd = connection.CreateCommand();
         tableCmd.CommandText =
             """
+            -- EMPLOYEES
+            DROP tABLE IF EXISTS employees;
+            CREATE TABLE employees (
+            emp_id INTEGER PRIMARY KEY,
+            department TEXT NOT NULL,
+            salary INTEGER NOT NULL
+            );
+                
+            INSERT INTO employees VALUES
+              (1, 'IT', 5000),
+              (2, 'HR', 2400),
+              (3, 'HR', 3500),
+              (4, 'Sales', 5500),
+              (5, 'Engineering', 6000);
+            
+            
+            DROP TABLE IF EXISTS sale;
+            CREATE TABLE sale (
+                order_id INTEGER PRIMARY KEY,
+                customer TEXT NOT NULL,
+                region TEXT NOT NULL,
+                amount INTEGER NOT NULL
+            );
+
+            INSERT INTO sale VALUES 
+             (1, 'Alice', 'North', 100),
+             (2, 'Bob', 'South', 150),
+             (3, 'Charlie', 'East', 200),
+             (4, 'David', 'West', 250),
+             (5, 'Eve', 'North', 300);  
+
             -- SHIFT
             DROP TABLE IF EXISTS shift;
             CREATE TABLE shift (
@@ -223,18 +254,6 @@ public class DbInitializer(IConfiguration config)
               --('2025-01-28', 'WT-003', 34.347),
               --('2025-01-28', 'WT-004', 28.114),
               --('2025-01-28', 'WT-005', 26.487);
-
-            DROP TABLE IF EXISTS "123";
-            CREATE TABLE "123" (
-                "*" INTEGER,
-                "123" INTEGER,
-                "user" TEXT,
-            );
-            
-            INSERT INTO "123" VALUES
-                (1, 2, '1_1'),
-                (3, 4, '2_1'),
-                (5, 6, '3_1');
             """;
         tableCmd.ExecuteNonQuery();
     }
