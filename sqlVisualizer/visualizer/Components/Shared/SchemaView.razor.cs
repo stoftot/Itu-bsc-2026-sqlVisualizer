@@ -57,11 +57,14 @@ public partial class SchemaView : ComponentBase, IDisposable
     private async Task LoadFile(InputFileChangeEventArgs e)
     {
         Directory.CreateDirectory("data/" + HomeState.SessionId);
-            
+        
         var file = e.File;
         var safeFileName = Path.GetFileName(file.Name);
         var filePath = Path.Combine("data", HomeState.SessionId, safeFileName);
-        await using var sourceFileStream = file.OpenReadStream();
+        if (file.Size > 50000000)
+            throw new Exception("File is too large. Maximum allowed size is 50MB.");
+        
+        await using var sourceFileStream = file.OpenReadStream(50000000);
         await using var targetFileStream = new FileStream(filePath, FileMode.Create);
         await sourceFileStream.CopyToAsync(targetFileStream);
         targetFileStream.Close();
