@@ -17,6 +17,7 @@ public partial class Home : ComponentBase, IDisposable
     protected override void OnInitialized()
     {
         _query = HomeState.Queries[0].SQL;
+        HomeState.LastVisualizedQuery = _query;
         HomeState.SessionId = Http.HttpContext?.Request.Cookies["session_id"] ?? "unknown";
         HomeState.StateChanged += OnHomeStateChanged;
     }
@@ -29,6 +30,7 @@ public partial class Home : ComponentBase, IDisposable
         HomeState.RunSQL = async sql =>
         {
             _query = sql;
+            HomeState.LastVisualizedQuery = sql;
             await InvokeAsync(StateHasChanged);
             await QueryView.Init();
         };

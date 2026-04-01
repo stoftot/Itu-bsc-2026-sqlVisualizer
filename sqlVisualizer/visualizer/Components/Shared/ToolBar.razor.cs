@@ -32,14 +32,19 @@ public partial class ToolBar : ComponentBase, IDisposable
         MetricsHandler.IncrementAction(HomeState.SessionId, HomeState.Queries[Int32.Parse((String)e.Value)].Type);
         var newSQL = HomeState.Queries[Int32.Parse((String)e.Value)].SQL;
         await HomeState.Editor.SetValue(newSQL);
+        HomeState.CurrentEditorQuery = newSQL;
+        HomeState.NotifyStateChanged();
         await RunQuery();
     }
 
     async Task RunQuery()
     {
-        var editorContent = await HomeState.Editor.GetValue();
+        var editorContent = await HomeState.Editor.GetValue() ?? "";
+        HomeState.CurrentEditorQuery = editorContent;
         MetricsHandler.RecordQuery(HomeState.SessionId, editorContent);
-        await HomeState.RunSQL(editorContent ?? "");
+        await HomeState.RunSQL(editorContent);
+        HomeState.LastVisualizedQuery = editorContent;
+        HomeState.NotifyStateChanged();
         await RunQueryCallback.InvokeAsync();
     }
 

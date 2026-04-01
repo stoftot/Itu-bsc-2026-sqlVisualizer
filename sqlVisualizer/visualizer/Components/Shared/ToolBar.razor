@@ -16,10 +16,12 @@
             </div>
         }
 
-        <button @onclick="RunQuery" class="text-button">
-            <p class="text-button__text">Run Query</p>
-            <i class="bi bi-play-fill"></i>
-        </button>
+        <span title="@(HomeState.IsShowingLatestVisualisation ? "Already showing the latest visualization. Change the query to run again." : null)">
+            <button @onclick="RunQuery" class="text-button" disabled="@HomeState.IsShowingLatestVisualisation">
+                <p class="text-button__text">Run Query</p>
+                <i class="bi bi-play-fill"></i>
+            </button>
+        </span>
     </div>
     
     <div class="editor-part">
