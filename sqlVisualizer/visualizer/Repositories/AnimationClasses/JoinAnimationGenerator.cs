@@ -32,7 +32,7 @@ public static class JoinAnimationGenerator
             SQLKeyword.RIGHT_JOIN or SQLKeyword.RIGHT_OUTER_JOIN 
                 => GenerateRightJoinAndRightOuterJoin(primaryTable, joiningTable, toTable, primaryColumnsToHighlightIndexes, joiningColumnsToHighlightIndexes),
             SQLKeyword.FULL_JOIN or SQLKeyword.FULL_OUTER_JOIN 
-                => throw new NotImplementedException(),
+                => GenerateFullJoinAndFullOuterJoin(primaryTable, joiningTable, toTable, primaryColumnsToHighlightIndexes, joiningColumnsToHighlightIndexes),
             _ => throw new NotImplementedException("not supported keyword: " + action.Keyword)
         };
     }
@@ -274,6 +274,133 @@ public static class JoinAnimationGenerator
         return new Animation(steps);
     }
     
+    private static Animation GenerateFullJoinAndFullOuterJoin(Table primaryTable, Table joiningTable,
+        Table toTable, IList<int> primaryColumnsToHighlightIndexes, IList<int> joiningColumnsToHighlightIndexes)
+    {
+        var steps = new List<Action>();
+
+        steps.Add(tvm.HideTableCellBased(toTable));
+
+        steps.Add(tvm.CombineActions(
+            [
+                tvm.ChangeHighlightColourColumns(primaryTable, primaryColumnsToHighlightIndexes, UtilColor.SecondaryHighlightColor),
+                tvm.ChangeHighlightColourColumns(joiningTable, joiningColumnsToHighlightIndexes, UtilColor.SecondaryHighlightColor)
+            ]));
+
+        var matchedJoiningRowIndexes = new HashSet<int>();
+        var currentResultIndex = 0;
+        List<Action> toToggle = [];
+        List<Action> deToggle = [];
+
+        for (int primaryRow = 0; primaryRow < primaryTable.Entries.Count; primaryRow++)
+        {
+            var foundMatchInJoiningTable = false;
+
+            var primaryEntry = primaryTable.Entries[primaryRow];
+            var primaryToggle = tvm.CombineActions(
+                [
+                    tvm.GenerateToggleHighlightRow(primaryEntry),
+                    tvm.GenerateToggleHighlightCells(primaryTable, primaryRow, primaryColumnsToHighlightIndexes)
+                ]);
+
+            toToggle.Add(primaryToggle);
+
+            for (int joiningRow = 0; joiningRow < joiningTable.Entries.Count; joiningRow++)
+            {
+                var joiningEntry = joiningTable.Entries[joiningRow];
+                var joiningCellToggle = tvm.GenerateToggleHighlightCells(joiningTable, joiningRow, joiningColumnsToHighlightIndexes);
+                var joiningRowAlreadyMatched = matchedJoiningRowIndexes.Contains(joiningRow);
+
+                var joiningStepActions = new List<Action>();
+                if (!joiningRowAlreadyMatched)
+                    joiningStepActions.Add(tvm.GenerateToggleHighlightRow(joiningEntry));
+                joiningStepActions.Add(joiningCellToggle);
+
+                var joiningStep = tvm.CombineActions(joiningStepActions);
+                toToggle.Add(joiningStep);
+
+                if (currentResultIndex < toTable.Entries.Count
+                    && AreJoinEquivalentToResult(
+                        primaryEntry, joiningEntry, toTable.Entries[currentResultIndex]
+                    ))
+                {
+                    foundMatchInJoiningTable = true;
+
+                    matchedJoiningRowIndexes.Add(joiningRow);
+                    deToggle.Add(joiningCellToggle);
+
+                    toToggle.Add(() =>
+                    {
+                        joiningEntry.SetHighlightHexColor(UtilColor.RedHighlightColor);
+                        joiningEntry.IsHighlighted = true;
+                    });
+                    toToggle.AddRange(
+                    [
+                        tvm.GenerateToggleVisibleCellsInRow(toTable.Entries[currentResultIndex]),
+                        tvm.GenerateToggleHighlightRow(toTable.Entries[currentResultIndex])
+                    ]);
+                    deToggle.Add(tvm.GenerateToggleHighlightRow(toTable.Entries[currentResultIndex]));
+                    currentResultIndex++;
+                }
+                else
+                {
+                    deToggle.Add(joiningStep);
+                }
+
+                steps.Add(toToggle.ToOneAction());
+                toToggle.Clear();
+                toToggle.AddRange(deToggle);
+                deToggle.Clear();
+            }
+
+            if (!foundMatchInJoiningTable)
+            {
+                steps.Add(tvm.CombineActions(toToggle,
+                    [
+                        tvm.GenerateToggleVisibleCellsInRow(toTable.Entries[currentResultIndex]),
+                        tvm.GenerateToggleHighlightRow(toTable.Entries[currentResultIndex])
+                    ]));
+                toToggle.Clear();
+                toToggle.AddRange(
+                [
+                    primaryToggle,
+                    tvm.GenerateToggleHighlightRow(toTable.Entries[currentResultIndex])
+                ]);
+                currentResultIndex++;
+            }
+            else
+            {
+                toToggle.Add(primaryToggle);
+            }
+        }
+
+        var finalActions = new List<Action>();
+
+        for (int joiningRow = 0; joiningRow < joiningTable.Entries.Count; joiningRow++)
+        {
+            if (matchedJoiningRowIndexes.Contains(joiningRow))
+                continue;
+
+            var joiningEntry = joiningTable.Entries[joiningRow];
+            finalActions.Add(() =>
+            {
+                joiningEntry.SetHighlightColorDefault();
+                joiningEntry.IsHighlighted = true;
+            });
+        }
+
+        for (int resultRow = currentResultIndex; resultRow < toTable.Entries.Count; resultRow++)
+        {
+            finalActions.Add(tvm.GenerateToggleVisibleCellsInRow(toTable.Entries[resultRow]));
+            finalActions.Add(tvm.GenerateToggleHighlightRow(toTable.Entries[resultRow]));
+        }
+
+        steps.Add(finalActions.Count != 0
+            ? tvm.CombineActions(toToggle, finalActions)
+            : toToggle.ToOneAction());
+        
+        return new Animation(steps);
+    }
 
     private static bool AreJoinEquivalentToResult(TableEntry primary, TableEntry joining, TableEntry result)
     {
