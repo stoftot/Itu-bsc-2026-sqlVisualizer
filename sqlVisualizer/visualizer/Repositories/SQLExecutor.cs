@@ -94,7 +94,7 @@ public class SQLExecutor(DuckDBConnection connection)
         else if (containsJoinAndNotOrderBy)
         {
             var lastJoin = components.Last(c => c.Keyword.IsJoin());
-            var table = "";
+            var orderBy = "";
             
             switch (lastJoin.Keyword)
             {
@@ -102,22 +102,33 @@ public class SQLExecutor(DuckDBConnection connection)
                 case SQLKeyword.INNER_JOIN:
                 case SQLKeyword.LEFT_JOIN:
                 case SQLKeyword.LEFT_OUTER_JOIN:
+                {
                     //extract from table
                     var fromComponent = components.First(c => c.Keyword == SQLKeyword.FROM);
-                    table = fromComponent.Clause.Trim().Split(' ').Last();
-                    
+                    orderBy = fromComponent.Clause.Trim().Split(' ').Last();
+                }
                     break;
                 case SQLKeyword.RIGHT_JOIN:
                 case SQLKeyword.RIGHT_OUTER_JOIN:
+                {
                     //extract joining table
-                    table = UtilRegex.Match(lastJoin.Clause, ".*(?=ON)")
+                    orderBy = UtilRegex.Match(lastJoin.Clause, ".*(?=ON)")
                         .Value.Trim().Split(' ').Last();
+                }
                     break;
                 case SQLKeyword.FULL_JOIN:
                 case SQLKeyword.FULL_OUTER_JOIN:
+                {
+                    var fromComponent = components.First(c => c.Keyword == SQLKeyword.FROM);
+                    orderBy = fromComponent.Clause.Trim().Split(' ').Last() + ".rowid";
+
+                    orderBy += ","+UtilRegex.Match(lastJoin.Clause, ".*(?=ON)")
+                        .Value.Trim().Split(' ').Last() + ".rowid";
+                }
                     break;
             }
-            components.Add(new SQLDecompositionComponent(SQLKeyword.ORDER_BY, table+".rowid"));
+
+            components.Add(new SQLDecompositionComponent(SQLKeyword.ORDER_BY, orderBy));
         }
 
         foreach (var component in components.OrderBy(c => c.Keyword.SyntaxPrecedence()))
