@@ -95,8 +95,8 @@ public class VisulisationGenerationTest : IClassFixture<DuckDbFixture>
                 LEFT JOIN purchase ON product.productname = purchase.productname
                 """)]
     [InlineData("""
-                SELECT * FROM product
-                RIGHT JOIN purchase ON product.productname = purchase.productname
+                SELECT * FROM purchase
+                RIGHT JOIN product ON product.productname = purchase.productname
                 """)]
     [InlineData("""
                 SELECT * FROM product
