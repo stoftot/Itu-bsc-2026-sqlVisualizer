@@ -196,7 +196,7 @@ public static class JoinAnimationGenerator
         
         steps.Add(tvm.HideTableCellBased(toTable));
         
-        //set highlight color of condition colors
+        //set highlight color of condition columns
         steps.Add(tvm.CombineActions(
             [
                 tvm.ChangeHighlightColourColumns(primaryTable, primaryColumnsToHighlightIndexes, UtilColor.SecondaryHighlightColor),
@@ -317,7 +317,11 @@ public static class JoinAnimationGenerator
                 joiningStepActions.Add(joiningCellToggle);
 
                 var joiningStep = tvm.CombineActions(joiningStepActions);
-                toToggle.Add(joiningStep);
+                toToggle.AddRange(
+                [
+                    tvm.SetHighlightColourDefaultRow(joiningTable, joiningRow),
+                    joiningStep
+                ]);
 
                 if (currentResultIndex < toTable.Entries.Count
                     && AreJoinEquivalentToResult(
@@ -327,13 +331,13 @@ public static class JoinAnimationGenerator
                     foundMatchInJoiningTable = true;
 
                     matchedJoiningRowIndexes.Add(joiningRow);
-                    deToggle.Add(joiningCellToggle);
 
-                    toToggle.Add(() =>
-                    {
-                        joiningEntry.SetHighlightHexColor(UtilColor.RedHighlightColor);
-                        joiningEntry.IsHighlighted = true;
-                    });
+                    deToggle.AddRange(
+                    [
+                        joiningCellToggle,
+                        tvm.ChangeHighlightColourRow(joiningTable, joiningRow, UtilColor.GreenHighlightColor),
+                    ]);
+      
                     toToggle.AddRange(
                     [
                         tvm.GenerateToggleVisibleCellsInRow(toTable.Entries[currentResultIndex]),
@@ -344,7 +348,11 @@ public static class JoinAnimationGenerator
                 }
                 else
                 {
-                    deToggle.Add(joiningStep);
+                    deToggle.AddRange( 
+                    [
+                                tvm.SwitchToPreviousHighlightColorRow(joiningTable, joiningRow),
+                                joiningStep
+                            ]);
                 }
 
                 steps.Add(toToggle.ToOneAction());
@@ -394,10 +402,12 @@ public static class JoinAnimationGenerator
             finalActions.Add(tvm.GenerateToggleVisibleCellsInRow(toTable.Entries[resultRow]));
             finalActions.Add(tvm.GenerateToggleHighlightRow(toTable.Entries[resultRow]));
         }
-
-        steps.Add(finalActions.Count != 0
-            ? tvm.CombineActions(toToggle, finalActions)
-            : toToggle.ToOneAction());
+        
+        steps.Add(toToggle.ToOneAction());
+        if(finalActions.Count > 0)
+            steps.Add(finalActions.ToOneAction());
+        
+        steps.Add(tvm.ResetTables([joiningTable, toTable]));
         
         return new Animation(steps);
     }
