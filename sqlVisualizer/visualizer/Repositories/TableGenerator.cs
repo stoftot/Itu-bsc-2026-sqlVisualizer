@@ -6,9 +6,12 @@ namespace visualizer.Repositories;
 
 public class TableGenerator(SQLExecutor sqlExecutor, TableOriginColumnsGenerator tocg)
 {
-    public void GenerateTablesIntialStepWithOriginColumns(List<Table> fromTables, SQLDecompositionComponent intialStep)
+    public void GenerateTablesIntialStepWithOriginColumns(List<Table> fromTables, SQLDecompositionComponent intialStep,
+        List<SQLDecompositionComponent> currSteps)
     {
-        fromTables.Add(sqlExecutor.Execute(intialStep).Result);
+        var table = sqlExecutor.Execute(currSteps).Result;
+        table.Name = intialStep.Clause.Split(' ')[^1];
+        fromTables.Add(table);
         tocg.GenerateTableOriginOnColumnsFromTableName(fromTables);
     }
 
@@ -27,7 +30,7 @@ public class TableGenerator(SQLExecutor sqlExecutor, TableOriginColumnsGenerator
             case SQLKeyword.RIGHT_OUTER_JOIN:
             case SQLKeyword.FULL_JOIN:
             case SQLKeyword.FULL_OUTER_JOIN:
-                GenerateFromTablesJoin(fromTables, currStep);
+                GenerateFromTablesJoin(fromTables, currStep, currSteps);
                 break;
             case SQLKeyword.HAVING:
                 GenerateFromTablesHaving(fromTables, currStep, currSteps);
@@ -35,9 +38,15 @@ public class TableGenerator(SQLExecutor sqlExecutor, TableOriginColumnsGenerator
         }
     }
 
-    private void GenerateFromTablesJoin(List<Table> fromTables, SQLDecompositionComponent currentStep)
+    private void GenerateFromTablesJoin(List<Table> fromTables, SQLDecompositionComponent currentStep,
+        List<SQLDecompositionComponent> currSteps)
     {
-        var joiningTable = sqlExecutor.Execute(currentStep.GenerateFromClauseFromJoin()).Result;
+        var fromClause = currentStep.GenerateFromClauseFromJoin();
+        var withComponent = currSteps.FirstOrDefault(c => c.Keyword == SQLKeyword.WITH);
+        var components = withComponent != null
+            ? (IEnumerable<SQLDecompositionComponent>)[withComponent, fromClause]
+            : [fromClause];
+        var joiningTable = sqlExecutor.Execute(components).Result;
         joiningTable.Name = ExtractSourceName(currentStep.Clause);
         tocg.GenerateTableOriginOnColumnsFromTableName(joiningTable);
         fromTables.Add(joiningTable);

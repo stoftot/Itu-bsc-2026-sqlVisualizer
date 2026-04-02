@@ -1,4 +1,3 @@
-using DuckDB.NET.Data;
 using MudBlazor.Services;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -54,15 +53,9 @@ builder.Services.AddOpenTelemetry().WithMetrics(metrics =>
         ).AddPrometheusExporter();
 });
 
-builder.Services.AddScoped<DuckDBConnection>(sp =>
-{
-    var config = sp.GetRequiredService<IConfiguration>();
-    var connString = config.GetConnectionString("Default");
-    return new DuckDBConnection(connString ?? throw new ArgumentNullException(nameof(connString)));
-});
-
+builder.Services.AddScoped<ICurrentDatabaseContext, CurrentDatabaseContext>();
 builder.Services.AddScoped<SQLExecutor>();
-builder.Services.AddScoped<SQLDecomposer>();
+builder.Services.AddScoped<ISQLDecomposer, DuckDbSQLDecomposer>();
 builder.Services.AddScoped<TableGenerator>();
 builder.Services.AddScoped<TableOriginColumnsGenerator>();
 builder.Services.AddScoped<AliasReplacer>();
@@ -99,6 +92,7 @@ app.MapPrometheusScrapingEndpoint();
 new DbInitializer(app.Configuration).Initialize();
 new DbInitializer(app.Configuration).InitializeMetrics();
 new DbInitializer(app.Configuration).InitializeUser();
+new DbInitializer(app.Configuration).InitializePostTestDB();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

@@ -1,7 +1,131 @@
-﻿h5 {
-    margin-left: 8px;
+﻿.schema-container {
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid rgb(226, 232, 240);
+    min-width: 250px;
 }
 
-h6 {
-    margin-left: 16px;
+/* ── DB Selector ─────────────────────────────────────── */
+.schema-db-box {
+    padding: 16px 16px 16px;
+    background: rgb(248, 250, 252);
+    border-bottom: 1px solid rgb(226, 232, 240);
+}
+
+.schema-section-label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: rgb(26, 46, 74);
+    margin-bottom: 8px;
+}
+
+.schema-source-select {
+    padding: 0;
+}
+
+.schema-source-label {
+    display: block;
+    font-size: 0.58rem;
+    font-weight: 700;
+    color: #64748b;
+    letter-spacing: 0.1em;
+    margin-bottom: 4px;
+}
+
+.schema-source-dropdown {
+    width: 100%;
+    color: #243650;
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+/* ── Schema Viewer ───────────────────────────────────── */
+.schema-viewer {
+    padding: 12px 12px 12px;
+    overflow-y: auto;
+}
+
+.schema-table-box {
+    margin-bottom: 16px;
+}
+
+.schema-table {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    margin-bottom: 4px;
+    cursor: pointer;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #cbd5e1;
+    transition: background 0.12s;
+    border-radius: 6px;
+}
+
+.schema-table:hover {
+    background: rgba(0, 0, 0, 0.07);
+}
+
+.schema-table__icon {
+    color: rgb(26, 46, 74);
+    font-size: 0.8rem;
+    flex-shrink: 0;
+}
+
+.schema-table__name {
+    color: rgb(26, 46, 74);
+}
+
+.schema-columns {
+    border-left: 1px solid rgb(226, 232, 240);
+    margin-left: 18px;
+}
+
+.schema-column {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2px 12px 2px 30px;
+}
+
+.schema-column__name {
+    font-size: 0.7rem;
+    color: #475569;
+}
+
+.schema-column__type {
+    font-size: 0.6rem;
+    color: #94a3b8;
+    letter-spacing: 0.04em;
+}
+
+/* ── Add New DB ──────────────────────────────────────── */
+.schema-new-db {
+    margin-top: auto;
+    padding: 16px 20px;
+    border-top: 1px solid rgb(226, 232, 240);
+}
+
+.schema-new-db-btn {
+    width: 100%;
+    background: transparent;
+    color: rgb(112, 127, 148);
+    border: 3px dashed rgb(118, 133, 154);
+    border-radius: 6px;
+    padding: 12px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    letter-spacing: 0.05em;
+    cursor: pointer;
 }

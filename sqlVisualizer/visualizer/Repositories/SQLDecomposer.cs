@@ -3,7 +3,7 @@ using visualizer.Models;
 
 namespace visualizer.Repositories;
 
-public class SQLDecomposer
+public class SQLDecomposer : ISQLDecomposer
 {
     private IReadOnlyList<SQLKeyword> SupportedKeywords { get; }
 

@@ -1,12 +1,15 @@
 ﻿
-/* Button */
-button {
-    border: none;
-    border-radius: 5px;
+/* icon */
+.bi {
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #ffc720;
+    opacity: 0.75;
+    transition: opacity 0.15s;
 }
 
-.bi {
-    font-size: 1.6em;
+.bi:hover {
+    opacity: 1;
 }
 
 /* Modal */
@@ -25,7 +28,8 @@ button {
 
 .modal-content {
     background-color: #fefefe;
-    margin: 15% auto; /* 15% from the top and centered */
+    color: black;
+    margin: 5% auto; /* 15% from the top and centered */
     padding: 32px;
     border: 1px solid #888;
     width: 60%;
@@ -52,3 +56,4 @@ h3 {
     text-decoration: none;
     cursor: pointer;
 }
+

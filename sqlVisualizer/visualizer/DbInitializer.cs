@@ -14,6 +14,76 @@ public class DbInitializer(IConfiguration config)
         var tableCmd = connection.CreateCommand();
         tableCmd.CommandText =
             """
+            drop table if exists "123";
+            -- Table with coffee types
+            DROP TABLE IF EXISTS coffee_sales;
+            DROP TABLE IF EXISTS coffee_types;
+            CREATE TABLE coffee_types (
+                coffee_id INTEGER PRIMARY KEY,
+                coffee_name TEXT
+            );
+            
+            -- Table with sales transactions
+            
+            CREATE TABLE coffee_sales (
+                sale_id INTEGER PRIMARY KEY,
+                coffee_id INTEGER,
+                quantity INTEGER,
+                price_per_unit DOUBLE,
+                sale_date TEXT,
+                FOREIGN KEY (coffee_id) REFERENCES coffee_types(coffee_id)
+            );
+
+            -- Insert coffee types
+            INSERT INTO coffee_types VALUES
+            (1, 'Espresso'),
+            (2, 'Latte'),
+            (3, 'Cappuccino'),
+            (4, 'Americano'),
+            (5, 'Mocha');
+            
+            -- Insert sales data
+            INSERT INTO coffee_sales VALUES
+            (1, 1, 2, 3.00, '2026-01-01'),
+            (2, 2, 1, 4.50, '2026-01-01'),
+            (3, 1, 1, 3.00, '2026-01-02'),
+            (4, 3, 3, 4.00, '2026-01-02'),
+            (5, 2, 2, 4.50, '2026-01-03'),
+            (6, 4, 1, 2.50, '2026-01-03'),
+            (7, 5, 1, 3.5, '2026-01-03'),
+            (8, 5, 1, 3.5, '2026-01-04');
+
+            -- EMPLOYEES
+            DROP tABLE IF EXISTS employees;
+            CREATE TABLE employees (
+            emp_id INTEGER PRIMARY KEY,
+            department TEXT NOT NULL,
+            salary INTEGER NOT NULL
+            );
+                
+            INSERT INTO employees VALUES
+              (1, 'IT', 5000),
+              (2, 'HR', 2400),
+              (3, 'HR', 3500),
+              (4, 'Sales', 5500),
+              (5, 'Engineering', 6000);
+            
+            
+            DROP TABLE IF EXISTS sale;
+            CREATE TABLE sale (
+                order_id INTEGER PRIMARY KEY,
+                user_id INTEGER NOT NULL,
+                region TEXT NOT NULL,
+                amount INTEGER NOT NULL
+            );
+
+            INSERT INTO sale VALUES 
+             (1, 1, 'North', 100),
+             (2, 2, 'South', 150),
+             (3, 3, 'East', 200),
+             (4, 4, 'West', 250),
+             (5, 5, 'North', 300);  
+
             -- SHIFT
             DROP TABLE IF EXISTS shift;
             CREATE TABLE shift (
@@ -30,15 +100,21 @@ public class DbInitializer(IConfiguration config)
             -- USER
             DROP TABLE IF EXISTS "user";
             CREATE TABLE "user" (
+                user_id INTEGER,
                 username TEXT,
                 email TEXT,
                 password TEXT
             );
             
             INSERT INTO "user" VALUES
-              ('Anna', 'anna', '***'),
-              ('Martin', 'mhent', '***'),
-              ('Omar', 'omsh', '***');
+              (1, 'Anna', 'anna', '***'),
+              (2, 'Martin', 'mhent', '***'),
+              (3, 'Omar', 'omsh', '***'),
+              (4, 'Alice', 'alice', '***'),
+              (5, 'Bob', 'bob', '***'),
+              (6, 'Charlie', 'charlie', '***'),
+              (7, 'David', 'david', '***'),
+              (8, 'Eve', 'eve', '***');
             
             -- PRODUCT
             DROP TABLE IF EXISTS product;
@@ -223,21 +299,126 @@ public class DbInitializer(IConfiguration config)
               --('2025-01-28', 'WT-003', 34.347),
               --('2025-01-28', 'WT-004', 28.114),
               --('2025-01-28', 'WT-005', 26.487);
-
-            DROP TABLE IF EXISTS "123";
-            CREATE TABLE "123" (
-                "*" INTEGER,
-                "123" INTEGER,
-                "user" TEXT,
-            );
-            
-            INSERT INTO "123" VALUES
-                (1, 2, '1_1'),
-                (3, 4, '2_1'),
-                (5, 6, '3_1');
             """;
         tableCmd.ExecuteNonQuery();
     }
+
+    public void InitializePostTestDB()
+    {
+        var connString = config.GetConnectionString("PostTest");
+        using var connection = new  DuckDBConnection(connString);
+        connection.Open();
+
+        var tableCmd = connection.CreateCommand();
+        tableCmd.CommandText =
+            """
+            -- Drop tables if they already exist
+            DROP TABLE IF EXISTS sales_products;
+            DROP TABLE IF EXISTS sales;
+            DROP TABLE IF EXISTS products;
+            DROP TABLE IF EXISTS users;
+            DROP TABLE IF EXISTS cashiers;
+            
+            -- Users table
+            CREATE TABLE users (
+                user_id INTEGER PRIMARY KEY,
+                name TEXT,
+                email TEXT
+            );
+            
+            -- Cashiers table
+            CREATE TABLE cashiers (
+                cashier_id INTEGER PRIMARY KEY,
+                name TEXT
+            );
+            
+            -- Products table
+            CREATE TABLE products (
+                product_id INTEGER PRIMARY KEY,
+                name TEXT,
+                price DECIMAL(10,2)
+            );
+            
+            -- Sales table
+            CREATE TABLE sales (
+                sale_id INTEGER PRIMARY KEY,
+                user_id INTEGER,
+                cashier_id INTEGER,
+                sale_date TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(user_id),
+                FOREIGN KEY (cashier_id) REFERENCES cashiers(cashier_id)
+            );
+            
+            -- Sales_Products table (many-to-many: sales ↔ products)
+            CREATE TABLE sales_products (
+                sale_id INTEGER,
+                product_id INTEGER,
+                quantity INTEGER,
+                PRIMARY KEY (sale_id, product_id),
+                FOREIGN KEY (sale_id) REFERENCES sales(sale_id),
+                FOREIGN KEY (product_id) REFERENCES products(product_id)
+            );
+            
+            -- Insert users (5 users)
+            INSERT INTO users VALUES
+            (1, 'Alice', 'alice@example.com'),
+            (2, 'Bob', 'bob@example.com'),
+            (3, 'Charlie', 'charlie@example.com'),
+            (4, 'Diana', 'diana@example.com'),
+            (5, 'Eve', 'eve@example.com');
+            
+            -- Insert cashiers (3 cashiers)
+            INSERT INTO cashiers VALUES
+            (1, 'Martina'),
+            (2, 'Abraham'),
+            (3, 'Thresa');
+            
+            -- Insert products (5 products)
+            INSERT INTO products VALUES
+            (1, 'Laptop', 1200.00),
+            (2, 'Phone', 800.00),
+            (3, 'Headphones', 150.00),
+            (4, 'Keyboard', 100.00),
+            (5, 'Mouse', 50.00);
+            
+            -- Insert sales (10 sales referencing users & cashiers)
+            INSERT INTO sales VALUES
+            (1, 1, 1, '2026-01-01 10:00:00'),
+            (2, 2, 2, '2026-01-02 11:00:00'),
+            (3, 3, 3, '2026-01-03 12:00:00'),
+            (4, 4, 1, '2026-01-04 13:00:00'),
+            (5, 5, 2, '2026-01-05 14:00:00'),
+            (6, 1, 3, '2026-01-06 15:00:00'),
+            (7, 2, 1, '2026-01-07 16:00:00'),
+            (8, 3, 2, '2026-01-08 17:00:00'),
+            (9, 4, 3, '2026-01-09 18:00:00'),
+            (10, 5, 1, '2026-01-10 19:00:00');
+            
+            -- Insert sales_products (linking products to sales)
+            INSERT INTO sales_products VALUES
+            (1, 1, 1),
+            (1, 5, 2),
+            (2, 2, 1),
+            (2, 3, 1),
+            (3, 3, 2),
+            (3, 4, 1),
+            (4, 1, 1),
+            (4, 2, 1),
+            (5, 5, 3),
+            (6, 4, 2),
+            (6, 5, 1),
+            (7, 2, 2),
+            (8, 1, 1),
+            (8, 3, 1),
+            (9, 4, 1),
+            (9, 5, 2),
+            (10, 1, 1),
+            (10, 2, 1),
+            (10, 3, 1);
+            """;
+        tableCmd.ExecuteNonQuery();
+    }
+    
     
     public void InitializeMetrics()
     {
@@ -251,6 +432,7 @@ public class DbInitializer(IConfiguration config)
             
             CREATE SEQUENCE IF NOT EXISTS queries_written_id_seq START 1;
             CREATE SEQUENCE IF NOT EXISTS time_spent_id_seq START 1;
+            CREATE SEQUENCE IF NOT EXISTS action_keyword_metrics_id_seq START 1;
             -- ACTIONS
             CREATE TABLE IF NOT EXISTS button_action_counts (
                 session_id      VARCHAR NOT NULL,
@@ -281,6 +463,23 @@ public class DbInitializer(IConfiguration config)
                                                   
                 PRIMARY KEY (id, session_id)
             );
+
+            CREATE TABLE IF NOT EXISTS action_keyword_metrics (
+                id BIGINT DEFAULT nextval('action_keyword_metrics_id_seq'),
+                session_id VARCHAR NOT NULL,
+                action_type VARCHAR NOT NULL,
+                sql_keyword VARCHAR NOT NULL,
+                count    BIGINT  NOT NULL DEFAULT 0,
+                UNIQUE (session_id, action_type, sql_keyword)
+            );
+
+            CREATE TABLE IF NOT EXISTS keyword_animation_view_percentage (
+                sql_keyword VARCHAR NOT NULL,
+                total_percentage_sum DOUBLE NOT NULL DEFAULT 0,
+                view_count BIGINT NOT NULL DEFAULT 0,
+                
+                PRIMARY KEY (sql_keyword)
+            );
             """;
         tableCmd.ExecuteNonQuery();
     }
@@ -296,7 +495,13 @@ public class DbInitializer(IConfiguration config)
             """
             CREATE TABLE IF NOT EXISTS user_queries (
                 session_id TEXT PRIMARY KEY, query TEXT
-            )
+            );
+            
+            CREATE TABLE IF NOT EXISTS user_databases (
+                session_id string, 
+                database_path string,
+                PRIMARY KEY (session_id, database_path)
+            );
             """;
         tableCmd.ExecuteNonQuery();
     }

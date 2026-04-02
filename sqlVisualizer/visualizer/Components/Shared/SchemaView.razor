@@ -1,26 +1,46 @@
-﻿<h4>Database Schema</h4>
-@foreach(var table in Database.Tables)
-{
-    <h5 class="schema-table-header" @onclick="@(() => HandleTableClick(table))">@table.Name</h5>
-    @foreach (var (column, type) in table.ColumnNames.Zip(table.ColumnTypes))
-    {
-        <h6 class="schema-entry">@column - @type</h6>
-    }
-}
+﻿@rendermode InteractiveServer
 
-<style>
-    .schema-table-header {
-        font-weight: bold;
-        cursor: pointer;
-        user-select: none;
-    }
+<aside class="schema-container">
+    <div class="schema-db-box">
+        <div class="schema-section-label">DATABASE</div>
+        <div class="schema-source-select">
+            <span class="schema-source-label">SELECTED SOURCE</span>
+            <select class="schema-source-dropdown" @onclick="GetDatabaseNames" @onchange="DatabaseChanged">
+                <option value="Example Database">Example Database</option>
+                @foreach (string name in HomeState.DatabaseNames)
+                {
+                    <option value="@name">@name</option>
+                }
+            </select>
+        </div>
+    </div>
 
-    .schema-table-header:hover {
-        text-decoration: underline;
-    }
+    <div class="schema-viewer">
+        @foreach(var table in Database.Tables)
+        {
+            <div class="schema-table-box">
+                
+                <div class="schema-table" @onclick="@(() => HandleTableClick(table))">
+                    <i class="bi bi-table schema-table__icon"></i>
+                    <span class="schema-table__name">@table.Name</span>
+                </div>
+                
+                <div class="schema-columns">
+                    @foreach (var (column, type) in table.ColumnNames.Zip(table.ColumnTypes))
+                    {
+                        <div class="schema-column">
+                            <span class="schema-column__name">@column</span>
+                            <span class="schema-column__type">@type</span>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
 
-    .schema-entry {
-        font-style: italic;
-        cursor: default;
-    }
-</style>
+    <div class="schema-new-db">
+        <label class="schema-new-db-btn"><i class="bi bi-plus"></i> NEW DATABASE
+            <InputFile hidden OnChange="LoadFile" />
+        </label>
+    </div>
+</aside>

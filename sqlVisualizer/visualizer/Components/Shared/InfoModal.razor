@@ -1,5 +1,5 @@
 ﻿<!-- Trigger/Open The Modal -->
-<button class="info-button" @onclick="ToggleModal">
+<button @onclick="ToggleModal">
     <i class="bi bi-question-circle"></i>
 </button>
 
@@ -10,33 +10,50 @@
 
         <!-- Modal content -->
         <div class="modal-content" @onclick:stopPropagation="true">
-            
+
             <span class="close" @onclick="ToggleModal">&times;</span>
-            
+
             <h1>SQL Visualizer</h1>
-            <p>This project visualizes SQL to help students break up complex quires into smaller parts.</p>
-            
+            <p>This project visualizes SQL to help students break up complex queries into smaller parts.</p>
+            <p>This tool consists of 3 parts;</p>
+            <ul>
+                <li>
+                    The database schema <br/>
+                    This shows you the tables and column names that are available to you
+                </li>
+                <li>
+                    The SQL editor <br/>
+                    Here you can edit one of our example queries or write your own from scratch
+                </li>
+                <li>
+                    The visualization view <br/>
+                    When you have written yor query pres Run Query
+                </li>
+            </ul>
+
             <h3>How to use</h3>
-            <p>
-                This tool consists of 3 parts;<br/>
-                The database schema <br/>
-                    This shows you the tables and column names that are available to you <br/>
-                The SQL editor <br/>
-                    Here you can edit one of our example queries or write your own from scratch <br/>
-                The visualization view <br/>
-                    When you have written yor query pres Run Query <br/>
-            </p>
-            
+            <ul>
+                <li>Pick an example query or write your own custom query</li>
+                <li>Click run query to generate the animations</li>
+                <li>Step to the SQL clause that you are interested in</li>
+                <li>Play, pause and step through the animation for that clause</li>
+            </ul>
+
             <h3>Supported SQL keywords</h3>
-            <p>
-                Currently not all of SQL is supported. As of now you can use;<br/>
-                Select, From, Where, and Group By statements
-            </p>
-            
+            <p>Currently not all of SQL is supported. As of now you can use</p>
+            <ul>
+                <li>Select with alias, aggregates</li>
+                <li>Window Functions (Currently, the animation does not account for the window frame)</li>
+                <li>Where</li>
+                <li>Join</li>
+                <li>Group by</li>
+                <li>having</li>
+            </ul>
+
             <h3>GitHub</h3>
             <p>
-                For more information check our 
-                <a target="_blank" rel="noopener noreferrer" href="https://github.com/stoftot/Itu-bsc-2026-sqlVisualizer">GitHub</a>
+                For more information check our
+                <a target="_blank" rel="noopener noreferrer" href="https://github.com/stoftot/Itu-bsc-2026-sqlVisualizer">GitHub https://github.com/stoftot/Itu-bsc-2026-sqlVisualizer</a>
             </p>
         </div>
     </div>

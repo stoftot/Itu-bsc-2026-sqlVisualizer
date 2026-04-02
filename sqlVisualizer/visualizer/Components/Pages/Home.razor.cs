@@ -5,7 +5,7 @@ using visualizer.Repositories;
 
 namespace visualizer.Components.Pages;
 
-public partial class Home : ComponentBase
+public partial class Home : ComponentBase, IDisposable
 {
     [Inject] public required IHttpContextAccessor Http { get; init; }
     [Inject] public required HomeState HomeState { get; init; }
@@ -17,8 +17,12 @@ public partial class Home : ComponentBase
     protected override void OnInitialized()
     {
         _query = HomeState.Queries[0].SQL;
+        HomeState.LastVisualizedQuery = _query;
         HomeState.SessionId = Http.HttpContext?.Request.Cookies["session_id"] ?? "unknown";
+        HomeState.StateChanged += OnHomeStateChanged;
     }
+
+    private void OnHomeStateChanged() => _ = InvokeAsync(StateHasChanged);
 
     protected override void OnAfterRender(bool firstRender)
     {
@@ -26,6 +30,7 @@ public partial class Home : ComponentBase
         HomeState.RunSQL = async sql =>
         {
             _query = sql;
+            HomeState.LastVisualizedQuery = sql;
             await InvokeAsync(StateHasChanged);
             await QueryView.Init();
         };
@@ -42,5 +47,10 @@ public partial class Home : ComponentBase
     {
         viewVisulisation = true;
         StateHasChanged();
+    }
+    
+    public void Dispose()
+    {
+        HomeState.StateChanged -= OnHomeStateChanged;
     }
 }

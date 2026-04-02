@@ -1,28 +1,27 @@
 .layout {
-    height: 100%;
-    display: grid;
-    grid: 1fr 56px 260px / 320px 1fr;
-    grid-template-areas: "main main" "toolbar toolbar" "schema editor";
+    display: flex;
+    flex-grow: 1;
+    min-height: 100px;
 }
 
-main {
-    grid-area: main;
-    padding: 20px;
+/* ── Main content ────────────────────────────────────── */
+.main-content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
 }
 
+/* ── View ────────────────────────────────────────────── */
+.view {
+    flex-grow: 1;
+    padding: 32px 96px;
+    background: #f8fafc;
+    overflow: auto;
+}
+
+/* ── Toolbar ─────────────────────────────────────────── */
 .toolbar {
-    grid-area: toolbar;
-    background: #E5E7EB;
-}
-
-.schema {
-    grid-area: schema;
-    background: #F1F5F9;
-    overflow-y: scroll;
-    height: 100%;
-    padding: 8px;
-}
-
-.editor {
-    grid-area: editor;
+    background: #f1f5f9;
+    border-top: 1px solid #d1d5db;
+    border-bottom: 1px solid #d1d5db;
 }

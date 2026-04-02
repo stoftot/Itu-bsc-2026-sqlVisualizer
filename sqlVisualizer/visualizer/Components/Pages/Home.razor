@@ -4,31 +4,28 @@
 
 <PageTitle>Home</PageTitle>
 <div class="layout">
-    <main>
-        @if (viewVisulisation)
-        {
-            <QueryIlustrationView @ref="QueryView" Query="@_query"/>
-        }
-        else
-        {
-            <TableView @key="@Guid.NewGuid()"
-                       Table="tableSelected"/>
-        }
-    </main>
-    <ErrorPopup/>
-    <div class="toolbar">
-        <ToolBar 
-            RunQueryCallback="RunQueryCallback"
-            />
-    </div>
+    
+    @if (HomeState.ViewSidebar)
+    {
+        <SchemaView OnTableSelected="HandTabledSchemaTableSelected" />
+    }
+    
+    <main class="main-content">
+        <div class="view">
+            @if (viewVisulisation)
+            {
+                <QueryIlustrationView @ref="QueryView" Query="@_query"/>
+            }
+            else
+            {
+                <TableView @key="@Guid.NewGuid()" Table="tableSelected"/>
+            }
+        </div>
 
-    <div class="schema">
-        <SchemaView 
-            OnTableSelected="HandTabledSchemaTableSelected"
-        />
-    </div>
-
-    <div class="editor">
+        <ToolBar RunQueryCallback="RunQueryCallback" />
+    
         <EditorView />
-    </div>
+    </main>
+    
+    <ErrorPopup/>
 </div>

@@ -18,7 +18,8 @@ public enum SQLKeyword
     // DISTINCT,
     ORDER_BY,
     LIMIT,
-    OFFSET
+    OFFSET,
+    WITH
 }
 
 public static class SQLKeywordExtensions
@@ -27,6 +28,7 @@ public static class SQLKeywordExtensions
     {
         return keyword switch
         {
+            SQLKeyword.WITH => "WITH",
             SQLKeyword.SELECT => "SELECT",
             SQLKeyword.FROM => "FROM",
             SQLKeyword.WHERE => "WHERE",
@@ -79,6 +81,7 @@ public static class SQLKeywordExtensions
         if (keyword.IsJoin()) return 1;
         return keyword switch
         {
+            SQLKeyword.WITH => -1,
             SQLKeyword.FROM => 0,
             SQLKeyword.WHERE => 2,
             SQLKeyword.GROUP_BY => 3,
@@ -96,6 +99,7 @@ public static class SQLKeywordExtensions
         if(keyword.IsJoin()) return 2;
         return keyword switch
         {
+            SQLKeyword.WITH => -1,
             SQLKeyword.SELECT => 0,
             // SQLKeyword.DISTINCT => 0,
             SQLKeyword.FROM => 1,

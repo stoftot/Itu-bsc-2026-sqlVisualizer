@@ -32,17 +32,27 @@ public partial class ToolBar : ComponentBase, IDisposable
         MetricsHandler.IncrementAction(HomeState.SessionId, HomeState.Queries[Int32.Parse((String)e.Value)].Type);
         var newSQL = HomeState.Queries[Int32.Parse((String)e.Value)].SQL;
         await HomeState.Editor.SetValue(newSQL);
+        HomeState.CurrentEditorQuery = newSQL;
+        HomeState.NotifyStateChanged();
         await RunQuery();
     }
 
     async Task RunQuery()
     {
-        var editorContent = await HomeState.Editor.GetValue();
+        var editorContent = await HomeState.Editor.GetValue() ?? "";
+        HomeState.CurrentEditorQuery = editorContent;
         MetricsHandler.RecordQuery(HomeState.SessionId, editorContent);
-        await HomeState.RunSQL(editorContent ?? "");
+        await HomeState.RunSQL(editorContent);
+        HomeState.LastVisualizedQuery = editorContent;
+        HomeState.NotifyStateChanged();
         await RunQueryCallback.InvokeAsync();
     }
 
+    async Task SelectStep(int index)
+    {
+        await HomeState.SelectStep(index);
+    }
+    
     async Task StepPrevious()
     {
         MetricsHandler.IncrementAction(HomeState.SessionId, ActionType.Previous);
@@ -64,6 +74,7 @@ public partial class ToolBar : ComponentBase, IDisposable
         else
         {
             MetricsHandler.IncrementAction(HomeState.SessionId, ActionType.Animate);
+            MetricsHandler.RecordActionKeyword(HomeState.SessionId, ActionType.Animate, HomeState.Steps[HomeState.CurrentStepIndex].Component.Keyword.ToString());
             await HomeState.AnimatePlay();
         }
     }
@@ -71,12 +82,14 @@ public partial class ToolBar : ComponentBase, IDisposable
     async Task StepAnimationPrevious()
     { 
         MetricsHandler.IncrementAction(HomeState.SessionId, ActionType.AnimationPrevious);
-        await HomeState.AnimateStepPrivious();
+        MetricsHandler.RecordActionKeyword(HomeState.SessionId, ActionType.AnimationPrevious, HomeState.Steps[HomeState.CurrentStepIndex].Component.Keyword.ToString());
+        await HomeState.AnimateStepPrevious();
     }
 
     async Task StepAnimationNext()
     {
         MetricsHandler.IncrementAction(HomeState.SessionId, ActionType.AnimationNext);
+        MetricsHandler.RecordActionKeyword(HomeState.SessionId, ActionType.AnimationNext, HomeState.Steps[HomeState.CurrentStepIndex].Component.Keyword.ToString());
         await HomeState.AnimateStepNext();
     }
 
