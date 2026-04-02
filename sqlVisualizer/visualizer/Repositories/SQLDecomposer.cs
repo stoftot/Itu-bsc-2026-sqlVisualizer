@@ -30,9 +30,14 @@ public class SQLDecomposer
     {
         List<SQLDecompositionComponent> result = [];
         
-        sql = sql.ToLower().Replace("\nfrom ", " from ").Replace(";", "");
-        string selectSQL = sql.Split(" from ")[0].Replace("select ", "");
-        sql = "from " + sql.Split(" from ")[1];
+        sql = Regex.Replace(sql, "\nfrom ", " from ", RegexOptions.IgnoreCase);
+        sql = Regex.Replace(sql, "; ", string.Empty, RegexOptions.IgnoreCase);
+        var sqlParts = Regex.Split(sql, " from ", RegexOptions.IgnoreCase);
+        var selectSQL = Regex.Replace(sqlParts[0], "select", string.Empty, RegexOptions.IgnoreCase);
+        sql =  "FROM " + sqlParts[1];
+        // sql = sql.ToLower().Replace("\nfrom ", " from ").Replace(";", "");
+        // string selectSQL = sql.Split(" from ")[0].Replace("select ", "");
+        // sql = "from " + sql.Split(" from ")[1];
         
         SQLDecompositionComponent selectClause = new SQLDecompositionComponent(SQLKeyword.SELECT, selectSQL);
         result.Add(selectClause);
