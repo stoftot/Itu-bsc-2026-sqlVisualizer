@@ -32,6 +32,8 @@ public class TableVisualModifier
         return table.Entries[row].Values[column].ToggleHighlight;
     }
 
+    public Action SetHighlightColourDefaultRow(Table table, int row)
+        => table.Entries[row].SetHighlightColorDefault;
     public Action ChangeHighlightColourRow(Table table, int row, string hexColour)
     {
         var entry = table.Entries[row];
@@ -54,9 +56,13 @@ public class TableVisualModifier
         => columns.Select(col => ChangeHighlightColourCell(table, row, col, hexColour)).ToOneAction();
 
     public Action ChangeHighlightColourCell(Table table, int row, int column, string hexColour)
-    {
-        return () => table.Entries[row].Values[column].SetHighlightHexColor(hexColour);
-    }
+        => () => table.Entries[row].Values[column].SetHighlightHexColor(hexColour);
+    
+    public Action SwitchToPreviousHighlightColorCell(Table table, int row, int column)
+        =>  table.Entries[row].Values[column].SetHighlightColorPrevious;
+    
+    public Action SwitchToPreviousHighlightColorRow(Table table, int row)
+        =>  table.Entries[row].SetHighlightColorPrevious;
 
     public Action GenerateToggleHighlightColumn(Table table, int index)
     {
