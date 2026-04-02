@@ -103,8 +103,8 @@ public class VisulisationGenerationTest : IClassFixture<DuckDbFixture>
                 FULL JOIN purchase ON product.productname = purchase.productname
                 """)]
     [InlineData("""
-                SELECT * FROM product
-                FULL JOIN user ON product.productname = user.username
+                SELECT * FROM shift
+                FULL JOIN user ON user.username = shift.cashier
                 """)]
     [InlineData("""
                 SELECT product.productname, purchase.purchasetime, user.username FROM product
@@ -255,6 +255,11 @@ public class VisulisationGenerationTest : IClassFixture<DuckDbFixture>
                 FROM "purchase"
                 JOIN "product" ON "purchase".productname = product."productname"
                 GROUP BY "username"
+                """)]
+    [InlineData("""
+                SELECT * FROM shift
+                FULL JOIN user ON user.username = shift.cashier
+                WHERE username LIKE 'M%' OR cashier LIKE 'M%'
                 """)]
     public void Combination(string query)
     {
