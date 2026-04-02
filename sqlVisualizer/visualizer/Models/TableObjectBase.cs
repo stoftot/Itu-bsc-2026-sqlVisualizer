@@ -4,29 +4,28 @@ namespace visualizer.Models;
 
 public abstract class TableObjectBase
 {
-    private string HighlightStyle { get; set; } = "";
+    private string HighlightColor { get; set; }
+    private string PreviousHighlightColor { get; set; }
+    
     public bool IsHighlighted { get; set; } = false;
     public bool IsVisible { get; set; } = true;
     
     public void ToggleHighlight() => IsHighlighted = !IsHighlighted;
     public void ToggleVisible() => IsVisible = !IsVisible;
-    
-    public string GetHighlightStyle()
-    {
-        if (string.IsNullOrWhiteSpace(HighlightStyle))
-        {
-            SetHighlightColorDefault();
-        }
 
-        return HighlightStyle;
-    }
+    public string GetHighlightStyle() => $"background-color: {HighlightColor};";
     
     public void SetHighlightColorDefault() => SetHighlightHexColor(UtilColor.PrimaryHighlightColor);
     public void SetHighlightStyleSecondary() => SetHighlightHexColor(UtilColor.SecondaryHighlightColor);
-    
 
-    public void SetHighlightHexColor(string hexColor) =>
-        HighlightStyle = $"background-color: {hexColor};";
+
+    public void SetHighlightHexColor(string hexColor)
+    {
+        PreviousHighlightColor = HighlightColor;
+        HighlightColor = hexColor;
+    }
+    
+    public void SetHighlightColorPrevious() => SetHighlightHexColor(PreviousHighlightColor);
 
     public void SetHighlightStyleDefault()
     {
