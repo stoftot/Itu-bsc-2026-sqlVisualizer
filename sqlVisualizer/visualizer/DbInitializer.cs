@@ -30,7 +30,7 @@ public class DbInitializer(IConfiguration config)
                 coffee_id INTEGER,
                 quantity INTEGER,
                 price_per_unit DOUBLE,
-                sale_date DATE,
+                sale_date TEXT,
                 FOREIGN KEY (coffee_id) REFERENCES coffee_types(coffee_id)
             );
 
@@ -39,7 +39,8 @@ public class DbInitializer(IConfiguration config)
             (1, 'Espresso'),
             (2, 'Latte'),
             (3, 'Cappuccino'),
-            (4, 'Americano');
+            (4, 'Americano'),
+            (5, 'Mocha');
             
             -- Insert sales data
             INSERT INTO coffee_sales VALUES
@@ -48,7 +49,9 @@ public class DbInitializer(IConfiguration config)
             (3, 1, 1, 3.00, '2026-01-02'),
             (4, 3, 3, 4.00, '2026-01-02'),
             (5, 2, 2, 4.50, '2026-01-03'),
-            (6, 4, 1, 2.50, '2026-01-03');
+            (6, 4, 1, 2.50, '2026-01-03'),
+            (7, 5, 1, 3.5, '2026-01-03'),
+            (8, 5, 1, 3.5, '2026-01-04');
 
             -- EMPLOYEES
             DROP tABLE IF EXISTS employees;
@@ -69,17 +72,17 @@ public class DbInitializer(IConfiguration config)
             DROP TABLE IF EXISTS sale;
             CREATE TABLE sale (
                 order_id INTEGER PRIMARY KEY,
-                customer TEXT NOT NULL,
+                user_id INTEGER NOT NULL,
                 region TEXT NOT NULL,
                 amount INTEGER NOT NULL
             );
 
             INSERT INTO sale VALUES 
-             (1, 'Alice', 'North', 100),
-             (2, 'Bob', 'South', 150),
-             (3, 'Charlie', 'East', 200),
-             (4, 'David', 'West', 250),
-             (5, 'Eve', 'North', 300);  
+             (1, 1, 'North', 100),
+             (2, 2, 'South', 150),
+             (3, 3, 'East', 200),
+             (4, 4, 'West', 250),
+             (5, 5, 'North', 300);  
 
             -- SHIFT
             DROP TABLE IF EXISTS shift;
@@ -97,15 +100,21 @@ public class DbInitializer(IConfiguration config)
             -- USER
             DROP TABLE IF EXISTS "user";
             CREATE TABLE "user" (
+                user_id INTEGER,
                 username TEXT,
                 email TEXT,
                 password TEXT
             );
             
             INSERT INTO "user" VALUES
-              ('Anna', 'anna', '***'),
-              ('Martin', 'mhent', '***'),
-              ('Omar', 'omsh', '***');
+              (1, 'Anna', 'anna', '***'),
+              (2, 'Martin', 'mhent', '***'),
+              (3, 'Omar', 'omsh', '***'),
+              (4, 'Alice', 'alice', '***'),
+              (5, 'Bob', 'bob', '***'),
+              (6, 'Charlie', 'charlie', '***'),
+              (7, 'David', 'david', '***'),
+              (8, 'Eve', 'eve', '***');
             
             -- PRODUCT
             DROP TABLE IF EXISTS product;
@@ -293,6 +302,123 @@ public class DbInitializer(IConfiguration config)
             """;
         tableCmd.ExecuteNonQuery();
     }
+
+    public void InitializePostTestDB()
+    {
+        var connString = config.GetConnectionString("PostTest");
+        using var connection = new  DuckDBConnection(connString);
+        connection.Open();
+
+        var tableCmd = connection.CreateCommand();
+        tableCmd.CommandText =
+            """
+            -- Drop tables if they already exist
+            DROP TABLE IF EXISTS sales_products;
+            DROP TABLE IF EXISTS sales;
+            DROP TABLE IF EXISTS products;
+            DROP TABLE IF EXISTS users;
+            DROP TABLE IF EXISTS cashiers;
+            
+            -- Users table
+            CREATE TABLE users (
+                user_id INTEGER PRIMARY KEY,
+                name TEXT,
+                email TEXT
+            );
+            
+            -- Cashiers table
+            CREATE TABLE cashiers (
+                cashier_id INTEGER PRIMARY KEY,
+                name TEXT
+            );
+            
+            -- Products table
+            CREATE TABLE products (
+                product_id INTEGER PRIMARY KEY,
+                name TEXT,
+                price DECIMAL(10,2)
+            );
+            
+            -- Sales table
+            CREATE TABLE sales (
+                sale_id INTEGER PRIMARY KEY,
+                user_id INTEGER,
+                cashier_id INTEGER,
+                sale_date TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(user_id),
+                FOREIGN KEY (cashier_id) REFERENCES cashiers(cashier_id)
+            );
+            
+            -- Sales_Products table (many-to-many: sales ↔ products)
+            CREATE TABLE sales_products (
+                sale_id INTEGER,
+                product_id INTEGER,
+                quantity INTEGER,
+                PRIMARY KEY (sale_id, product_id),
+                FOREIGN KEY (sale_id) REFERENCES sales(sale_id),
+                FOREIGN KEY (product_id) REFERENCES products(product_id)
+            );
+            
+            -- Insert users (5 users)
+            INSERT INTO users VALUES
+            (1, 'Alice', 'alice@example.com'),
+            (2, 'Bob', 'bob@example.com'),
+            (3, 'Charlie', 'charlie@example.com'),
+            (4, 'Diana', 'diana@example.com'),
+            (5, 'Eve', 'eve@example.com');
+            
+            -- Insert cashiers (3 cashiers)
+            INSERT INTO cashiers VALUES
+            (1, 'Martina'),
+            (2, 'Abraham'),
+            (3, 'Thresa');
+            
+            -- Insert products (5 products)
+            INSERT INTO products VALUES
+            (1, 'Laptop', 1200.00),
+            (2, 'Phone', 800.00),
+            (3, 'Headphones', 150.00),
+            (4, 'Keyboard', 100.00),
+            (5, 'Mouse', 50.00);
+            
+            -- Insert sales (10 sales referencing users & cashiers)
+            INSERT INTO sales VALUES
+            (1, 1, 1, '2026-01-01 10:00:00'),
+            (2, 2, 2, '2026-01-02 11:00:00'),
+            (3, 3, 3, '2026-01-03 12:00:00'),
+            (4, 4, 1, '2026-01-04 13:00:00'),
+            (5, 5, 2, '2026-01-05 14:00:00'),
+            (6, 1, 3, '2026-01-06 15:00:00'),
+            (7, 2, 1, '2026-01-07 16:00:00'),
+            (8, 3, 2, '2026-01-08 17:00:00'),
+            (9, 4, 3, '2026-01-09 18:00:00'),
+            (10, 5, 1, '2026-01-10 19:00:00');
+            
+            -- Insert sales_products (linking products to sales)
+            INSERT INTO sales_products VALUES
+            (1, 1, 1),
+            (1, 5, 2),
+            (2, 2, 1),
+            (2, 3, 1),
+            (3, 3, 2),
+            (3, 4, 1),
+            (4, 1, 1),
+            (4, 2, 1),
+            (5, 5, 3),
+            (6, 4, 2),
+            (6, 5, 1),
+            (7, 2, 2),
+            (8, 1, 1),
+            (8, 3, 1),
+            (9, 4, 1),
+            (9, 5, 2),
+            (10, 1, 1),
+            (10, 2, 1),
+            (10, 3, 1);
+            """;
+        tableCmd.ExecuteNonQuery();
+    }
+    
     
     public void InitializeMetrics()
     {

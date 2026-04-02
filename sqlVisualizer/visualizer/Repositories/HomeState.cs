@@ -30,7 +30,7 @@ public class HomeState
     public event Action? StateChanged;
     public void NotifyStateChanged() => StateChanged?.Invoke();
     public string SelectedDatabase { get; set; } = "Example Database";
-    public List<String> DatabaseNames = ["Example Database"];
+    public List<String> DatabaseNames = ["Example Database", "PostTest DB"];
     public List<Query> Queries = [
         new()
         {

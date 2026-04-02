@@ -39,6 +39,10 @@ public partial class SchemaView : ComponentBase, IDisposable
         {
             CurrentDatabaseContext.ActiveConnectionString = "Data Source=data/database.db";
         }
+        else if (string.Equals(HomeState.SelectedDatabase, "PostTest DB"))
+        {
+            CurrentDatabaseContext.ActiveConnectionString = "Data Source=data/posttest.db";
+        }
         else
         {
             var safeFileName = Path.GetFileName(HomeState.SelectedDatabase);
