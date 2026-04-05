@@ -124,7 +124,7 @@ public class SQLExecutor
                 {
                     //extract from table
                     var fromComponent = components.First(c => c.Keyword == SQLKeyword.FROM);
-                    orderBy = fromComponent.Clause.Trim().Split(' ').Last();
+                    orderBy = fromComponent.Clause.Trim().Split(' ').Last() + ".rowid";
                 }
                     break;
                 case SQLKeyword.RIGHT_JOIN:
@@ -132,7 +132,7 @@ public class SQLExecutor
                 {
                     //extract joining table
                     orderBy = UtilRegex.Match(lastJoin.Clause, ".*(?=ON)")
-                        .Value.Trim().Split(' ').Last();
+                        .Value.Trim().Split(' ').Last() + ".rowid";
                 }
                     break;
                 case SQLKeyword.FULL_JOIN:
