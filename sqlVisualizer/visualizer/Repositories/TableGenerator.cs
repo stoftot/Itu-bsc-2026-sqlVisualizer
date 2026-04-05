@@ -152,7 +152,7 @@ public class TableGenerator(SQLExecutor sqlExecutor, TableOriginColumnsGenerator
         }
 
         var groupedTables = tabel.Entries
-            .GroupBy(e => new CompositeKey(groupByIndexes.Select(i => e.Values[i].Value)))
+            .GroupBy(e => new CompositeKey(groupByIndexes.Select(i => e.Values[i].RawValue)))
             .OrderBy(g => g.Key, CompositeKeyComparer.Instance)
             .Select(g => new Table
             {
@@ -254,14 +254,7 @@ public class TableGenerator(SQLExecutor sqlExecutor, TableOriginColumnsGenerator
 
         private static int CompareValue(object? left, object? right)
         {
-            if (ReferenceEquals(left, right)) return 0;
-            if (left is null) return -1;
-            if (right is null) return 1;
-
-            if (left is IComparable comparable && left.GetType() == right.GetType())
-                return comparable.CompareTo(right);
-
-            return string.Compare(left.ToString(), right.ToString(), StringComparison.Ordinal);
+            return TableValue.CompareRawValues(left, right);
         }
     }
 }

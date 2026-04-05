@@ -53,7 +53,12 @@ public class SQLExecutor
             var row = new List<TableValue>();
             for (var i = 0; i < reader.FieldCount; i++)
             {
-                row.Add(new TableValue { Value = reader.GetValue(i).ToString() ?? "NULL" });
+                var rawValue = reader.IsDBNull(i) ? null : reader.GetValue(i);
+                row.Add(new TableValue
+                {
+                    RawValue = rawValue,
+                    Value = rawValue?.ToString() ?? "NULL"
+                });
             }
 
             entries.Add(new TableEntry { Values = row });

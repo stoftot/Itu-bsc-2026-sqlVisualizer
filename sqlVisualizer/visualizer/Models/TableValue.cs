@@ -5,6 +5,7 @@ namespace visualizer.Models;
 public class TableValue : TableObjectBase
 {
     public required string Value  { get; set; }
+    public object? RawValue { get; set; }
 
     public string GetStyle()
     {
@@ -31,8 +32,20 @@ public class TableValue : TableObjectBase
     }
 
     public override bool Equals(object? obj)
-    { 
-        var compare = (obj as TableValue);
-        return string.Equals(Value, compare.Value);
+    {
+        var compare = obj as TableValue;
+        return compare is not null && string.Equals(Value, compare.Value);
+    }
+
+    public static int CompareRawValues(object? left, object? right)
+    {
+        if (ReferenceEquals(left, right)) return 0;
+        if (left is null) return -1;
+        if (right is null) return 1;
+
+        if (left is IComparable comparable && left.GetType() == right.GetType())
+            return comparable.CompareTo(right);
+
+        return string.Compare(left.ToString(), right.ToString(), StringComparison.Ordinal);
     }
 }

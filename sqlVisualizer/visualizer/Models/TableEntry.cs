@@ -31,7 +31,7 @@ public class TableEntry : TableObjectBase
     public TableEntry AppendRowIndex(string rowIndex)
     {
         List<TableValue> values = Values;
-        values.Add(new TableValue {Value =  rowIndex});
+        values.Add(new TableValue {Value =  rowIndex, RawValue = rowIndex});
         return new TableEntry
         {
             Values = values

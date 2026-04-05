@@ -106,9 +106,10 @@ public class Table
     public Table OrderBy(string column, bool ascending)
     {
         var columnIndex = IndexOfColumn(column);
+        var rawValueComparer = Comparer<object?>.Create(TableValue.CompareRawValues);
         var orderedEntries = ascending
-            ? Entries.OrderBy(e => e.Values[columnIndex].Value).ToList()
-            : Entries.OrderByDescending(e => e.Values[columnIndex].Value).ToList();
+            ? Entries.OrderBy(e => e.Values[columnIndex].RawValue, rawValueComparer).ToList()
+            : Entries.OrderByDescending(e => e.Values[columnIndex].RawValue, rawValueComparer).ToList();
 
         return new Table
         {
