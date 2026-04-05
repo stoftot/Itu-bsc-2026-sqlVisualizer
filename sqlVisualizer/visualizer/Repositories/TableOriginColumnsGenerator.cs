@@ -17,6 +17,9 @@ public class TableOriginColumnsGenerator
             case SQLKeyword.RIGHT_OUTER_JOIN:
             case SQLKeyword.FULL_JOIN:
             case SQLKeyword.FULL_OUTER_JOIN:
+            case SQLKeyword.WHERE:
+            case SQLKeyword.LIMIT:
+            case SQLKeyword.ORDER_BY:
                 DuplicateOriginOnColumnsToSingle(vis.FromTables, vis.ToTables[0]);
                 break;
             case SQLKeyword.SELECT:
@@ -25,16 +28,9 @@ public class TableOriginColumnsGenerator
             case SQLKeyword.GROUP_BY:
                 DuplicateOriginOnColumnsToMulti(vis.FromTables[0], vis.ToTables);
                 break;
-            case SQLKeyword.WHERE:
-                DuplicateOriginOnColumnsToSingle(vis.FromTables, vis.ToTables[0]);
-                break;
             case SQLKeyword.HAVING:
                 //since fromTables are copied to toTables, they already have origin
                 break;
-            case SQLKeyword.LIMIT:
-                DuplicateOriginOnColumnsToSingle(vis.FromTables, vis.ToTables[0]);
-                break;
-            case SQLKeyword.ORDER_BY:
             case SQLKeyword.OFFSET:
                 throw new NotImplementedException();
             default:
