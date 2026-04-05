@@ -1,4 +1,5 @@
 ﻿using Visualizer;
+using visualizer.Models;
 
 namespace TestProject1;
 
@@ -832,5 +833,79 @@ public class AliasReplacingTest
                      FROM product AS p
                      WHERE p.price > 10
                      """, actual);
+    }
+
+    [Fact]
+    public void InsertAliases_ReappliesAggregateAliasesBySelectIndex()
+    {
+        var replacer = new AliasReplacer();
+
+        replacer.RemoveSelectAliases("""
+                                    SELECT username, SUM(price) AS total_spend, COUNT() purchase_count
+                                    FROM purchase
+                                    GROUP BY username
+                                    """);
+
+        var visualisations = new List<visualizer.Models.Visualisation>
+        {
+            new()
+            {
+                Component = new visualizer.Models.SQLDecompositionComponent(SQLKeyword.SELECT, "username, SUM(price), COUNT()"),
+                FromTables = [],
+                ToTables =
+                [
+                    new visualizer.Models.Table
+                    {
+                        Name = string.Empty,
+                        ColumnNames = ["username", "SUM(price)", "COUNT()"],
+                        Entries = Array.Empty<visualizer.Models.TableEntry>(),
+                        ColumnTypes = [],
+                        Aggregations = []
+                    }
+                ],
+                Animation = new visualizer.Models.Animation([])
+            }
+        };
+
+        replacer.InsertAliases(visualisations);
+
+        Assert.Equal(["username", "total_spend", "purchase_count"], visualisations[0].ToTables[0].ColumnNames);
+    }
+
+    [Fact]
+    public void InsertAliases_ReappliesMixedAliasesWithoutParsingExpressions()
+    {
+        var replacer = new AliasReplacer();
+
+        replacer.RemoveSelectAliases("""
+                                    SELECT p.name display_name, SUM(p.price * 2) AS total_value, p.category
+                                    FROM product AS p
+                                    GROUP BY p.name, p.category
+                                    """);
+
+        var visualisations = new List<visualizer.Models.Visualisation>
+        {
+            new()
+            {
+                Component = new visualizer.Models.SQLDecompositionComponent(SQLKeyword.SELECT, "product.name, SUM(product.price * 2), product.category"),
+                FromTables = [],
+                ToTables =
+                [
+                    new visualizer.Models.Table
+                    {
+                        Name = string.Empty,
+                        ColumnNames = ["name", "SUM(price * 2)", "category"],
+                        Entries = Array.Empty<visualizer.Models.TableEntry>(),
+                        ColumnTypes = [],
+                        Aggregations = []
+                    }
+                ],
+                Animation = new visualizer.Models.Animation([])
+            }
+        };
+
+        replacer.InsertAliases(visualisations);
+
+        Assert.Equal(["display_name", "total_value", "category"], visualisations[0].ToTables[0].ColumnNames);
     }
 }

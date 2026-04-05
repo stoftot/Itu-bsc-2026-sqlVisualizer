@@ -7,7 +7,7 @@ public class AliasReplacer
 {
     private Dictionary<string, string> AliasToTableMap { get; } = new(StringComparer.OrdinalIgnoreCase);
     private Dictionary<string, string> AliasReferenceMap { get; } = new(StringComparer.OrdinalIgnoreCase);
-    private Dictionary<string, string> SelectAliasMap { get; } = new(StringComparer.OrdinalIgnoreCase);
+    private List<SelectAliasDefinition> SelectAliases { get; } = [];
 
     public string ReplaceAliases(string sql)
     {
@@ -16,7 +16,7 @@ public class AliasReplacer
 
         AliasToTableMap.Clear();
         AliasReferenceMap.Clear();
-        SelectAliasMap.Clear();
+        SelectAliases.Clear();
 
         var tokens = Tokenize(sql);
         if (tokens.Count == 0)
@@ -39,7 +39,7 @@ public class AliasReplacer
 
         AliasToTableMap.Clear();
         AliasReferenceMap.Clear();
-        SelectAliasMap.Clear();
+        SelectAliases.Clear();
 
         var tokens = Tokenize(sql);
         if (tokens.Count == 0)
@@ -56,18 +56,12 @@ public class AliasReplacer
         var selectVis = visualisations.First(v => v.Component.Keyword == SQLKeyword.SELECT);
         var table = selectVis.ToTables[0];
 
-        foreach (var aliasEntry in SelectAliasMap)
+        foreach (var aliasEntry in SelectAliases)
         {
-            var parts = aliasEntry.Key.Trim().Split('.');
-            if (parts.Length != 2)
+            if (aliasEntry.ColumnIndex < 0 || aliasEntry.ColumnIndex >= table.ColumnNames.Count)
                 continue;
 
-            var tableReference = ResolveTableReference(parts[0]);
-            var columnName = $"{tableReference}.{parts[1]}";
-            var index = table.IndexOfColumn(columnName);
-
-            if (index >= 0)
-                table.ColumnNames[index] = aliasEntry.Value;
+            table.ColumnNames[aliasEntry.ColumnIndex] = aliasEntry.Alias;
         }
     }
 
@@ -158,6 +152,8 @@ public class AliasReplacer
 
         var itemStart = tokens[selectIndex].End;
 
+        var selectItemIndex = 0;
+
         for (var index = selectIndex + 1; index <= fromIndex; index++)
         {
             var isBoundary = index == fromIndex;
@@ -167,14 +163,15 @@ public class AliasReplacer
                 continue;
 
             var itemEnd = isBoundary ? tokens[fromIndex].Start : tokens[index].Start;
-            ProcessSelectItem(sql, tokens, itemStart, itemEnd, edits);
+            ProcessSelectItem(sql, tokens, itemStart, itemEnd, selectItemIndex, edits);
+            selectItemIndex++;
 
             if (!isBoundary)
                 itemStart = tokens[index].End;
         }
     }
 
-    private void ProcessSelectItem(string sql, List<Token> tokens, int itemStart, int itemEnd, List<TextEdit> edits)
+    private void ProcessSelectItem(string sql, List<Token> tokens, int itemStart, int itemEnd, int selectItemIndex, List<TextEdit> edits)
     {
         var itemTokens = tokens
             .Where(t => t.Start >= itemStart && t.End <= itemEnd && t.Depth == 0)
@@ -210,9 +207,7 @@ public class AliasReplacer
         if (string.IsNullOrWhiteSpace(expression))
             return;
 
-        var columnReference = TryExtractColumnReference(expression);
-        if (columnReference is not null)
-            SelectAliasMap[columnReference] = aliasToken.Text;
+        SelectAliases.Add(new SelectAliasDefinition(selectItemIndex, aliasToken.Text));
 
         while (aliasStart > itemStart && char.IsWhiteSpace(sql[aliasStart - 1]))
             aliasStart--;
@@ -283,33 +278,6 @@ public class AliasReplacer
             builder.Append(sql, cursor, sql.Length - cursor);
 
         return builder.ToString();
-    }
-
-    private static string? TryExtractColumnReference(string expression)
-    {
-        var trimmed = expression.Trim();
-        if (trimmed.StartsWith("DISTINCT ", StringComparison.OrdinalIgnoreCase))
-            trimmed = trimmed["DISTINCT ".Length..].TrimStart();
-
-        var tokens = Tokenize(trimmed);
-        if (tokens.Count == 1 && tokens[0].IsIdentifier)
-            return tokens[0].Text;
-
-        if (tokens.Count == 3 && tokens[0].IsIdentifier && tokens[1].Text == "." && tokens[2].IsIdentifier)
-            return $"{tokens[0].Text}.{tokens[2].Text}";
-
-        return null;
-    }
-
-    private string ResolveTableReference(string reference)
-    {
-        if (AliasReferenceMap.TryGetValue(reference, out var replacement))
-            return replacement;
-
-        if (AliasToTableMap.TryGetValue(reference, out var tableName))
-            return tableName;
-
-        return reference;
     }
 
     private static string CreateSyntheticAlias(string tableName, int occurrence, HashSet<string> usedNames)
@@ -543,6 +511,7 @@ public class AliasReplacer
 
     private sealed record Token(string Text, int Start, int End, int Depth, bool IsIdentifier);
     private sealed record TextEdit(int Start, int End, string Replacement);
+    private sealed record SelectAliasDefinition(int ColumnIndex, string Alias);
     private sealed record TableAliasDefinition(
         string Alias,
         string TableName,
