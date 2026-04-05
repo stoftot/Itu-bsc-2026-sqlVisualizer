@@ -30,31 +30,29 @@ public class DummyMetricsHandler : IMetricsHandler
 
     public IEnumerable<ActionCountDto> GetActionCounts()
     {
-        throw new NotImplementedException();
+        return new List<ActionCountDto>();
     }
 
     public IEnumerable<StepTimeDto> GetTimeSpentByStep()
     {
-        throw new NotImplementedException();
+        return new List<StepTimeDto>();
     }
 
     public void RecordActionKeyword(string sessionId, ActionType actionType, string sqlKeyword)
     {
-        throw new NotImplementedException();
     }
 
     public List<ActionKeywordMetric> GetActionKeywordMetrics()
     {
-        throw new NotImplementedException();
+        return [];
     }
 
     public void RecordAnimationViewPercentage(string sessionId, SQLKeyword keyword, double percentage)
     {
-        throw new NotImplementedException();
     }
 
     public IEnumerable<ActionCountDto> GetAnimationViewPercentages()
     {
-        throw new NotImplementedException();
+        return new List<ActionCountDto>();
     }
 }
