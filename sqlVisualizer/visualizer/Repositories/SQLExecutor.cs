@@ -64,7 +64,7 @@ public class SQLExecutor
             entries.Add(new TableEntry { Values = row });
         }
 
-        return new Table {ColumnNames = columnNames, Entries = entries.AsReadOnly() };
+        return new Table {ColumnNames = columnNames, Entries = entries };
     }
     
     public async Task<Table> Execute(IEnumerable<SQLDecompositionComponent> sqlDecompositionComponents)
