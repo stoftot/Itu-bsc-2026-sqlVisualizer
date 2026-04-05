@@ -20,6 +20,11 @@ public class TableVisualModifier
         return entry.ToggleHighlight;
     }
 
+    public Action GenerateToggleHighlightRow(Table table, int row)
+    {
+        return table.Entries[row].ToggleHighlight;
+    }
+
     public Action GenerateToggleHighlightCells(Table table, int row, ICollection<int> column)
     {
         return column

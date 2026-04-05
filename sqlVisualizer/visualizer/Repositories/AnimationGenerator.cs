@@ -34,7 +34,9 @@ public static class AnimationGenerator
                 toTables.Count > 1
                     ? throw new ArgumentException("SELECT animations can only be generated to one table")
                     : SelectAnimationGenerator.Generate(fromTables, toTables[0], action),
-            SQLKeyword.ORDER_BY => throw new NotImplementedException("ORDER BY animations are not yet supported"),
+            SQLKeyword.ORDER_BY => fromTables.Count > 1 && toTables.Count > 1
+                ? throw new ArgumentException("LIMIT animation can only be generated from one table to another")
+                : OrderByAnimationGenerator.Generate(fromTables[0], toTables[0], action),
             SQLKeyword.LIMIT => fromTables.Count > 1 && toTables.Count > 1
                 ? throw new ArgumentException("LIMIT animation can only be generated from one table to another")
                 : LimitAnimationGenerator.Generate(fromTables[0], toTables[0], action),
