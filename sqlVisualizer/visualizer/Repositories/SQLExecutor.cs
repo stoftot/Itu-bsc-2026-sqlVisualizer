@@ -25,7 +25,7 @@ public class SQLExecutor
         };
     }
 
-    private async Task<Table> Execute(string sql, string? connectionString = null)
+    public async Task<Table> Execute(string sql, string? connectionString = null)
     {
         var resolvedConnectionString = connectionString ?? _databaseContext.ActiveConnectionString;
         await using var temporaryConnection = new DuckDBConnection(resolvedConnectionString);
