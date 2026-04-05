@@ -363,6 +363,32 @@ public class VisulisationGenerationTest : IClassFixture<DuckDbFixture>
     {
         TestQuery(query);
     }
+    
+    [Theory]
+    [InlineData("""
+                SELECT * 
+                FROM shift 
+                ORDER BY shift.cashier
+                """)]
+    [InlineData("""
+                SELECT * 
+                FROM shift 
+                ORDER BY shift.cashier, day 
+                """)]
+    [InlineData("""
+                SELECT * 
+                FROM shift 
+                ORDER BY shift.cashier asc 
+                """)]
+    [InlineData("""
+                SELECT * 
+                FROM shift 
+                ORDER BY shift.cashier desc
+                """)]
+    public void OrderBy(string query)
+    {
+        TestQuery(query);
+    }
 
     private void TestQuery(string query)
     {
