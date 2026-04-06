@@ -7,6 +7,8 @@
             <span class="schema-source-label">SELECTED SOURCE</span>
             <select class="schema-source-dropdown" @onclick="GetDatabaseNames" @onchange="DatabaseChanged">
                 <option value="Example Database">Example Database</option>
+                <option value="PreTest DB">PreTest DB</option>
+                <option value="PostTest DB">PostTest DB</option>
                 @foreach (string name in HomeState.DatabaseNames)
                 {
                     <option value="@name">@name</option>

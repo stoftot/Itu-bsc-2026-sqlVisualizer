@@ -302,6 +302,120 @@ public class DbInitializer(IConfiguration config)
             """;
         tableCmd.ExecuteNonQuery();
     }
+    
+    public void InitializePreTestDB()
+    {
+        var connString = config.GetConnectionString("PreTest");
+        using var connection = new  DuckDBConnection(connString);
+        connection.Open();
+
+        var tableCmd = connection.CreateCommand();
+        tableCmd.CommandText =
+            """
+            DROP TABLE IF EXISTS coffee_sales;
+            DROP TABLE IF EXISTS sale;
+            DROP TABLE IF EXISTS coffees;
+            DROP TABLE IF EXISTS employees;
+            DROP TABLE IF EXISTS departments;
+
+            -- Departments
+            CREATE TABLE departments (
+                department_id INTEGER PRIMARY KEY,
+                name TEXT
+            );
+
+            -- Employees (users)
+            CREATE TABLE employees (
+                user_id INTEGER PRIMARY KEY,
+                department_id INTEGER,
+                name TEXT,
+                salary INTEGER,
+                FOREIGN KEY (department_id) REFERENCES departments(department_id)
+            );
+
+            -- Coffees
+            CREATE TABLE coffees (
+                coffee_id INTEGER PRIMARY KEY,
+                name TEXT,
+                price DECIMAL(6,2)
+            );
+
+            -- Sales
+            CREATE TABLE sale (
+                sale_id INTEGER PRIMARY KEY,
+                user_id INTEGER,
+                date TEXT,
+                FOREIGN KEY (user_id) REFERENCES employees(user_id)
+            );
+
+            -- Coffee sales (many-to-many)
+            CREATE TABLE coffee_sales (
+                sale_id INTEGER,
+                coffee_id INTEGER,
+                PRIMARY KEY (sale_id, coffee_id),
+                FOREIGN KEY (sale_id) REFERENCES sale(sale_id),
+                FOREIGN KEY (coffee_id) REFERENCES coffees(coffee_id)
+            );
+
+            -- Insert departments
+            INSERT INTO departments VALUES
+            (1, 'Barista'),
+            (2, 'Management'),
+            (3, 'Support');
+
+            -- Insert employees
+            INSERT INTO employees VALUES
+            (1, 1, 'Alice', 28000),
+            (2, 1, 'Bob', 27000),
+            (3, 2, 'Charlie', 40000),
+            (4, 3, 'Diana', 30000),
+            (5, 1, 'Eve', 26000),
+            (6, 3, 'Frank', 31000);
+
+            -- Insert coffees
+            INSERT INTO coffees VALUES
+            (1, 'Espresso', 3.00),
+            (2, 'Americano', 3.50),
+            (3, 'Latte', 4.50),
+            (4, 'Cappuccino', 4.00),
+            (5, 'Mocha', 5.00);
+
+            -- Insert sales (10 sales across different employees)
+            INSERT INTO sale VALUES
+            (1, 1, '2026-03-01'),
+            (2, 2, '2026-03-01'),
+            (3, 1, '2026-03-01'),
+            (4, 3, '2026-03-02'),
+            (5, 4, '2026-03-02'),
+            (6, 5, '2026-03-03'),
+            (7, 2, '2026-03-03'),
+            (8, 6, '2026-03-03'),
+            (9, 1, '2026-03-04'),
+            (10, 5, '2026-03-04');
+
+            -- Insert coffee_sales (multiple coffees per sale for richer queries)
+            INSERT INTO coffee_sales VALUES
+            (1, 1),
+            (1, 3),
+            (2, 2),
+            (3, 4),
+            (3, 1),
+            (4, 5),
+            (5, 3),
+            (5, 4),
+            (6, 2),
+            (6, 1),
+            (7, 3),
+            (8, 5),
+            (8, 2),
+            (9, 4),
+            (9, 3),
+            (10, 1),
+            (10, 2),
+            (10, 5);
+            """;
+        tableCmd.ExecuteNonQuery();
+    }
 
     public void InitializePostTestDB()
     {
