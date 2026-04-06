@@ -1,0 +1,66 @@
+@page "/Editor"
+@using visualizer.Components.Shared
+@rendermode InteractiveServer
+
+<PageTitle>Editor</PageTitle>
+<div class="layout" style="display:flex; flex-grow:1; min-height:100px;">
+    <SchemaView OnTableSelected="HandTabledSchemaTableSelected"/>
+
+    <main class="main-content" style="flex-grow:1; display:flex; flex-direction:column;">
+        <div class="view" style="flex-grow:1; padding:32px 96px; background:#f8fafc; overflow:auto;">
+            @if (viewResult)
+            {
+                @if (resultTable is null)
+                {
+                    <div class="alert alert-info" role="alert">
+                        Run a query to see the result table.
+                    </div>
+                }
+                else
+                {
+                    <TableView @key="@resultTable" Table="resultTable"/>
+                }
+            }
+            else
+            {
+                <TableView @key="@tableSelected" Table="tableSelected"/>
+            }
+        </div>
+
+        <div class="toolbar" style="background:#f1f5f9; border-top:1px solid #d1d5db; border-bottom:1px solid #d1d5db;">
+            <div class="schema-part">
+                <button @onclick="RunQuery"
+                        class="text-button">
+                    <p class="text-button__text">Run Query</p>
+                    <i class="bi bi-play-fill"></i>
+                </button>
+            </div>
+        </div>
+
+        <StandaloneCodeEditor @ref="Editor"
+                              Id="my-code-editor"
+                              ConstructionOptions="EditorConstructionOptions"
+                              OnDidChangeModelContent="OnDidChangeModelContent"/>
+
+    </main>
+
+    @if (HasExecutionError)
+    {
+        <div @onclick="CloseErrorPopup"
+             style="display:block; position:fixed; z-index:9999; inset:0; overflow:auto; background-color:rgba(0,0,0,0.4);">
+            <div @onclick:stopPropagation="true"
+                 style="background-color:#fefefe; margin:15% auto; border:1px solid #888; overflow:hidden; width:30%;">
+                <div
+                    style="display:flex; justify-content:space-between; align-items:center; background-color:#0d2b45; color:white; padding:16px 20px;">
+                    <h1 style="margin:0; font-size:1.5rem;">An error occurred</h1>
+                    <span @onclick="CloseErrorPopup"
+                          style="font-size:24px; font-weight:bold; cursor:pointer; color:white;">&times;</span>
+                </div>
+
+                <div style="padding:20px; color:#333;">
+                    <p>@ExecutionErrorMessage</p>
+                </div>
+            </div>
+        </div>
+    }
+</div>
