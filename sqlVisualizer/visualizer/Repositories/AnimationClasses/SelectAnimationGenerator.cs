@@ -118,18 +118,19 @@ public static class SelectAnimationGenerator
         if (!Enum.TryParse(parts[0].Trim().ToUpperInvariant(), out SQLAggregateFunctionsKeyword keyword))
             throw new ArgumentException($"the aggregate function \"{parts[0].Trim()}\" is not supported");
 
+        var columnParameters = parts[1].Split(")")[0].Trim();
         switch (keyword)
         {
             case SQLAggregateFunctionsKeyword.COUNT:
-                HandleCountAggregate(fromTables, toTable, parts[1].Trim()[..^1], toColumnIndex, steps);
+                HandleCountAggregate(fromTables, toTable, columnParameters, toColumnIndex, steps);
                 break;
             case SQLAggregateFunctionsKeyword.SUM:
             case SQLAggregateFunctionsKeyword.AVG:
-                HandleSumAndAvgAggregate(fromTables, toTable, parts[1].Trim()[..^1], toColumnIndex, steps);
+                HandleSumAndAvgAggregate(fromTables, toTable, columnParameters, toColumnIndex, steps);
                 break;
             case SQLAggregateFunctionsKeyword.MIN:
             case SQLAggregateFunctionsKeyword.MAX:
-                HandleMinAndMaxAggregate(fromTables, toTable, parts[1].Trim()[..^1], toColumnIndex, steps);
+                HandleMinAndMaxAggregate(fromTables, toTable, columnParameters, toColumnIndex, steps);
                 break;
             default:
                 throw new ArgumentOutOfRangeException();
@@ -180,18 +181,7 @@ public static class SelectAnimationGenerator
     private static void HandleAggregateSpecificColumns(List<Table> fromTables, Table toTable,
         IEnumerable<string> columnNames, int toColumnIndex, List<Action> steps)
     {
-        var fromColumnIndexes = new List<int>();
-        try
-        {
-            foreach (var column in columnNames)
-            {
-                fromColumnIndexes.Add(fromTables[0].IndexOfColumn(column));
-            }
-        }
-        catch (ArgumentException e)
-        {
-            throw new NotSupportedException("The column wasn't found, this method only handles a specific columns", e);
-        }
+        var fromColumnIndexes = fromTables[0].IndexOfColumns(columnNames).ToList();
 
         int i = 0;
         foreach (var table in fromTables)
