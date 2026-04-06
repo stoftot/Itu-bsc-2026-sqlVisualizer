@@ -11,14 +11,11 @@ public class VisualisationsGenerator(ISQLDecomposer decomposer, TableGenerator t
     {
         var visualisations = new List<Visualisation>();
         query = Regex.Replace(query, "[ ]{2,}", " ");
-        // query = ar.ReplaceAliases(query);
-        query = ar.RemoveSelectAliases(query);
+        query = ar.ReplaceAliases(query);
         var steps = decomposer.Decompose(query);
 
         GenerateTablesWithOriginOnColumns(steps, visualisations);
         GenerateAnimations(visualisations);
-        
-        ar.InsertAliases(visualisations);
 
         return visualisations;
     }

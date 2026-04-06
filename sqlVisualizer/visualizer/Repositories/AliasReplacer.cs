@@ -1,180 +1,58 @@
 using System.Text;
-using visualizer.Models;
 
 namespace Visualizer;
 
 public class AliasReplacer
 {
-    private Dictionary<string, string> AliasToTableMap { get; } = new(StringComparer.OrdinalIgnoreCase);
-    private Dictionary<string, string> AliasReferenceMap { get; } = new(StringComparer.OrdinalIgnoreCase);
-    private List<SelectAliasDefinition> SelectAliases { get; } = [];
-
     public string ReplaceAliases(string sql)
     {
         if (string.IsNullOrWhiteSpace(sql))
             return sql;
 
-        AliasToTableMap.Clear();
-        AliasReferenceMap.Clear();
-        SelectAliases.Clear();
-
         var tokens = Tokenize(sql);
         if (tokens.Count == 0)
             return sql;
 
-        var edits = new List<TextEdit>();
-        var tableAliasDefinitions = ExtractTableAliases(sql, tokens);
+        var aliases = ExtractSelectAliases(sql, tokens);
+        if (aliases.Count == 0)
+            return sql.TrimEnd();
 
-        PlanTableAliasEdits(tableAliasDefinitions, edits);
-        ExtractSelectAliases(sql, tokens, edits);
-
-        var withoutAliasDefinitions = ApplyEdits(sql, edits);
-        return ReplaceTableAliasReferences(withoutAliasDefinitions).TrimEnd();
+        return ReplaceAliasUsages(sql, tokens, aliases).TrimEnd();
     }
 
-    public string RemoveSelectAliases(string sql)
+    private static Dictionary<string, string> ExtractSelectAliases(string sql, List<Token> tokens)
     {
-        if (string.IsNullOrWhiteSpace(sql))
-            return sql;
-
-        AliasToTableMap.Clear();
-        AliasReferenceMap.Clear();
-        SelectAliases.Clear();
-
-        var tokens = Tokenize(sql);
-        if (tokens.Count == 0)
-            return sql;
-
-        var edits = new List<TextEdit>();
-        ExtractSelectAliases(sql, tokens, edits);
-
-        return ApplyEdits(sql, edits).TrimEnd();
-    }
-
-    public void InsertAliases(List<Visualisation> visualisations)
-    {
-        var selectVis = visualisations.First(v => v.Component.Keyword == SQLKeyword.SELECT);
-        var table = selectVis.ToTables[0];
-
-        foreach (var aliasEntry in SelectAliases)
-        {
-            if (aliasEntry.ColumnIndex < 0 || aliasEntry.ColumnIndex >= table.ColumnNames.Count)
-                continue;
-
-            table.ColumnNames[aliasEntry.ColumnIndex] = aliasEntry.Alias;
-        }
-    }
-
-    private List<TableAliasDefinition> ExtractTableAliases(string sql, List<Token> tokens)
-    {
-        var definitions = new List<TableAliasDefinition>();
-
-        for (var index = 0; index < tokens.Count; index++)
-        {
-            if (!IsTableSourceStarter(tokens[index]))
-                continue;
-
-            var tableStartIndex = index + 1;
-            if (!IsIdentifierToken(tokens, tableStartIndex))
-                continue;
-
-            var tableEndIndex = ConsumeQualifiedIdentifier(tokens, tableStartIndex);
-            var aliasKeywordIndex = tableEndIndex + 1;
-            var aliasIndex = -1;
-
-            if (aliasKeywordIndex < tokens.Count && IsKeyword(tokens[aliasKeywordIndex], "AS") && IsIdentifierToken(tokens, aliasKeywordIndex + 1))
-            {
-                aliasIndex = aliasKeywordIndex + 1;
-            }
-            else if (IsIdentifierToken(tokens, aliasKeywordIndex) && !IsClauseBoundary(tokens[aliasKeywordIndex].Text))
-            {
-                aliasIndex = aliasKeywordIndex;
-            }
-
-            if (aliasIndex == -1)
-                continue;
-
-            var tableName = sql[tokens[tableStartIndex].Start..tokens[tableEndIndex].End];
-            var alias = tokens[aliasIndex].Text;
-
-            AliasToTableMap[alias] = tableName;
-            definitions.Add(new TableAliasDefinition(
-                alias,
-                tableName,
-                tokens[aliasIndex].Start,
-                tokens[aliasIndex].End,
-                tokens[tableEndIndex].End,
-                tokens[aliasIndex].End));
-        }
-
-        return definitions;
-    }
-
-    private void PlanTableAliasEdits(List<TableAliasDefinition> definitions, List<TextEdit> edits)
-    {
-        var usedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-        foreach (var definition in definitions)
-        {
-            usedNames.Add(definition.TableName);
-            usedNames.Add(definition.Alias);
-        }
-
-        foreach (var group in definitions.GroupBy(d => d.TableName, StringComparer.OrdinalIgnoreCase))
-        {
-            var occurrence = 0;
-
-            foreach (var definition in group)
-            {
-                occurrence++;
-
-                if (occurrence == 1)
-                {
-                    AliasReferenceMap[definition.Alias] = definition.TableName;
-                    edits.Add(new TextEdit(definition.RemoveStart, definition.RemoveEnd, string.Empty));
-                    continue;
-                }
-
-                var syntheticAlias = CreateSyntheticAlias(definition.TableName, occurrence, usedNames);
-                AliasReferenceMap[definition.Alias] = syntheticAlias;
-                edits.Add(new TextEdit(definition.AliasStart, definition.AliasEnd, syntheticAlias));
-            }
-        }
-    }
-
-    private void ExtractSelectAliases(string sql, List<Token> tokens, List<TextEdit> edits)
-    {
+        var aliases = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         var selectIndex = FindTopLevelKeyword(tokens, "SELECT");
         var fromIndex = FindTopLevelKeyword(tokens, "FROM");
 
         if (selectIndex == -1 || fromIndex == -1 || fromIndex <= selectIndex)
-            return;
+            return aliases;
 
         var itemStart = tokens[selectIndex].End;
-
-        var selectItemIndex = 0;
 
         for (var index = selectIndex + 1; index <= fromIndex; index++)
         {
             var isBoundary = index == fromIndex;
-            var isComma = !isBoundary && tokens[index].Text == "," && tokens[index].Depth == 0;
+            var isComma = !isBoundary && tokens[index].Depth == 0 && tokens[index].Text == ",";
 
             if (!isBoundary && !isComma)
                 continue;
 
             var itemEnd = isBoundary ? tokens[fromIndex].Start : tokens[index].Start;
-            ProcessSelectItem(sql, tokens, itemStart, itemEnd, selectItemIndex, edits);
-            selectItemIndex++;
+            ExtractAliasFromSelectItem(sql, tokens, itemStart, itemEnd, aliases);
 
             if (!isBoundary)
                 itemStart = tokens[index].End;
         }
+
+        return aliases;
     }
 
-    private void ProcessSelectItem(string sql, List<Token> tokens, int itemStart, int itemEnd, int selectItemIndex, List<TextEdit> edits)
+    private static void ExtractAliasFromSelectItem(string sql, List<Token> tokens, int itemStart, int itemEnd, Dictionary<string, string> aliases)
     {
         var itemTokens = tokens
-            .Where(t => t.Start >= itemStart && t.End <= itemEnd && t.Depth == 0)
+            .Where(token => token.Start >= itemStart && token.End <= itemEnd && token.Depth == 0)
             .ToList();
 
         if (itemTokens.Count <= 1)
@@ -185,12 +63,10 @@ public class AliasReplacer
             return;
 
         var previousToken = itemTokens[^2];
-        var aliasStart = aliasToken.Start;
         var expressionEnd = aliasToken.Start;
 
         if (IsKeyword(previousToken.Text, "AS"))
         {
-            aliasStart = previousToken.Start;
             expressionEnd = previousToken.Start;
         }
         else
@@ -207,41 +83,39 @@ public class AliasReplacer
         if (string.IsNullOrWhiteSpace(expression))
             return;
 
-        SelectAliases.Add(new SelectAliasDefinition(selectItemIndex, aliasToken.Text));
-
-        while (aliasStart > itemStart && char.IsWhiteSpace(sql[aliasStart - 1]))
-            aliasStart--;
-
-        edits.Add(new TextEdit(aliasStart, aliasToken.End, string.Empty));
+        aliases[aliasToken.Text] = expression;
     }
 
-    private string ReplaceTableAliasReferences(string sql)
+    private static string ReplaceAliasUsages(string sql, List<Token> tokens, Dictionary<string, string> aliases)
     {
-        if (AliasReferenceMap.Count == 0)
-            return sql;
-
-        var tokens = Tokenize(sql);
         var builder = new StringBuilder(sql.Length);
         var cursor = 0;
+        var clause = Clause.None;
+        var seenFrom = false;
 
         for (var index = 0; index < tokens.Count; index++)
         {
             var token = tokens[index];
+
             if (cursor < token.Start)
                 builder.Append(sql, cursor, token.Start - cursor);
 
-            if (token.IsIdentifier &&
-                AliasReferenceMap.TryGetValue(token.Text, out var replacement) &&
-                index + 1 < tokens.Count &&
-                tokens[index + 1].Text == ".")
+            if (token.Depth == 0)
             {
-                builder.Append(replacement);
-            }
-            else
-            {
-                builder.Append(sql, token.Start, token.End - token.Start);
+                clause = GetClause(tokens, index, clause);
+                if (clause is Clause.From or Clause.Join)
+                    seenFrom = true;
             }
 
+            string? replacement = null;
+            var hasReplacement = token.IsIdentifier && aliases.TryGetValue(token.Text, out replacement);
+            var canReplace = seenFrom &&
+                             clause is Clause.On or Clause.Where or Clause.GroupBy or Clause.Having &&
+                             hasReplacement &&
+                             !IsQualifiedIdentifier(tokens, index) &&
+                             !IsFunctionCall(tokens, index);
+
+            builder.Append(canReplace ? replacement : sql[token.Start..token.End]);
             cursor = token.End;
         }
 
@@ -251,123 +125,62 @@ public class AliasReplacer
         return builder.ToString();
     }
 
-    private static string ApplyEdits(string sql, List<TextEdit> edits)
+    private static Clause GetClause(List<Token> tokens, int index, Clause currentClause)
     {
-        if (edits.Count == 0)
-            return sql;
+        var token = tokens[index];
 
-        var orderedEdits = edits
-            .Where(edit => edit.End >= edit.Start)
-            .OrderBy(edit => edit.Start)
-            .ToList();
+        if (IsKeyword(token.Text, "FROM"))
+            return Clause.From;
 
-        var builder = new StringBuilder(sql.Length);
-        var cursor = 0;
+        if (IsJoinStarter(token.Text))
+            return Clause.Join;
 
-        foreach (var edit in orderedEdits)
-        {
-            if (edit.Start < cursor)
-                continue;
+        if (IsKeyword(token.Text, "ON"))
+            return Clause.On;
 
-            builder.Append(sql, cursor, edit.Start - cursor);
-            builder.Append(edit.Replacement);
-            cursor = edit.End;
-        }
+        if (IsKeyword(token.Text, "WHERE"))
+            return Clause.Where;
 
-        if (cursor < sql.Length)
-            builder.Append(sql, cursor, sql.Length - cursor);
+        if (IsKeyword(token.Text, "GROUP"))
+            return Clause.GroupBy;
 
-        return builder.ToString();
+        if (IsKeyword(token.Text, "HAVING"))
+            return Clause.Having;
+
+        if (IsKeyword(token.Text, "ORDER"))
+            return Clause.OrderBy;
+
+        if (IsKeyword(token.Text, "LIMIT"))
+            return Clause.Limit;
+
+        if (IsKeyword(token.Text, "OFFSET"))
+            return Clause.Offset;
+
+        if (IsKeyword(token.Text, "UNION") || IsKeyword(token.Text, "INTERSECT") || IsKeyword(token.Text, "EXCEPT"))
+            return Clause.None;
+
+        return currentClause;
     }
 
-    private static string CreateSyntheticAlias(string tableName, int occurrence, HashSet<string> usedNames)
+    private static bool IsJoinStarter(string text)
     {
-        var baseName = ExtractAliasBaseName(tableName);
-        var candidate = $"{baseName}_{occurrence}";
-
-        while (!usedNames.Add(candidate))
-            candidate = $"{candidate}_x";
-
-        return candidate;
-    }
-
-    private static string ExtractAliasBaseName(string tableName)
-    {
-        var tokens = Tokenize(tableName);
-        var lastIdentifier = tokens.LastOrDefault(t => t.IsIdentifier)?.Text ?? "table";
-
-        if (lastIdentifier.StartsWith('"') && lastIdentifier.EndsWith('"') && lastIdentifier.Length >= 2)
-            lastIdentifier = lastIdentifier[1..^1];
-
-        var builder = new StringBuilder(lastIdentifier.Length);
-        foreach (var character in lastIdentifier)
-        {
-            builder.Append(char.IsLetterOrDigit(character) || character == '_' ? character : '_');
-        }
-
-        if (builder.Length == 0 || !char.IsLetter(builder[0]) && builder[0] != '_')
-            builder.Insert(0, '_');
-
-        return builder.ToString();
-    }
-
-    private static int FindTopLevelKeyword(List<Token> tokens, string keyword)
-    {
-        for (var index = 0; index < tokens.Count; index++)
-        {
-            if (tokens[index].Depth == 0 && IsKeyword(tokens[index].Text, keyword))
-                return index;
-        }
-
-        return -1;
-    }
-
-    private static int ConsumeQualifiedIdentifier(List<Token> tokens, int startIndex)
-    {
-        var index = startIndex;
-
-        while (index + 2 < tokens.Count &&
-               tokens[index].IsIdentifier &&
-               tokens[index + 1].Text == "." &&
-               tokens[index + 2].IsIdentifier)
-        {
-            index += 2;
-        }
-
-        return index;
-    }
-
-    private static bool IsTableSourceStarter(Token token)
-    {
-        return token.Depth == 0 && (IsKeyword(token.Text, "FROM") || IsKeyword(token.Text, "JOIN"));
-    }
-
-    private static bool IsIdentifierToken(List<Token> tokens, int index)
-    {
-        return index >= 0 && index < tokens.Count && tokens[index].IsIdentifier;
-    }
-
-    private static bool IsClauseBoundary(string text)
-    {
-        return text.Equals(",", StringComparison.Ordinal) ||
-               IsKeyword(text, "JOIN") ||
+        return IsKeyword(text, "JOIN") ||
                IsKeyword(text, "INNER") ||
                IsKeyword(text, "LEFT") ||
                IsKeyword(text, "RIGHT") ||
                IsKeyword(text, "FULL") ||
                IsKeyword(text, "CROSS") ||
-               IsKeyword(text, "NATURAL") ||
-               IsKeyword(text, "WHERE") ||
-               IsKeyword(text, "GROUP") ||
-               IsKeyword(text, "HAVING") ||
-               IsKeyword(text, "ORDER") ||
-               IsKeyword(text, "LIMIT") ||
-               IsKeyword(text, "OFFSET") ||
-               IsKeyword(text, "WINDOW") ||
-               IsKeyword(text, "UNION") ||
-               IsKeyword(text, "INTERSECT") ||
-               IsKeyword(text, "EXCEPT") ||
-               IsKeyword(text, "ON");
+               IsKeyword(text, "NATURAL");
+    }
+
+    private static bool IsQualifiedIdentifier(List<Token> tokens, int index)
+    {
+        return index + 1 < tokens.Count && tokens[index + 1].Text == ".";
+    }
+
+    private static bool IsFunctionCall(List<Token> tokens, int index)
+    {
+        return index + 1 < tokens.Count && tokens[index + 1].Text == "(";
     }
 
     private static bool CanPrecedeImplicitAlias(string text)
@@ -385,9 +198,15 @@ public class AliasReplacer
                text != "(";
     }
 
-    private static bool IsKeyword(Token token, string keyword)
+    private static int FindTopLevelKeyword(List<Token> tokens, string keyword)
     {
-        return IsKeyword(token.Text, keyword);
+        for (var index = 0; index < tokens.Count; index++)
+        {
+            if (tokens[index].Depth == 0 && IsKeyword(tokens[index].Text, keyword))
+                return index;
+        }
+
+        return -1;
     }
 
     private static bool IsKeyword(string text, string keyword)
@@ -509,14 +328,19 @@ public class AliasReplacer
         return tokens;
     }
 
+    private enum Clause
+    {
+        None,
+        From,
+        Join,
+        On,
+        Where,
+        GroupBy,
+        Having,
+        OrderBy,
+        Limit,
+        Offset
+    }
+
     private sealed record Token(string Text, int Start, int End, int Depth, bool IsIdentifier);
-    private sealed record TextEdit(int Start, int End, string Replacement);
-    private sealed record SelectAliasDefinition(int ColumnIndex, string Alias);
-    private sealed record TableAliasDefinition(
-        string Alias,
-        string TableName,
-        int AliasStart,
-        int AliasEnd,
-        int RemoveStart,
-        int RemoveEnd);
 }
