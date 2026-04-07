@@ -4,74 +4,97 @@ using visualizer.Utility;
 
 namespace visualizer.Repositories.AnimationClasses;
 
-public class OrderByAnimationGenerator
+public static class OrderByAnimationGenerator
 {
-    private static TableVisualModifier tvm = new();
-    public static Animation Generate(Table fromTable, Table toTable,
-        SQLDecompositionComponent action)
+    private static readonly TableVisualModifier tvm = new();
+
+    public static Animation Generate(Table fromTable, Table toTable, SQLDecompositionComponent action)
     {
         var steps = new List<Action>();
-        var columns = 
-            Regex.Replace(action.Clause, "desc|asc", "", RegexOptions.IgnoreCase)
-            .Split(",", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        var columnsToOrderBy = toTable.IndexOfColumns(columns);
+        var orderByColumns = ParseOrderByColumns(action.Clause);
+        var orderByColumnIndexes = toTable.IndexOfColumns(orderByColumns);
 
-        var copy = toTable.DeepClone();
-        copy.AppendRowIndex();
+        var indexedResultTable = toTable.DeepClone();
+        indexedResultTable.AppendRowIndex();
 
-        var positionReferenceList = new List<TableEntry>();
-        
-        //clear table;
+        var sortedEntries = new List<TableEntry>();
         steps.Add(() => toTable.Entries.Clear());
 
-        for(int i = 0; i < fromTable.Entries.Count; i++)
+        for (int rowIndex = 0; rowIndex < fromTable.Entries.Count; rowIndex++)
         {
-            var entryToInsert = fromTable.Entries[i];
-            var duplicateEntryToInsertBasedOn = copy.Entries.First(e => e != null && e.Values[..^1].SequenceEqual(entryToInsert.Values));
-            copy.Entries[copy.Entries.IndexOf(duplicateEntryToInsertBasedOn)] = null;
-            
-            InsertEntrySorted(duplicateEntryToInsertBasedOn, positionReferenceList);
-            var indexToInsertAt = positionReferenceList.IndexOf(duplicateEntryToInsertBasedOn);
-            
+            var sourceEntry = fromTable.Entries[rowIndex];
+            var indexedResultEntry = TakeMatchingIndexedEntry(indexedResultTable, sourceEntry);
+            var insertIndex = InsertEntrySorted(indexedResultEntry, sortedEntries);
+
             //We only need to do highlighting in the from table,
             //as it is the same object we insert into the to table,
             //which means when we change it in the from table it's gonna change in the to table as well
             steps.Add(tvm.CombineActions(
-                [
-                    () => toTable.Entries.Insert(indexToInsertAt, entryToInsert),
-                    tvm.GenerateToggleHighlightRow(fromTable, i),
-                    tvm.GenerateToggleHighlightCells(fromTable, i, columnsToOrderBy),
-                    tvm.ChangeHighlightColourCells(fromTable, i, columnsToOrderBy, UtilColor.SecondaryHighlightColor)
-                ]));
-            
-            steps.Add(tvm.CombineActions(
-                [
-                    tvm.GenerateToggleHighlightRow(fromTable, i),
-                    tvm.GenerateToggleHighlightCells(fromTable, i, columnsToOrderBy),
-                ]));
+            [
+                () => toTable.Entries.Insert(insertIndex, sourceEntry),
+                CreateInsertStep(fromTable, rowIndex, orderByColumnIndexes)
+            ]));
+            steps.Add(CreateResetHighlightStep(fromTable, rowIndex, orderByColumnIndexes));
         }
-
 
         return new Animation(steps);
     }
-    
-    private class IndexCompare : IComparer<TableEntry>
+
+    private static string[] ParseOrderByColumns(string clause) =>
+        Regex.Replace(clause, " desc| asc", "", RegexOptions.IgnoreCase)
+            .Split(",", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+    private static TableEntry TakeMatchingIndexedEntry(Table indexedResultTable, TableEntry sourceEntry)
     {
-        public int Compare(TableEntry x, TableEntry y)
+        var matchingEntry = indexedResultTable.Entries.First(entry =>
+            entry != null && entry.Values[..^1].SequenceEqual(sourceEntry.Values));
+
+        indexedResultTable.Entries[indexedResultTable.Entries.IndexOf(matchingEntry)] = null;
+        return matchingEntry;
+    }
+    
+    private static Action CreateInsertStep(
+        Table fromTable,
+        int rowIndex,
+        IList<int> orderByColumnIndexes)
+    {
+        return tvm.CombineActions(
+        [
+            tvm.GenerateToggleHighlightRow(fromTable, rowIndex),
+            tvm.GenerateToggleHighlightCells(fromTable, rowIndex, orderByColumnIndexes),
+            tvm.ChangeHighlightColourCells(fromTable, rowIndex, orderByColumnIndexes, UtilColor.SecondaryHighlightColor)
+        ]);
+    }
+
+    private static Action CreateResetHighlightStep(Table fromTable, int rowIndex, IList<int> orderByColumnIndexes)
+    {
+        return tvm.CombineActions(
+        [
+            tvm.GenerateToggleHighlightRow(fromTable, rowIndex),
+            tvm.GenerateToggleHighlightCells(fromTable, rowIndex, orderByColumnIndexes),
+        ]);
+    }
+
+    private sealed class RowIndexComparer : IComparer<TableEntry>
+    {
+        public int Compare(TableEntry? x, TableEntry? y)
         {
+            ArgumentNullException.ThrowIfNull(x);
+            ArgumentNullException.ThrowIfNull(y);
             return x.Values.Last().Value.CompareTo(y.Values.Last().Value);
         }
     }
 
-    private static void InsertEntrySorted(TableEntry entry, List<TableEntry> list)
+    private static int InsertEntrySorted(TableEntry entry, List<TableEntry> sortedEntries)
     {
-        var index = list.BinarySearch(entry, new IndexCompare());
+        var insertIndex = sortedEntries.BinarySearch(entry, new RowIndexComparer());
 
-        if (index < 0)
+        if (insertIndex < 0)
         {
-            index = ~index;
+            insertIndex = ~insertIndex;
         }
 
-        list.Insert(index, entry);
+        sortedEntries.Insert(insertIndex, entry);
+        return insertIndex;
     }
 }
