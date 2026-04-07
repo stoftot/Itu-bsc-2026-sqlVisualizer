@@ -14,9 +14,12 @@ public class OrderByAnimationGenerator
         var columns = 
             Regex.Replace(action.Clause, "desc|asc", "", RegexOptions.IgnoreCase)
             .Split(",", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        var columnsToGroupBy = toTable.IndexOfColumns(columns);
+        var columnsToOrderBy = toTable.IndexOfColumns(columns);
 
         var copy = toTable.DeepClone();
+        copy.AppendRowIndex();
+
+        var positionReferenceList = new List<TableEntry>();
         
         //clear table;
         steps.Add(() => toTable.Entries.Clear());
@@ -24,9 +27,11 @@ public class OrderByAnimationGenerator
         for(int i = 0; i < fromTable.Entries.Count; i++)
         {
             var entryToInsert = fromTable.Entries[i];
-            var indexOfEntryToInsert = copy.Entries.IndexOf(entryToInsert);
-            copy.Entries[indexOfEntryToInsert] = null;
-            var indexToInsertAt = Math.Min(indexOfEntryToInsert, i);
+            var duplicateEntryToInsertBasedOn = copy.Entries.First(e => e != null && e.Values[..^1].SequenceEqual(entryToInsert.Values));
+            copy.Entries[copy.Entries.IndexOf(duplicateEntryToInsertBasedOn)] = null;
+            
+            InsertEntrySorted(duplicateEntryToInsertBasedOn, positionReferenceList);
+            var indexToInsertAt = positionReferenceList.IndexOf(duplicateEntryToInsertBasedOn);
             
             //We only need to do highlighting in the from table,
             //as it is the same object we insert into the to table,
@@ -35,18 +40,38 @@ public class OrderByAnimationGenerator
                 [
                     () => toTable.Entries.Insert(indexToInsertAt, entryToInsert),
                     tvm.GenerateToggleHighlightRow(fromTable, i),
-                    tvm.GenerateToggleHighlightCells(fromTable, i, columnsToGroupBy),
-                    tvm.ChangeHighlightColourCells(fromTable, i, columnsToGroupBy, UtilColor.SecondaryHighlightColor)
+                    tvm.GenerateToggleHighlightCells(fromTable, i, columnsToOrderBy),
+                    tvm.ChangeHighlightColourCells(fromTable, i, columnsToOrderBy, UtilColor.SecondaryHighlightColor)
                 ]));
             
             steps.Add(tvm.CombineActions(
                 [
                     tvm.GenerateToggleHighlightRow(fromTable, i),
-                    tvm.GenerateToggleHighlightCells(fromTable, i, columnsToGroupBy),
+                    tvm.GenerateToggleHighlightCells(fromTable, i, columnsToOrderBy),
                 ]));
         }
 
 
         return new Animation(steps);
+    }
+    
+    private class IndexCompare : IComparer<TableEntry>
+    {
+        public int Compare(TableEntry x, TableEntry y)
+        {
+            return x.Values.Last().Value.CompareTo(y.Values.Last().Value);
+        }
+    }
+
+    private static void InsertEntrySorted(TableEntry entry, List<TableEntry> list)
+    {
+        var index = list.BinarySearch(entry, new IndexCompare());
+
+        if (index < 0)
+        {
+            index = ~index;
+        }
+
+        list.Insert(index, entry);
     }
 }
