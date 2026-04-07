@@ -261,6 +261,31 @@ public class VisulisationGenerationTest : IClassFixture<DuckDbFixture>
                 FULL JOIN user ON user.username = shift.cashier
                 WHERE username LIKE 'M%' OR cashier LIKE 'M%'
                 """)]
+    [InlineData("""
+               SELECT coffee_name, sum(cs.price_per_unit * cs.quantity) as sale
+               FROM coffee_sales cs 
+               JOIN coffee_types ct ON ct.coffee_id = cs.coffee_id
+               WHERE ct.coffee_name not like '%Espresso'
+               GROUP BY coffee_name
+               ORDER BY sale
+               """)] 
+    [InlineData("""
+               SELECT coffee_name as name, sum(cs.price_per_unit * cs.quantity) as sale
+               FROM coffee_sales cs
+               JOIN coffee_types ct ON ct.coffee_id = cs.coffee_id
+               WHERE name not like '%Espresso'
+               GROUP BY name
+               HAVING sale between 2 and 12
+               ORDER BY sale
+               LIMIT 10
+               """)]
+    [InlineData("""
+                SELECT pr.productname, SUM(pr.price) totalSale
+                FROM purchase pu
+                JOIN product pr ON pr.productname = pu.productname
+                GROUP BY pr.productname
+                HAVING totalSale > 100
+                """)]
     public void Combination(string query)
     {
         TestQuery(query);

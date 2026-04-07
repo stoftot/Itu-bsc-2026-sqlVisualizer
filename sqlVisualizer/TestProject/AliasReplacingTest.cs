@@ -1,911 +1,779 @@
-﻿using Visualizer;
-using visualizer.Models;
+using Visualizer;
 
 namespace TestProject1;
 
 public class AliasReplacingTest
 {
-    [Theory]
-    [InlineData("""
-                SELECT p.price pic, pu.productname, pu.purchasetime as ptime
-                FROM product as p
-                JOIN purchase as pu ON p.productname = pu.productname
-                JOIN user u on pu.username = u.username
-                """,
-        """
-                SELECT product.price, purchase.productname, purchase.purchasetime
-                FROM product
-                JOIN purchase ON product.productname = purchase.productname
-                JOIN user on purchase.username = user.username
-                """
-                )]
-    [InlineData("""
-                SELECT p.price p, pu.productname as pu, pu.purchasetime product
-                FROM product as p
-                JOIN purchase as pu ON p.productname = pu.productname
-                JOIN user u on pu.username = u.username
-                """,
-        """
-                SELECT product.price, purchase.productname, purchase.purchasetime
-                FROM product
-                JOIN purchase ON product.productname = purchase.productname
-                JOIN user on purchase.username = user.username
-                """
-                )]
-    [InlineData("""
-                SELECT p.price p, pu.productname as pu, pu.purchasetime product FROM product as p JOIN purchase as pu ON p.productname = pu.productname JOIN user u on pu.username = u.username
-                """,
-        """
-                SELECT product.price, purchase.productname, purchase.purchasetime FROM product JOIN purchase ON product.productname = purchase.productname JOIN user on purchase.username = user.username
-                """
-    )]
-    [InlineData("""
-                SELECT product.price, purchase.productname, purchase.purchasetime
-                FROM product
-                JOIN purchase ON product.productname = purchase.productname
-                JOIN user on purchase.username = user.username
-                """,
-        """
-                SELECT product.price, purchase.productname, purchase.purchasetime
-                FROM product
-                JOIN purchase ON product.productname = purchase.productname
-                JOIN user on purchase.username = user.username
-                """
-    )]
-    [InlineData("""
-                SELECT DISTINCT product.productname FROM product
-                """,
-        """
-                SELECT DISTINCT product.productname FROM product
-                """ 
-    )]
-    [InlineData("""
-                SELECT DISTINCT product.productname pic FROM product
-                """,
-        """
-                SELECT DISTINCT product.productname FROM product
-                """ 
-    )]
-    [InlineData("""
-                SELECT DISTINCT product.productname as pic FROM product
-                """,
-        """
-                SELECT DISTINCT product.productname FROM product
-                """ 
-    )]
-    [InlineData("""
-                SELECT DISTINCT product.productname as DISTINCT_Pname FROM product
-                """,
-        """
-                SELECT DISTINCT product.productname FROM product
-                """ 
-    )]
-    [InlineData("""
-                SELECT DISTINCT product.productname DISTINCT_Pname FROM product
-                """,
-        """
-                SELECT DISTINCT product.productname FROM product
-                """ 
-    )]
-    [InlineData("""
-                SELECT productname, count() 
-                FROM purchase 
-                GROUP BY productname
-                HAVING COUNT() > 2
-                """,
-        """
-                SELECT productname, count() 
-                FROM purchase 
-                GROUP BY productname
-                HAVING COUNT() > 2
-                """ 
-    )]
-    [InlineData("""
-                SELECT "*" FROM "123" 
-                JOIN "45" ON "45"."user" = "123"."user"
-                """,
-        """
-                SELECT "*" FROM "123" 
-                JOIN "45" ON "45"."user" = "123"."user"
-                """ 
-    )]
-    [InlineData("""
-                SELECT "65".theBest, "65".theSecondBest as TSB FROM "123" 
-                JOIN "45" as "65" ON "65"."user" = "123"."user"
-                """,
-        """
-                SELECT "45".theBest, "45".theSecondBest FROM "123" 
-                JOIN "45" ON "45"."user" = "123"."user"
-                """ 
-    )]
-    [InlineData("""
-                SELECT SUM(hello) FROM TEST
-                """,
-        """
-                SELECT SUM(hello) FROM TEST
-                """ 
-    )]
-    [InlineData("""
-                SELECT AVG(hello) FROM TEST
-                """,
-        """
-                SELECT AVG(hello) FROM TEST
-                """ 
-    )]
-    [InlineData("""
-                SELECT MAX(hello) FROM TEST
-                """,
-        """
-                SELECT MAX(hello) FROM TEST
-                """ 
-    )]
-    [InlineData("""
-                SELECT MIN(hello) FROM TEST
-                """,
-        """
-                SELECT MIN(hello) FROM TEST
-                """ 
-    )]
-    [InlineData("""
-                SELECT COUNT(hello) FROM TEST
-                """,
-        """
-                SELECT COUNT(hello) FROM TEST
-                """ 
-    )]
-    [InlineData("""
-                SELECT SUM(hello + 123) FROM TEST
-                """,
-        """
-                SELECT SUM(hello + 123) FROM TEST
-                """ 
-    )]
-    [InlineData("""
-                SELECT SUM(hello + 123) as SS FROM TEST
-                """,
-        """
-                SELECT SUM(hello + 123) FROM TEST
-                """ 
-    )]
-    [InlineData("""
-                SELECT SUM(hello + 123) SS FROM TEST
-                """,
-        """
-                SELECT SUM(hello + 123) FROM TEST
-                """ 
-    )]
-    [InlineData("""
-                SELECT SUM("123" + "123") FROM TEST
-                """,
-        """
-                SELECT SUM("123" + "123") FROM TEST
-                """ 
-    )]
-    [InlineData("""
-                SELECT SUM("*" + "/") FROM TEST
-                """,
-        """
-                SELECT SUM("*" + "/") FROM TEST
-                """ 
-    )]
-    [InlineData("""
-                SELECT SUM("*" + "/") as S1 FROM TEST
-                """,
-        """
-                SELECT SUM("*" + "/") FROM TEST
-                """ 
-    )]
-    [InlineData("""
-                SELECT SUM("*" + "/") S1 FROM TEST
-                """,
-        """
-                SELECT SUM("*" + "/") FROM TEST
-                """ 
-    )]
-    [InlineData("""
-                SELECT SUM("*" + 123 + "/") FROM TEST
-                """,
-        """
-                SELECT SUM("*" + 123 + "/") FROM TEST
-                """ 
-    )]
-    [InlineData("""
-                SELECT SUM("*" + "/" + 123) FROM TEST
-                """,
-        """
-                SELECT SUM("*" + "/" + 123) FROM TEST
-                """ 
-    )]
-    [InlineData("""
-                SELECT SUM(123 + "*" + "/") FROM TEST
-                """,
-        """
-                SELECT SUM(123 + "*" + "/") FROM TEST
-                """ 
-    )]
-    [InlineData("""
-                SELECT p.productname
-                FROM product p
-                WHERE p.price > 10
-                ORDER BY p.productname
-                """,
-        """
-                SELECT product.productname
-                FROM product
-                WHERE product.price > 10
-                ORDER BY product.productname
-                """
-    )]
-    [InlineData("""
-                SELECT COALESCE(p.productname, p.price) display_value
-                FROM product p
-                """,
-        """
-                SELECT COALESCE(product.productname, product.price)
-                FROM product
-                """
-    )]
-    [InlineData("""
-                select username, productname, purchasetime, sum(price) over (partition by username order by productname desc, username ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) as cum_sales
-                from sales;
-                """,
-        """
-                select username, productname, purchasetime, sum(price) over (partition by username order by productname desc, username ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)
-                from sales;
-                """ 
-    )]
-    [InlineData("""
-                select s.username, productname, s.purchasetime, sum(s.price) over (partition by s.username order by s.productname desc, username ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) as cum_sales
-                from sales as s;
-                """,
-        """
-                select sales.username, productname, sales.purchasetime, sum(sales.price) over (partition by sales.username order by sales.productname desc, username ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)
-                from sales;
-                """ 
-    )]
-    [InlineData("""
-                SELECT SUM("*" + "123"), "*", "*" + 100, "321"."user" as U123, 123
-                FROM "123" as "321"
-                group by "*", "user"
-                """,
-        """
-                SELECT SUM("*" + "123"), "*", "*" + 100, "123"."user", 123
-                FROM "123"
-                group by "*", "user"
-                """ 
-    )]
-    [InlineData("""
-                SELECT 123 FROM abc
-                """,
-        """
-                SELECT 123 FROM abc
-                """ 
-    )]
-    [InlineData("""
-                SELECT price + 123, SUM(price * 0.25) as Discounts
-                FROM sales
-                GROUP BY price
-                """,
-        """
-                SELECT price + 123, SUM(price * 0.25)
-                FROM sales
-                GROUP BY price
-                """ 
-    )]
-    [InlineData("""
-                SELECT _2025 FROM abc
-                """,
-        """
-                SELECT _2025 FROM abc
-                """ 
-    )]
-    [InlineData("""
-                SELECT 123 + 123 + price FROM sales 
-                """,
-        """
-                SELECT 123 + 123 + price FROM sales
-                """ 
-    )]
-    [InlineData("""
-                SELECT 
-                    SUM("!@#" + "456") AS "sum$1",
-                    "weird column" AS " ",
-                    "abc" || "def" AS "concat",
-                    "t1"."col1" AS c1,
-                    789 AS "789"
-                FROM "table-name" AS "t1"
-                GROUP BY "weird column", "col1";
-                """,
-        """
-                SELECT 
-                    SUM("!@#" + "456"),
-                    "weird column",
-                    "abc" || "def",
-                    "table-name"."col1",
-                    789
-                FROM "table-name"
-                GROUP BY "weird column", "col1";
-                """ 
-    )]
-    [InlineData("""
-                SELECT 
-                    SUM("select" + "from") AS "group",
-                    "order" AS "by",
-                    "x" * 2 AS "join",
-                    "a"."where" AS "cond",
-                    42 AS answer
-                FROM "select" AS "a"
-                GROUP BY "order", "where";
-                """,
-        """
-                SELECT 
-                    SUM("select" + "from"),
-                    "order",
-                    "x" * 2,
-                    "select"."where",
-                    42
-                FROM "select"
-                GROUP BY "order", "where";
-                """ 
-    )]
-    [InlineData("""
-                SELECT 
-                    SUM("a.b" + "c.d") AS "sum.dot",
-                    "strange-name" AS "alias-1",
-                    "x/y" + 10 AS "math?",
-                    "tbl.alias"."col:name" AS "colAlias",
-                    0 AS "zero"
-                FROM "tbl.alias" AS "tbl.alias"
-                GROUP BY "strange-name", "col:name";
-                """,
-        """
-                SELECT 
-                    SUM("a.b" + "c.d"),
-                    "strange-name",
-                    "x/y" + 10,
-                    "tbl.alias"."col:name",
-                    0
-                FROM "tbl.alias"
-                GROUP BY "strange-name", "col:name";
-                """ 
-    )]
-    [InlineData("""
-                SELECT 
-                    SUM(("1" + "2") * ("3" + 4)) AS total,
-                    "col space",
-                    ("*" || "*") AS stars,
-                    "x1"."y2" AS z3,
-                    999
-                FROM "x1" AS "x1"
-                GROUP BY "col space", "y2";
-                """,
-        """
-                SELECT 
-                    SUM(("1" + "2") * ("3" + 4)),
-                    "col space",
-                    ("*" || "*"),
-                    "x1"."y2",
-                    999
-                FROM "x1"
-                GROUP BY "col space", "y2";
-                """ 
-    )]
-    [InlineData("""
-                SELECT 
-                    SUM("a"+"b")   "sumAlias",
-                    "col1"    cAlias,
-                    "col2"+5   "5col",
-                    "t"."u"   u1,
-                    1   one
-                FROM "t" AS t
-                GROUP BY "col1", "u";
-                """,
-        """
-                SELECT 
-                    SUM("a"+"b"),
-                    "col1",
-                    "col2"+5,
-                    "t"."u",
-                    1
-                FROM "t"
-                GROUP BY "col1", "u";
-                """ 
-    )]
-    [InlineData("""
-                SELECT 
-                    SUM("1" + "2") AS "3",
-                    "4" AS "5",
-                    "6" * 7 AS "8",
-                    "9"."10" AS "11",
-                    12 AS "13"
-                FROM "9" AS "9"
-                GROUP BY "4", "10";
-                """,
-        """
-                SELECT 
-                    SUM("1" + "2"),
-                    "4",
-                    "6" * 7,
-                    "9"."10",
-                    12
-                FROM "9"
-                GROUP BY "4", "10";
-                """ 
-    )]
-    [InlineData("""
-                SELECT SUM("*" + col1) AS total_sum, name AS person_name, price + 100 AS adjusted_price, t.user AS u123, 123 AS n
-                FROM users AS t
-                GROUP BY name, user;
-                """,
-        """
-                SELECT SUM("*" + col1), name, price + 100, users.user, 123
-                FROM users
-                GROUP BY name, user;
-                """ 
-    )]
-    [InlineData("""
-                SELECT SUM(product_id + "123") AS s1, product_name AS pname, "*" + 100 AS weird_math, p.category AS cat_alias, 999 AS x
-                FROM products AS p
-                GROUP BY product_name, category;
-                """,
-        """
-                SELECT SUM(product_id + "123"), product_name, "*" + 100, products.category, 999
-                FROM products
-                GROUP BY product_name, category;
-                """ 
-    )]
-    [InlineData("""
-                SELECT SUM(amount + tax) AS total, customer AS c, "odd-name" + 1 AS strange_value, o."user" AS u, 0 AS zero
-                FROM orders AS o
-                GROUP BY customer, "user";
-                """,
-        """
-                SELECT SUM(amount + tax), customer, "odd-name" + 1, orders."user", 0
-                FROM orders
-                GROUP BY customer, "user";
-                """ 
-    )]
-    [InlineData("""
-                SELECT SUM("123" + quantity) AS mixed_sum, item AS i, quantity * 2 AS doubled, s.stock_id AS sid, 42 AS answer
-                FROM stock AS s
-                GROUP BY item, stock_id;
-                """,
-        """
-                SELECT SUM("123" + quantity), item, quantity * 2, stock.stock_id, 42
-                FROM stock
-                GROUP BY item, stock_id;
-                """ 
-    )]
-    [InlineData("""
-                SELECT SUM(a + b) AS sum_ab, normal_col AS nc, "space col" AS sc, x.id AS xid, 7 AS seven
-                FROM data_table AS x
-                GROUP BY normal_col, id;
-                """,
-        """
-                SELECT SUM(a + b), normal_col, "space col", data_table.id, 7
-                FROM data_table
-                GROUP BY normal_col, id;
-                """ 
-    )]
-    [InlineData("""
-                SELECT SUM(value + "*") AS weird_total, label AS l, score + 5 AS boosted, r.rank AS r1, 55 AS num
-                FROM results AS r
-                GROUP BY label, rank;
-                """,
-        """
-                SELECT SUM(value + "*"), label, score + 5, results.rank, 55
-                FROM results
-                GROUP BY label, rank;
-                """ 
-    )]
-    [InlineData("""
-                SELECT SUM(emp_id + "001") AS emp_sum, emp_name AS ename, salary + bonus AS total_pay, e.department AS dept, 1 AS one
-                FROM employees AS e
-                GROUP BY emp_name, department;
-                """,
-        """
-                SELECT SUM(emp_id + "001"), emp_name, salary + bonus, employees.department, 1
-                FROM employees
-                GROUP BY emp_name, department;
-                """ 
-    )]
-    [InlineData("""
-                SELECT SUM("!" + points) AS exclaim_sum, player AS p, level + 10 AS next_level, g.game_id AS gid, 88 AS lucky
-                FROM games AS g
-                GROUP BY player, game_id;
-                """,
-        """
-                SELECT SUM("!" + points), player, level + 10, games.game_id, 88
-                FROM games
-                GROUP BY player, game_id;
-                """ 
-    )]
-    [InlineData("""
-                SELECT SUM(total + discount) AS final_total, region AS r, "strange*" + 3 AS calc, s.sales_rep AS rep, 314 AS pi
-                FROM sales AS s
-                GROUP BY region, sales_rep;
-                """,
-        """
-                SELECT SUM(total + discount), region, "strange*" + 3, sales.sales_rep, 314
-                FROM sales
-                GROUP BY region, sales_rep;
-                """ 
-    )]
-    [InlineData("""
-                SELECT SUM(base + "bonus") AS comp, username AS uname, age + 1 AS next_age, a.role AS r, 2 AS two
-                FROM accounts AS a
-                GROUP BY username, role;
-                """,
-        """
-                SELECT SUM(base + "bonus"), username, age + 1, accounts.role, 2
-                FROM accounts
-                GROUP BY username, role;
-                """ 
-    )]
-    [InlineData("""
-                SELECT SUM(price) OVER (PARTITION BY category ORDER BY id) AS running_sum
-                FROM sales AS s
-                """,
-        """
-                SELECT SUM(price) OVER (PARTITION BY category ORDER BY id)
-                FROM sales
-                """ 
-    )]
-    [InlineData("""
-                SELECT price, SUM(price) OVER (PARTITION BY category) AS cat_total
-                FROM sales AS s
-                """,
-        """
-                SELECT price, SUM(price) OVER (PARTITION BY category)
-                FROM sales
-                """
-    )]
-    [InlineData("""
-                SELECT SUM("price") OVER (PARTITION BY "group" ORDER BY "id") AS total
-                FROM "sales" AS s
-                """,
-        """
-                SELECT SUM("price") OVER (PARTITION BY "group" ORDER BY "id")
-                FROM "sales"
-                """
-    )]
-    [InlineData("""
-                SELECT SUM(price * 2) OVER (PARTITION BY category) AS doubled_sum
-                FROM sales AS s
-                """,
-        """
-                SELECT SUM(price * 2) OVER (PARTITION BY category)
-                FROM sales
-                """
-    )]
-    [InlineData("""
-                SELECT SUM(s.price) OVER (PARTITION BY "category" ORDER BY s.id) AS total_sum
-                FROM sales AS s
-                """,
-        """
-                SELECT SUM(sales.price) OVER (PARTITION BY "category" ORDER BY sales.id)
-                FROM sales
-                """
-    )]
-    [InlineData("""
-                SELECT 
-                    SUM(price) OVER (PARTITION BY category) AS total,
-                    AVG(price) OVER (PARTITION BY category ORDER BY id) AS avg_price
-                FROM sales AS s
-                """,
-        """
-                SELECT 
-                    SUM(price) OVER (PARTITION BY category),
-                    AVG(price) OVER (PARTITION BY category ORDER BY id)
-                FROM sales
-                """
-    )]
-    [InlineData("""
-                SELECT ROW_NUMBER() OVER (PARTITION BY category ORDER BY id) AS rn
-                FROM sales AS s
-                """,
-        """
-                SELECT ROW_NUMBER() OVER (PARTITION BY category ORDER BY id)
-                FROM sales
-                """
-    )]
-    [InlineData("""
-                SELECT ROW_NUMBER() OVER (PARTITION BY "group" ORDER BY "user") AS r
-                FROM "123" AS "t1"
-                """,
-        """
-                SELECT ROW_NUMBER() OVER (PARTITION BY "group" ORDER BY "user")
-                FROM "123"
-                """
-    )]
-    [InlineData("""
-                SELECT SUM(price) OVER (ORDER BY id) AS running_total
-                FROM sales AS s
-                """,
-        """
-                SELECT SUM(price) OVER (ORDER BY id)
-                FROM sales
-                """
-    )]
-    [InlineData("""
-                SELECT SUM(price) OVER (PARTITION BY category) AS total
-                FROM sales AS s
-                """,
-        """
-                SELECT SUM(price) OVER (PARTITION BY category)
-                FROM sales
-                """
-    )]
-    [InlineData("""
-                SELECT SUM("price" + tax) OVER (PARTITION BY category ORDER BY "id") AS total_sum
-                FROM sales AS s
-                """,
-        """
-                SELECT SUM("price" + tax) OVER (PARTITION BY category ORDER BY "id")
-                FROM sales
-                """
-    )]
-    [InlineData("""
-                SELECT id, category, SUM(price) OVER (PARTITION BY category ORDER BY id) AS total
-                FROM sales AS s
-                """,
-        """
-                SELECT id, category, SUM(price) OVER (PARTITION BY category ORDER BY id)
-                FROM sales
-                """
-    )]
-    // [InlineData("""
-    //             xxx
-    //             """,
-    //     """
-    //             xxx
-    //             """ 
-    // )]
-    // [InlineData("""
-    //             xxx
-    //             """,
-    //     """
-    //             xxx
-    //             """ 
-    // )]
-    // [InlineData("""
-    //             xxx
-    //             """,
-    //     """
-    //             xxx
-    //             """ 
-    // )]
-    // [InlineData("""
-    //             xxx
-    //             """,
-    //     """
-    //             xxx
-    //             """ 
-    // )]
-    // [InlineData("""
-    //             xxx
-    //             """,
-    //     """
-    //             xxx
-    //             """ 
-    // )]
-    // [InlineData("""
-    //             xxx
-    //             """,
-    //     """
-    //             xxx
-    //             """ 
-    // )]
-    // [InlineData("""
-    //             xxx
-    //             """,
-    //     """
-    //             xxx
-    //             """ 
-    // )]
-    // //----------------------
-    // [InlineData("""
-    //             xxx
-    //             """,
-    //     """
-    //             xxx
-    //             """ 
-    // )]
-    // [InlineData("""
-    //             xxx
-    //             """,
-    //     """
-    //             xxx
-    //             """ 
-    // )]
-    // [InlineData("""
-    //             xxx
-    //             """,
-    //     """
-    //             xxx
-    //             """ 
-    // )]
-    // [InlineData("""
-    //             xxx
-    //             """,
-    //     """
-    //             xxx
-    //             """ 
-    // )]
-    // [InlineData("""
-    //             xxx
-    //             """,
-    //     """
-    //             xxx
-    //             """ 
-    // )]
-    // [InlineData("""
-    //             xxx
-    //             """,
-    //     """
-    //             xxx
-    //             """ 
-    // )]
-    // [InlineData("""
-    //             xxx
-    //             """,
-    //     """
-    //             xxx
-    //             """ 
-    // )]
-    // [InlineData("""
-    //             xxx
-    //             """,
-    //     """
-    //             xxx
-    //             """ 
-    // )]
-    // [InlineData("""
-    //             xxx
-    //             """,
-    //     """
-    //             xxx
-    //             """ 
-    // )]
-    // [InlineData("""
-    //             xxx
-    //             """,
-    //     """
-    //             xxx
-    //             """ 
-    // )]
-    // [InlineData("""
-    //             xxx
-    //             """,
-    //     """
-    //             xxx
-    //             """ 
-    // )]
-    // [InlineData("""
-    //             xxx
-    //             """,
-    //     """
-    //             xxx
-    //             """ 
-    // )]
-    
-    public void Test(string query, string expected)
-    {
-        var actual = new AliasReplacer().ReplaceAliases(query);
-        Assert.Equal(expected, actual);
-    }
-
     [Fact]
-    public void ReplaceAliases_ClearsStateBetweenCallsOnTheSameInstance()
+    public void ReplaceAliases_ReplacesSelectAliasesInWhereAndGroupBy()
     {
-        var replacer = new AliasReplacer();
-
-        var first = replacer.ReplaceAliases("""
-                                           SELECT p.price
-                                           FROM product p
-                                           """);
-        var second = replacer.ReplaceAliases("""
-                                            SELECT price
-                                            FROM purchase
-                                            """);
+        var actual = new AliasReplacer().ReplaceAliases("""
+                                                       SELECT coffee_name as name, sum(cs.price_per_unit * cs.quantity) as sale
+                                                       FROM coffee_sales cs 
+                                                       JOIN coffee_types ct ON cs.coffee_id = ct.coffee_id
+                                                       WHERE name not like '%Espresso'
+                                                       GROUP BY name
+                                                       ORDER BY sale
+                                                       """);
 
         Assert.Equal("""
-                     SELECT product.price
-                     FROM product
-                     """, first);
-        Assert.Equal("""
-                     SELECT price
-                     FROM purchase
-                     """, second);
-    }
-
-    [Fact]
-    public void RemoveSelectAliases_RemovesOnlySelectAliases()
-    {
-        var actual = new AliasReplacer().RemoveSelectAliases("""
-                                                            SELECT p.price AS price_alias, p.name display_name
-                                                            FROM product AS p
-                                                            WHERE p.price > 10
-                                                            """);
-
-        Assert.Equal("""
-                     SELECT p.price, p.name
-                     FROM product AS p
-                     WHERE p.price > 10
+                     SELECT coffee_name as name, sum(cs.price_per_unit * cs.quantity) as sale
+                     FROM coffee_sales cs 
+                     JOIN coffee_types ct ON cs.coffee_id = ct.coffee_id
+                     WHERE coffee_name not like '%Espresso'
+                     GROUP BY coffee_name
+                     ORDER BY sale
                      """, actual);
     }
 
     [Fact]
-    public void InsertAliases_ReappliesAggregateAliasesBySelectIndex()
+    public void ReplaceAliases_DoesNotTouchOrderByLimitOrOffset()
     {
-        var replacer = new AliasReplacer();
+        var actual = new AliasReplacer().ReplaceAliases("""
+                                                       SELECT coffee_name AS name, sum(price) AS sale
+                                                       FROM coffee_sales
+                                                       WHERE name IS NOT NULL
+                                                       ORDER BY sale
+                                                       LIMIT sale
+                                                       OFFSET sale
+                                                       """);
 
-        replacer.RemoveSelectAliases("""
-                                    SELECT username, SUM(price) AS total_spend, COUNT() purchase_count
-                                    FROM purchase
-                                    GROUP BY username
-                                    """);
-
-        var visualisations = new List<visualizer.Models.Visualisation>
-        {
-            new()
-            {
-                Component = new visualizer.Models.SQLDecompositionComponent(SQLKeyword.SELECT, "username, SUM(price), COUNT()"),
-                FromTables = [],
-                ToTables =
-                [
-                    new visualizer.Models.Table
-                    {
-                        Name = string.Empty,
-                        ColumnNames = ["username", "SUM(price)", "COUNT()"],
-                        Entries = Array.Empty<visualizer.Models.TableEntry>(),
-                        ColumnTypes = [],
-                        Aggregations = []
-                    }
-                ],
-                Animation = new visualizer.Models.Animation([])
-            }
-        };
-
-        replacer.InsertAliases(visualisations);
-
-        Assert.Equal(["username", "total_spend", "purchase_count"], visualisations[0].ToTables[0].ColumnNames);
+        Assert.Equal("""
+                     SELECT coffee_name AS name, sum(price) AS sale
+                     FROM coffee_sales
+                     WHERE coffee_name IS NOT NULL
+                     ORDER BY sale
+                     LIMIT sale
+                     OFFSET sale
+                     """, actual);
     }
 
     [Fact]
-    public void InsertAliases_ReappliesMixedAliasesWithoutParsingExpressions()
+    public void ReplaceAliases_ReplacesAliasesInsideHavingAndJoinConditions()
     {
-        var replacer = new AliasReplacer();
+        var actual = new AliasReplacer().ReplaceAliases("""
+                                                       SELECT ct.coffee_name AS name, SUM(cs.quantity) AS total_qty
+                                                       FROM coffee_sales cs
+                                                       JOIN coffee_types ct ON name = ct.coffee_name
+                                                       GROUP BY name
+                                                       HAVING total_qty > 10 AND name <> 'Latte'
+                                                       ORDER BY total_qty
+                                                       """);
 
-        replacer.RemoveSelectAliases("""
-                                    SELECT p.name display_name, SUM(p.price * 2) AS total_value, p.category
-                                    FROM product AS p
-                                    GROUP BY p.name, p.category
-                                    """);
+        Assert.Equal("""
+                     SELECT ct.coffee_name AS name, SUM(cs.quantity) AS total_qty
+                     FROM coffee_sales cs
+                     JOIN coffee_types ct ON ct.coffee_name = ct.coffee_name
+                     GROUP BY ct.coffee_name
+                     HAVING SUM(cs.quantity) > 10 AND ct.coffee_name <> 'Latte'
+                     ORDER BY total_qty
+                     """, actual);
+    }
 
-        var visualisations = new List<visualizer.Models.Visualisation>
-        {
-            new()
-            {
-                Component = new visualizer.Models.SQLDecompositionComponent(SQLKeyword.SELECT, "product.name, SUM(product.price * 2), product.category"),
-                FromTables = [],
-                ToTables =
-                [
-                    new visualizer.Models.Table
-                    {
-                        Name = string.Empty,
-                        ColumnNames = ["name", "SUM(price * 2)", "category"],
-                        Entries = Array.Empty<visualizer.Models.TableEntry>(),
-                        ColumnTypes = [],
-                        Aggregations = []
-                    }
-                ],
-                Animation = new visualizer.Models.Animation([])
-            }
-        };
+    [Fact]
+    public void ReplaceAliases_LeavesQueriesWithoutSelectAliasesUnchanged()
+    {
+        var query = """
+                    SELECT coffee_name, price
+                    FROM coffee_sales
+                    WHERE coffee_name LIKE 'E%'
+                    ORDER BY price
+                    """;
 
-        replacer.InsertAliases(visualisations);
+        var actual = new AliasReplacer().ReplaceAliases(query);
 
-        Assert.Equal(["display_name", "total_value", "category"], visualisations[0].ToTables[0].ColumnNames);
+        Assert.Equal(query, actual);
+    }
+
+    [Theory]
+    [InlineData(
+        """
+        SELECT coffee_name name, sum(cs.price_per_unit * cs.quantity) sale
+        FROM coffee_sales cs 
+        JOIN coffee_types ct ON cs.coffee_id = ct.coffee_id
+        WHERE name not like '%Espresso'
+        GROUP BY name
+        ORDER BY sale
+        """,
+        """
+        SELECT coffee_name name, sum(cs.price_per_unit * cs.quantity) sale
+        FROM coffee_sales cs 
+        JOIN coffee_types ct ON cs.coffee_id = ct.coffee_id
+        WHERE coffee_name not like '%Espresso'
+        GROUP BY coffee_name
+        ORDER BY sale
+        """
+        )]
+    [InlineData(
+        """
+        SELECT coffee_name name, sum(cs.price_per_unit * cs.quantity) sale
+        FROM coffee_sales cs 
+        JOIN coffee_types ct ON cs.coffee_id = ct.coffee_id
+        WHERE name not like '%Espresso'
+        GROUP BY name
+        ORDER BY sale
+        """,
+        """
+        SELECT coffee_name name, sum(cs.price_per_unit * cs.quantity) sale
+        FROM coffee_sales cs 
+        JOIN coffee_types ct ON cs.coffee_id = ct.coffee_id
+        WHERE coffee_name not like '%Espresso'
+        GROUP BY coffee_name
+        ORDER BY sale
+        """
+        )]
+
+[InlineData(
+        """
+        SELECT product_name pname, category c
+        FROM products
+        WHERE pname = 'Tea'
+        GROUP BY pname, c
+        HAVING c <> 'Cold'
+        ORDER BY pname
+        """,
+        """
+        SELECT product_name pname, category c
+        FROM products
+        WHERE product_name = 'Tea'
+        GROUP BY product_name, category
+        HAVING category <> 'Cold'
+        ORDER BY pname
+        """
+        )]
+
+[InlineData(
+        """
+        SELECT customer_id cid, count(*) total_orders
+        FROM orders
+        WHERE cid > 10
+        GROUP BY cid
+        HAVING total_orders > 3
+        ORDER BY total_orders desc
+        """,
+        """
+        SELECT customer_id cid, count(*) total_orders
+        FROM orders
+        WHERE customer_id > 10
+        GROUP BY customer_id
+        HAVING count(*) > 3
+        ORDER BY total_orders desc
+        """
+        )]
+
+[InlineData(
+        """
+        SELECT price * quantity total, product_id pid
+        FROM order_lines
+        WHERE total > 100
+        GROUP BY pid, total
+        ORDER BY total
+        """,
+        """
+        SELECT price * quantity total, product_id pid
+        FROM order_lines
+        WHERE price * quantity > 100
+        GROUP BY product_id, price * quantity
+        ORDER BY total
+        """
+        )]
+
+[InlineData(
+        """
+        SELECT first_name || ' ' || last_name full_name, department dept
+        FROM employees
+        WHERE full_name like 'A%'
+        GROUP BY full_name, dept
+        HAVING dept = 'Sales'
+        ORDER BY full_name
+        """,
+        """
+        SELECT first_name || ' ' || last_name full_name, department dept
+        FROM employees
+        WHERE first_name || ' ' || last_name like 'A%'
+        GROUP BY first_name || ' ' || last_name, department
+        HAVING department = 'Sales'
+        ORDER BY full_name
+        """
+        )]
+
+[InlineData(
+        """
+        SELECT region r, sum(amount) revenue
+        FROM sales
+        WHERE r in ('North', 'South')
+        GROUP BY r
+        HAVING revenue >= 1000
+        LIMIT 5
+        OFFSET 2
+        """,
+        """
+        SELECT region r, sum(amount) revenue
+        FROM sales
+        WHERE region in ('North', 'South')
+        GROUP BY region
+        HAVING sum(amount) >= 1000
+        LIMIT 5
+        OFFSET 2
+        """
+        )]
+
+[InlineData(
+        """
+        SELECT order_date d, customer_id cid, sum(total_price) total_sales
+        FROM orders
+        WHERE d >= '2025-01-01'
+        GROUP BY d, cid
+        HAVING total_sales > 500
+        ORDER BY d, total_sales
+        """,
+        """
+        SELECT order_date d, customer_id cid, sum(total_price) total_sales
+        FROM orders
+        WHERE order_date >= '2025-01-01'
+        GROUP BY order_date, customer_id
+        HAVING sum(total_price) > 500
+        ORDER BY d, total_sales
+        """
+        )]
+
+[InlineData(
+        """
+        SELECT city town, count(*) visits
+        FROM customers
+        WHERE town is not null
+        GROUP BY town
+        HAVING visits > 1
+        ORDER BY town asc
+        LIMIT 10
+        """,
+        """
+        SELECT city town, count(*) visits
+        FROM customers
+        WHERE city is not null
+        GROUP BY city
+        HAVING count(*) > 1
+        ORDER BY town asc
+        LIMIT 10
+        """
+        )]
+
+[InlineData(
+        """
+        SELECT salary * 12 yearly_salary, department dept
+        FROM employees
+        WHERE yearly_salary > 60000
+        GROUP BY yearly_salary, dept
+        HAVING dept <> 'HR'
+        ORDER BY yearly_salary
+        """,
+        """
+        SELECT salary * 12 yearly_salary, department dept
+        FROM employees
+        WHERE salary * 12 > 60000
+        GROUP BY salary * 12, department
+        HAVING department <> 'HR'
+        ORDER BY yearly_salary
+        """
+        )]
+
+[InlineData(
+        """
+        SELECT category cat, avg(price) avg_price
+        FROM products
+        WHERE cat <> 'Snacks'
+        GROUP BY cat
+        HAVING avg_price < 20
+        ORDER BY avg_price
+        OFFSET 4
+        """,
+        """
+        SELECT category cat, avg(price) avg_price
+        FROM products
+        WHERE category <> 'Snacks'
+        GROUP BY category
+        HAVING avg(price) < 20
+        ORDER BY avg_price
+        OFFSET 4
+        """
+        )]
+
+[InlineData(
+        """
+        SELECT u.username uname, u.age years
+        FROM users u
+        WHERE uname like 'M%'
+        AND years >= 18
+        GROUP BY uname, years
+        ORDER BY uname
+        """,
+        """
+        SELECT u.username uname, u.age years
+        FROM users u
+        WHERE u.username like 'M%'
+        AND u.age >= 18
+        GROUP BY u.username, u.age
+        ORDER BY uname
+        """
+        )]
+
+[InlineData(
+        """
+        SELECT p.productname pname, p.price cost
+        FROM product p
+        JOIN purchase pu ON pname = pu.productname
+        WHERE cost > 50
+        GROUP BY pname, cost, pu.username
+        HAVING pname <> 'Tea'
+        ORDER BY cost desc
+        """,
+        """
+        SELECT p.productname pname, p.price cost
+        FROM product p
+        JOIN purchase pu ON p.productname = pu.productname
+        WHERE p.price > 50
+        GROUP BY p.productname, p.price, pu.username
+        HAVING p.productname <> 'Tea'
+        ORDER BY cost desc
+        """
+        )]
+
+[InlineData(
+        """
+        SELECT extract(year from order_date) order_year, count(*) cnt
+        FROM orders
+        WHERE order_year = 2025
+        GROUP BY order_year
+        HAVING cnt > 10
+        ORDER BY cnt desc
+        """,
+        """
+        SELECT extract(year from order_date) order_year, count(*) cnt
+        FROM orders
+        WHERE extract(year from order_date) = 2025
+        GROUP BY extract(year from order_date)
+        HAVING count(*) > 10
+        ORDER BY cnt desc
+        """
+        )]
+
+[InlineData(
+        """
+        SELECT price + tax final_price, item_name item
+        FROM items
+        WHERE final_price between 100 and 200
+        GROUP BY final_price, item
+        HAVING item <> 'Mug'
+        ORDER BY item
+        """,
+        """
+        SELECT price + tax final_price, item_name item
+        FROM items
+        WHERE price + tax between 100 and 200
+        GROUP BY price + tax, item_name
+        HAVING item_name <> 'Mug'
+        ORDER BY item
+        """
+        )]
+
+[InlineData(
+        """
+        SELECT department dept, max(salary) top_salary
+        FROM employees
+        WHERE dept = 'Engineering'
+        GROUP BY dept
+        HAVING top_salary > 100000
+        ORDER BY top_salary
+        LIMIT 3
+        OFFSET 1
+        """,
+        """
+        SELECT department dept, max(salary) top_salary
+        FROM employees
+        WHERE department = 'Engineering'
+        GROUP BY department
+        HAVING max(salary) > 100000
+        ORDER BY top_salary
+        LIMIT 3
+        OFFSET 1
+        """
+        )]
+    [InlineData(
+        """
+        SELECT productname pname, price cost
+        FROM product
+        WHERE pname = 'Tea'
+        AND cost >= 100
+        ORDER BY pname, cost
+        """,
+        """
+        SELECT productname pname, price cost
+        FROM product
+        WHERE productname = 'Tea'
+        AND price >= 100
+        ORDER BY pname, cost
+        """
+        )]
+
+[InlineData(
+        """
+        SELECT p.productname pname, p.price price_value
+        FROM product p
+        JOIN purchase pu ON pname = pu.productname
+        WHERE price_value > 80
+        ORDER BY price_value desc
+        """,
+        """
+        SELECT p.productname pname, p.price price_value
+        FROM product p
+        JOIN purchase pu ON p.productname = pu.productname
+        WHERE p.price > 80
+        ORDER BY price_value desc
+        """
+        )]
+
+[InlineData(
+        """
+        SELECT productname as pname, price * 1.25 as taxed_price
+        FROM product
+        WHERE taxed_price > 100
+        GROUP BY pname, taxed_price
+        ORDER BY taxed_price
+        """,
+        """
+        SELECT productname as pname, price * 1.25 as taxed_price
+        FROM product
+        WHERE price * 1.25 > 100
+        GROUP BY productname, price * 1.25
+        ORDER BY taxed_price
+        """
+        )]
+
+[InlineData(
+        """
+        SELECT username uname, count(*) purchases
+        FROM purchase
+        WHERE uname is not null
+        GROUP BY uname
+        HAVING purchases > 1
+        ORDER BY purchases desc
+        """,
+        """
+        SELECT username uname, count(*) purchases
+        FROM purchase
+        WHERE username is not null
+        GROUP BY username
+        HAVING count(*) > 1
+        ORDER BY purchases desc
+        """
+        )]
+
+[InlineData(
+        """
+        SELECT purchasetime ptime, productname pname
+        FROM purchase
+        WHERE ptime >= TIMESTAMP '2025-02-12 00:00:00'
+        GROUP BY ptime, pname
+        ORDER BY ptime
+        """,
+        """
+        SELECT purchasetime ptime, productname pname
+        FROM purchase
+        WHERE purchasetime >= TIMESTAMP '2025-02-12 00:00:00'
+        GROUP BY purchasetime, productname
+        ORDER BY ptime
+        """
+        )]
+
+[InlineData(
+        """
+        SELECT p.productname name, coalesce(p.price, 0) safe_price
+        FROM product p
+        WHERE safe_price >= 50
+        GROUP BY name, safe_price
+        HAVING safe_price < 500
+        ORDER BY safe_price
+        """,
+        """
+        SELECT p.productname name, coalesce(p.price, 0) safe_price
+        FROM product p
+        WHERE coalesce(p.price, 0) >= 50
+        GROUP BY p.productname, coalesce(p.price, 0)
+        HAVING coalesce(p.price, 0) < 500
+        ORDER BY safe_price
+        """
+        )]
+
+[InlineData(
+        """
+        SELECT p.productname name, length(p.productname) len
+        FROM product p
+        WHERE len > 3
+        GROUP BY name, len
+        HAVING len < 20
+        ORDER BY len
+        """,
+        """
+        SELECT p.productname name, length(p.productname) len
+        FROM product p
+        WHERE length(p.productname) > 3
+        GROUP BY p.productname, length(p.productname)
+        HAVING length(p.productname) < 20
+        ORDER BY len
+        """
+        )]
+
+[InlineData(
+        """
+        SELECT productname name, upper(productname) upper_name
+        FROM product
+        WHERE upper_name like 'T%'
+        GROUP BY name, upper_name
+        ORDER BY upper_name
+        """,
+        """
+        SELECT productname name, upper(productname) upper_name
+        FROM product
+        WHERE upper(productname) like 'T%'
+        GROUP BY productname, upper(productname)
+        ORDER BY upper_name
+        """
+        )]
+
+[InlineData(
+        """
+        SELECT price + 10 adjusted, productname pname
+        FROM product
+        WHERE adjusted between 90 and 120
+        GROUP BY adjusted, pname
+        HAVING adjusted <> 95
+        ORDER BY adjusted
+        """,
+        """
+        SELECT price + 10 adjusted, productname pname
+        FROM product
+        WHERE price + 10 between 90 and 120
+        GROUP BY price + 10, productname
+        HAVING price + 10 <> 95
+        ORDER BY adjusted
+        """
+        )]
+
+[InlineData(
+        """
+        SELECT p.productname pname, p.price cost, pu.username uname
+        FROM product p
+        JOIN purchase pu ON pname = pu.productname AND uname is not null
+        WHERE cost > 50
+        GROUP BY pname, cost, uname
+        ORDER BY uname, cost
+        """,
+        """
+        SELECT p.productname pname, p.price cost, pu.username uname
+        FROM product p
+        JOIN purchase pu ON p.productname = pu.productname AND pu.username is not null
+        WHERE p.price > 50
+        GROUP BY p.productname, p.price, pu.username
+        ORDER BY uname, cost
+        """
+        )]
+
+[InlineData(
+        """
+        SELECT date_trunc('day', purchasetime) sale_day, count(*) cnt
+        FROM purchase
+        WHERE sale_day >= DATE '2025-02-12'
+        GROUP BY sale_day
+        HAVING cnt > 0
+        ORDER BY sale_day
+        """,
+        """
+        SELECT date_trunc('day', purchasetime) sale_day, count(*) cnt
+        FROM purchase
+        WHERE date_trunc('day', purchasetime) >= DATE '2025-02-12'
+        GROUP BY date_trunc('day', purchasetime)
+        HAVING count(*) > 0
+        ORDER BY sale_day
+        """
+        )]
+
+[InlineData(
+        """
+        SELECT regexp_replace(productname, 'a', 'x') weird_name, price price_value
+        FROM product
+        WHERE weird_name <> 'Tea'
+        AND price_value is not null
+        GROUP BY weird_name, price_value
+        ORDER BY weird_name
+        """,
+        """
+        SELECT regexp_replace(productname, 'a', 'x') weird_name, price price_value
+        FROM product
+        WHERE regexp_replace(productname, 'a', 'x') <> 'Tea'
+        AND price is not null
+        GROUP BY regexp_replace(productname, 'a', 'x'), price
+        ORDER BY weird_name
+        """
+        )]
+
+[InlineData(
+        """
+        SELECT productname as "name", price as "value"
+        FROM product
+        WHERE "name" like 'T%'
+        GROUP BY "name", "value"
+        HAVING "value" > 50
+        ORDER BY "value"
+        """,
+        """
+        SELECT productname as "name", price as "value"
+        FROM product
+        WHERE productname like 'T%'
+        GROUP BY productname, price
+        HAVING price > 50
+        ORDER BY "value"
+        """
+        )]
+
+[InlineData(
+        """
+        SELECT "productname" as pname, "price" as cost
+        FROM product
+        WHERE pname is distinct from 'Coffee'
+        GROUP BY pname, cost
+        HAVING cost is not null
+        ORDER BY cost
+        """,
+        """
+        SELECT "productname" as pname, "price" as cost
+        FROM product
+        WHERE "productname" is distinct from 'Coffee'
+        GROUP BY "productname", "price"
+        HAVING "price" is not null
+        ORDER BY cost
+        """
+        )]
+
+[InlineData(
+        """
+        SELECT p.productname pname, p.price + 1 one_more
+        FROM product p
+        WHERE not (one_more < 10)
+        GROUP BY pname, one_more
+        HAVING one_more >= 1
+        ORDER BY one_more
+        """,
+        """
+        SELECT p.productname pname, p.price + 1 one_more
+        FROM product p
+        WHERE not (p.price + 1 < 10)
+        GROUP BY p.productname, p.price + 1
+        HAVING p.price + 1 >= 1
+        ORDER BY one_more
+        """
+        )]
+
+[InlineData(
+        """
+        SELECT p.productname pname, p.price cost
+        FROM product p
+        JOIN purchase pu ON lower(pname) = lower(pu.productname)
+        WHERE cost * 2 > 100
+        GROUP BY pname, cost
+        ORDER BY pname
+        """,
+        """
+        SELECT p.productname pname, p.price cost
+        FROM product p
+        JOIN purchase pu ON lower(p.productname) = lower(pu.productname)
+        WHERE p.price * 2 > 100
+        GROUP BY p.productname, p.price
+        ORDER BY pname
+        """
+        )]
+
+[InlineData(
+        """
+        SELECT p.productname pname, count(*) cnt
+        FROM product p
+        JOIN purchase pu ON pname = pu.productname
+        GROUP BY pname
+        HAVING cnt between 1 and 5
+        ORDER BY cnt
+        LIMIT 10
+        OFFSET 2
+        """,
+        """
+        SELECT p.productname pname, count(*) cnt
+        FROM product p
+        JOIN purchase pu ON p.productname = pu.productname
+        GROUP BY p.productname
+        HAVING count(*) between 1 and 5
+        ORDER BY cnt
+        LIMIT 10
+        OFFSET 2
+        """
+        )]
+
+[InlineData(
+        """
+        SELECT p.productname pname, sum(pu.purchasetime is not null) hits
+        FROM product p
+        LEFT JOIN purchase pu ON pname = pu.productname
+        GROUP BY pname
+        HAVING hits > 0
+        ORDER BY hits desc
+        """,
+        """
+        SELECT p.productname pname, sum(pu.purchasetime is not null) hits
+        FROM product p
+        LEFT JOIN purchase pu ON p.productname = pu.productname
+        GROUP BY p.productname
+        HAVING sum(pu.purchasetime is not null) > 0
+        ORDER BY hits desc
+        """
+        )]
+
+[InlineData(
+        """
+        SELECT productname pname, price cost
+        FROM product
+        WHERE (pname = 'Tea' OR pname = 'Small')
+        AND cost >= 85
+        GROUP BY pname, cost
+        ORDER BY pname
+        """,
+        """
+        SELECT productname pname, price cost
+        FROM product
+        WHERE (productname = 'Tea' OR productname = 'Small')
+        AND price >= 85
+        GROUP BY productname, price
+        ORDER BY pname
+        """
+        )]
+
+[InlineData(
+        """
+        SELECT substring(productname, 1, 2) prefix, price cost
+        FROM product
+        WHERE prefix = 'Te'
+        GROUP BY prefix, cost
+        HAVING cost > 10
+        ORDER BY prefix
+        """,
+        """
+        SELECT substring(productname, 1, 2) prefix, price cost
+        FROM product
+        WHERE substring(productname, 1, 2) = 'Te'
+        GROUP BY substring(productname, 1, 2), price
+        HAVING price > 10
+        ORDER BY prefix
+        """
+        )]
+    public void General(string query, string expected)
+    {
+        var actual = new AliasReplacer().ReplaceAliases(query);
+        Assert.Equal(expected, actual);
     }
 }

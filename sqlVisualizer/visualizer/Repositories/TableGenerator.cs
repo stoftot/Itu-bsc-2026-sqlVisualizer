@@ -142,14 +142,9 @@ public class TableGenerator(SQLExecutor sqlExecutor, TableOriginColumnsGenerator
         if (fromTables.Count > 1)
             throw new ArgumentException("Group by can only be generated when there is only one from table");
         var tabel = fromTables[0].DeepClone();
-        var columnNamesToGroupBy = currentStep.Clause.Split(',');
+        var columnNamesToGroupBy = currentStep.Clause.Split(',', StringSplitOptions.TrimEntries);
 
-        var groupByIndexes = new List<int>();
-
-        foreach (var columName in columnNamesToGroupBy)
-        {
-            groupByIndexes.Add(tabel.IndexOfColumn(columName.Trim()));
-        }
+        var groupByIndexes = tabel.IndexOfColumns(columnNamesToGroupBy).ToList();
 
         var groupedTables = tabel.Entries
             .GroupBy(e => new CompositeKey(groupByIndexes.Select(i => e.Values[i].RawValue)))

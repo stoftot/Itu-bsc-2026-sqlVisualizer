@@ -47,7 +47,7 @@ public class Table
     /// <exception cref="ArgumentException"></exception>
     public int IndexOfColumn(string column)
     {
-        var parts = column.Trim().Split('.', 2);
+        var parts = column.Trim().Split(" ", 2)[0].Split('.', 2);
         var tableName = parts.Length == 2 ? parts[0] : null;
         var columnName = parts.Length == 2 ? parts[1] : parts[0];
 
