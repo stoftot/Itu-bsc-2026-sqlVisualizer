@@ -24,4 +24,31 @@
     background: #f1f5f9;
     border-top: 1px solid #d1d5db;
     border-bottom: 1px solid #d1d5db;
+    display: flex;
+    padding: 6px 12px;
+    align-items: center;
+}
+
+.text-button {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    background: #1a2e4a;
+    color: white;
+    border-radius: 4px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+}
+
+.text-button__text {
+    display: inline;
+    margin-bottom: 0;
+    color: white;
+}
+
+.text-button .bi {
+    color: white;
+    font-size: 1rem;
 }
