@@ -1,19 +1,36 @@
 using visualizer.Models;
+using visualizer.Utility;
 
 namespace visualizer.Repositories.AnimationClasses;
 
 public static class WhereAnimationGenerator
 {
     private static TableVisualModifier tvm = new();
+
     public static Animation Generate(Table fromTable, Table toTable, SQLDecompositionComponent action)
     {
-        var steps = new List<Action>{tvm.HideTableCellBased(toTable)};
+        var columnsInClause = UtilRegex.ExtractReferencedColumns(action.Clause);
+        var columnsInClauseIndexes = fromTable.IndexOfColumns(columnsInClause, ignoreColumnsNotFound: true);
+
+        var steps = new List<Action>
+        {
+            tvm.CombineActions(
+            [
+                tvm.HideTableCellBased(toTable),
+                tvm.ChangeHighlightColourColumns(fromTable, columnsInClauseIndexes, UtilColor.SecondaryHighlightColor)
+            ])
+        };
 
         var remainingResultRows = toTable.Entries.ToList();
         
-        foreach (var fromEntry in fromTable.Entries)
+        for(int i = 0; i < fromTable.Entries.Count; i++)
         {
-            var highlightSource = tvm.GenerateToggleHighlightRow(fromEntry);
+            var fromEntry = fromTable.Entries[i];
+            var highlightSource = tvm.CombineActions(
+                [
+                    tvm.GenerateToggleHighlightRow(fromEntry),
+                    tvm.GenerateToggleHighlightCells(fromTable, i, columnsInClauseIndexes)
+                ]);
 
             var matchingResult = remainingResultRows.FirstOrDefault(r =>
                 r.Values.Select(v => v.Value)
@@ -29,7 +46,7 @@ public static class WhereAnimationGenerator
 
                 steps.Add(tvm.CombineActions([
                     highlightSource,
-                    tvm.GenerateToggleHighlightRow(matchingResult)
+                    tvm.GenerateToggleHighlightRow(matchingResult),
                 ]));
 
                 remainingResultRows.Remove(matchingResult);
