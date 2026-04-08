@@ -348,6 +348,7 @@ public class MetricsHandler : IMetricsHandler
                SUM(time_spent_ms),
                SUM(animation_ms)
         FROM time_spent
+        WHERE time_spent_ms < 600000
         GROUP BY step
         ORDER BY step;
     ";
