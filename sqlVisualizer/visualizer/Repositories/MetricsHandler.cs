@@ -101,8 +101,8 @@ public class MetricsHandler : IMetricsHandler
 
         using var command = connection.CreateCommand();
         command.CommandText = @"
-        SELECT action_type, sql_keyword, count
-        FROM action_keyword_metrics
+        SELECT sql_keyword, action_type, sum(count)
+        FROM action_keyword_metrics group by sql_keyword, action_type
     ";
 
         using var reader = command.ExecuteReader();
@@ -113,8 +113,8 @@ public class MetricsHandler : IMetricsHandler
         {
             result.Add(new ActionKeywordMetric
             {
-                ActionType = reader.GetString(0),
-                SqlKeyword = reader.GetString(1),
+                ActionType = reader.GetString(1),
+                SqlKeyword = reader.GetString(0),
                 Count = reader.GetInt64(2)
             });
         }

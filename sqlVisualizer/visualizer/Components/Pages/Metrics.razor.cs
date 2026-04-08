@@ -69,7 +69,6 @@ public partial class Metrics : ComponentBase
         {
             var group = keywordCounts[i];
             var actions = group.ToList();
-        
             // Skip if no actions for this keyword
             if (actions.Count == 0)
                 continue;
@@ -79,7 +78,7 @@ public partial class Metrics : ComponentBase
         
             for (var j = 0; j < actions.Count; j++)
             {
-                subLabels[j] = actions[j].ActionType.ToString();
+                subLabels[j] = actions[j].ActionType;
                 subValues[j] = actions[j].Count;
             }
         
