@@ -8,7 +8,7 @@ public static class LimitAnimationGenerator
 
     public static Animation Generate(Table fromTable, Table toTable, SQLDecompositionComponent action)
     {
-        var steps = new List<Action>();
+        var steps = new List<Action>{tvm.HideTableCellBased(toTable)};
         
         if (!int.TryParse(action.Clause.Trim(), out var limitCount) || limitCount <= 0)
         {
@@ -28,7 +28,8 @@ public static class LimitAnimationGenerator
             {
                 steps.Add(tvm.CombineActions([
                     highlightSource,
-                    tvm.GenerateToggleHighlightRow(matchingResult)
+                    tvm.GenerateToggleHighlightRow(matchingResult),
+                    tvm.GenerateToggleVisibleCellsInRow(matchingResult)
                 ]));
 
                 steps.Add(tvm.CombineActions([

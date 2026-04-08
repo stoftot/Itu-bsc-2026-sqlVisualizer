@@ -7,10 +7,10 @@ public static class WhereAnimationGenerator
     private static TableVisualModifier tvm = new();
     public static Animation Generate(Table fromTable, Table toTable, SQLDecompositionComponent action)
     {
-        var steps = new List<Action>();
+        var steps = new List<Action>{tvm.HideTableCellBased(toTable)};
 
         var remainingResultRows = toTable.Entries.ToList();
-
+        
         foreach (var fromEntry in fromTable.Entries)
         {
             var highlightSource = tvm.GenerateToggleHighlightRow(fromEntry);
@@ -23,7 +23,8 @@ public static class WhereAnimationGenerator
             {
                 steps.Add(tvm.CombineActions([
                     highlightSource,
-                    tvm.GenerateToggleHighlightRow(matchingResult)
+                    tvm.GenerateToggleHighlightRow(matchingResult),
+                    tvm.GenerateToggleVisibleCellsInRow(matchingResult)
                 ]));
 
                 steps.Add(tvm.CombineActions([
