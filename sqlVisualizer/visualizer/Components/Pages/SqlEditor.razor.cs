@@ -42,6 +42,7 @@ public partial class SqlEditor : ComponentBase
     {
         try
         {
+            DuckDbSQLDecomposer.ValidateWithDuckDb(sql);
             HasExecutionError = false;
             ExecutionErrorMessage = string.Empty;
             resultTable = await SQLExecutor.Execute(sql);
