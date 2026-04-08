@@ -13,7 +13,7 @@ public static class JoinAnimationGenerator
     public static Animation Generate(List<Table> fromTables, Table toTable,
         SQLDecompositionComponent action)
     {
-        var joiningTableName = ExtractSourceName(action.Clause);
+        var joiningTableName = UtilRegex.ExtractTableNameFromJoin(action.Clause);
 
         var primaryTable = fromTables.First(t => t.Name != joiningTableName);
         var joiningTable = fromTables.First(t => t.Name == joiningTableName);
@@ -420,18 +420,6 @@ public static class JoinAnimationGenerator
 
         return p.Concat(j)
             .SequenceEqual(r);
-    }
-
-    private static string ExtractSourceName(string clause)
-    {
-        var onIndex = clause.IndexOf(" ON ", StringComparison.OrdinalIgnoreCase);
-        var beforeOn = onIndex >= 0 ? clause[..onIndex].Trim() : clause.Trim();
-        var parts = beforeOn.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-
-        if (parts.Length >= 2)
-            return parts[^1];
-
-        return parts[0];
     }
 
     /// <summary>

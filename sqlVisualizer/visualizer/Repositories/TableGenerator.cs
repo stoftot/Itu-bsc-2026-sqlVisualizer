@@ -1,6 +1,7 @@
 ﻿using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc;
 using visualizer.Models;
+using visualizer.Utility;
 
 namespace visualizer.Repositories;
 
@@ -47,21 +48,9 @@ public class TableGenerator(SQLExecutor sqlExecutor, TableOriginColumnsGenerator
             ? (IEnumerable<SQLDecompositionComponent>)[withComponent, fromClause]
             : [fromClause];
         var joiningTable = sqlExecutor.Execute(components).Result;
-        joiningTable.Name = ExtractSourceName(currentStep.Clause);
+        joiningTable.Name = UtilRegex.ExtractTableNameFromJoin(currentStep.Clause);
         tocg.GenerateTableOriginOnColumnsFromTableName(joiningTable);
         fromTables.Add(joiningTable);
-    }
-
-    private static string ExtractSourceName(string clause)
-    {
-        var onIndex = clause.IndexOf(" ON ", StringComparison.OrdinalIgnoreCase);
-        var beforeOn = onIndex >= 0 ? clause[..onIndex].Trim() : clause.Trim();
-        var parts = beforeOn.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-
-        if (parts.Length >= 2)
-            return parts[^1];
-
-        return parts[0];
     }
 
     private void GenerateFromTablesHaving(List<Table> fromTables, SQLDecompositionComponent currStep,

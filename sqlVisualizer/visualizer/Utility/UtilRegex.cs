@@ -80,7 +80,7 @@ public static class UtilRegex
     public static IEnumerable<string> ExtractReferencedColumns(string expression)
     {
         var potenTialColumns = expression.Split(' ');
-        var columns = new List<string>();
+        var columns = new HashSet<string>();
         const string pattern = @""".+""|\b.+";
         foreach (var pc in potenTialColumns)
         {
@@ -88,5 +88,11 @@ public static class UtilRegex
             if (match.Success) columns.Add(match.Groups[0].Value.Trim());
         }
         return columns.Where(value => !int.TryParse(value, out _));
+    }
+
+    public static string ExtractTableNameFromJoin(string clause)
+    {
+        var beforeOn = Regex.Split(clause, @"\bON\b", RegexOptions.IgnoreCase | RegexOptions.Singleline)[0];
+        return beforeOn.Trim().Split(" ", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Last();
     }
 }

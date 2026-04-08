@@ -286,6 +286,14 @@ public class VisulisationGenerationTest : IClassFixture<DuckDbFixture>
                 GROUP BY pr.productname
                 HAVING totalSale > 100
                 """)]
+    [InlineData("""
+                SELECT coffee_name, sum(cs.price_per_unit * cs.quantity) as sale
+                FROM coffee_sales cs JOIN coffee_types ct
+                ON ct.coffee_id = cs.coffee_id
+                WHERE ct.coffee_name not like '%Espresso'
+                GROUP BY ct.coffee_name
+                ORDER BY sale
+                """)]
     public void Combination(string query)
     {
         TestQuery(query);
