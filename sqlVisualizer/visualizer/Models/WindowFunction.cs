@@ -14,7 +14,7 @@ public class WindowFunction
 
     public static WindowFunction FromString(string windowFunction)
     {
-        var match = UtilRegex.Match(windowFunction, UtilRegex.NamedWindowFunctionPattern);
+        var match = UtilRegex.Match(windowFunction.Replace(")", " )"), UtilRegex.NamedWindowFunctionPattern);
         return new WindowFunction
         {
             SQL = windowFunction,

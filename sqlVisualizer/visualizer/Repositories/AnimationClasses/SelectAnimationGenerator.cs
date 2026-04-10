@@ -49,7 +49,7 @@ public static class SelectAnimationGenerator
         {
             columns.Add(currentColumn.ToString().Trim());
         }
-
+        
         return columns;
     }
 
