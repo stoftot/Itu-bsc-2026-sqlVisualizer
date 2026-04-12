@@ -39,13 +39,13 @@ public partial class ToolBar : ComponentBase, IDisposable
 
     async Task RunQuery()
     {
+        await RunQueryCallback.InvokeAsync();
         var editorContent = await HomeState.Editor.GetValue() ?? "";
         HomeState.CurrentEditorQuery = editorContent;
         MetricsHandler.RecordQuery(HomeState.SessionId, editorContent);
         await HomeState.RunSQL(editorContent);
         HomeState.LastVisualizedQuery = editorContent;
         HomeState.NotifyStateChanged();
-        await RunQueryCallback.InvokeAsync();
     }
 
     async Task SelectStep(int index)
