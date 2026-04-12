@@ -12,13 +12,13 @@
     
     <main class="main-content">
         <div class="view">
-            @if (viewVisulisation)
+            @if (HomeState.IsViewingTable)
             {
-                <QueryIlustrationView @ref="QueryView" Query="@_query"/>
+                <TableView @key="@Guid.NewGuid()" Table="tableSelected"/>
             }
             else
             {
-                <TableView @key="@Guid.NewGuid()" Table="tableSelected"/>
+                <QueryIlustrationView @ref="QueryView" Query="@_query"/>
             }
         </div>
 

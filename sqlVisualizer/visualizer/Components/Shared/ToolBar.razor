@@ -15,9 +15,11 @@
                 </select>
             </div>
         }
-
-        <span title="@(HomeState.IsShowingLatestVisualisation ? "Already showing the latest visualization. Change the query to run again." : null)">
-            <button @onclick="RunQuery" class="text-button" disabled="@HomeState.IsShowingLatestVisualisation">
+        <span title="@(HomeState is { IsShowingLatestVisualisation: true, IsViewingTable: false }
+                         ? "Already showing the latest visualization. Change the query to run again."
+                         : null)">
+            <button @onclick="RunQuery" class="text-button"
+                    disabled="@(HomeState is { IsShowingLatestVisualisation: true, IsViewingTable: false })">
                 <p class="text-button__text">Run Query</p>
                 <i class="bi bi-play-fill"></i>
             </button>
@@ -27,7 +29,7 @@
     <div class="editor-part">
         <div class="stepper">
             <button @onclick="StepPrevious"
-                    disabled="@(HomeState.CurrentStepIndex <= 0)">
+                    disabled="@(HomeState.CurrentStepIndex <= 0 || HomeState.IsViewingTable)">
                 <i class="bi bi-chevron-left"></i>
             </button>
             
@@ -36,34 +38,44 @@
                 int index = i;
                 @if (i == HomeState.CurrentStepIndex)
                 {
-                    <button class="stepper__step stepper__step--selected" @onclick="async () => await SelectStep(index)">@HomeState.Steps[index].Component.Keyword.ToSQLString()</button>
+                    <button class="stepper__step stepper__step--selected" @onclick="async () => await SelectStep(index)"
+                            disabled="@HomeState.IsViewingTable">
+                        @HomeState.Steps[index].Component.Keyword.ToSQLString()
+                    </button>
                 }
                 else
                 {
-                    <button class="stepper__step" @onclick="async () => await SelectStep(index)">@HomeState.Steps[index].Component.Keyword.ToSQLString()</button>
+                    <button class="stepper__step" @onclick="async () => await SelectStep(index)"
+                            disabled="@HomeState.IsViewingTable">
+                        @HomeState.Steps[index].Component.Keyword.ToSQLString()
+                    </button>
                 }
             }
             <button @onclick="StepNext"
-                    disabled="@(HomeState.CurrentStepIndex >= HomeState.Steps.Count - 1)">
+                    disabled="@(HomeState.CurrentStepIndex >= HomeState.Steps.Count - 1 || HomeState.IsViewingTable)">
                 <i class="bi bi-chevron-right"></i>
             </button>
         </div>
         
         <div class="stepper animation-stepper">
             <button @onclick="StepAnimationPrevious"
-                    disabled="@(HomeState.IsAnimationPlaying || HomeState.CurrentAnimationStepIndex <= 0)">
+                    disabled="@(HomeState.IsAnimationPlaying ||
+                              HomeState.CurrentAnimationStepIndex <= 0 ||
+                              HomeState.IsViewingTable)">
                 <i class="bi bi-chevron-left"></i>
             </button>
             
             <button @onclick="ToggleAnimation"
                     class="text-button"
-                    disabled="@(HomeState.CurrentAnimationStepCount == 0)">
+                    disabled="@(HomeState.CurrentAnimationStepCount == 0 || HomeState.IsViewingTable)">
                 <p class="text-button__text">@(HomeState.IsAnimationPlaying ? "Pause" : "Play")</p>
                 <i class="bi @(HomeState.IsAnimationPlaying ? "bi-pause-fill" : "bi-play-fill")"></i>
             </button>
-            
+
             <button @onclick="StepAnimationNext"
-                    disabled="@(HomeState.IsAnimationPlaying || HomeState.CurrentAnimationStepIndex >= HomeState.CurrentAnimationStepCount)">
+                    disabled="@(HomeState.IsAnimationPlaying ||
+                              HomeState.CurrentAnimationStepIndex >= HomeState.CurrentAnimationStepCount ||
+                              HomeState.IsViewingTable)">
                 <i class="bi bi-chevron-right"></i>
             </button>
         </div>

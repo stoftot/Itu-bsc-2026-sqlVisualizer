@@ -27,6 +27,7 @@ public class HomeState
     public bool IsShowingLatestVisualisation => NormalizeSql(CurrentEditorQuery) == NormalizeSql(LastVisualizedQuery);
     public bool IsAnimationPaused => !IsAnimationPlaying && CurrentAnimationStepIndex > 0 && CurrentAnimationStepIndex < CurrentAnimationStepCount;
     public bool ViewSidebar { get; set; } = true;
+    public bool IsViewingTable = false;
     public event Action? StateChanged;
     public void NotifyStateChanged() => StateChanged?.Invoke();
     public string SelectedDatabase { get; set; } = "Example Database";
