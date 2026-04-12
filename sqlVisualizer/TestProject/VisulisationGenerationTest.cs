@@ -301,6 +301,34 @@ public class VisulisationGenerationTest : IClassFixture<DuckDbFixture>
 
     [Theory]
     [InlineData("""
+                SELECT * FROM product
+                WHERE productname = 'NAN'
+                """)]
+    [InlineData("""
+                SELECT * FROM product pr
+                JOIN purchase pu ON pr.productname = pu.purchasetime
+                """)]
+    [InlineData("""
+                SELECT productname FROM product pr
+                GROUP BY productname
+                HAVING SUM(price) < -1
+                """)]
+    [InlineData("""
+                SELECT pr.productname FROM product pr
+                JOIN purchase pu ON pr.productname = pu.purchasetime
+                WHERE pr.productname not like 'NAN'
+                GROUP BY pr.productname
+                HAVING SUM(pr.price) > -1
+                ORDER BY pr.productname DESC 
+                LIMIT 3
+                """)]
+    public void EmptyResultTable(string query)
+    {
+        TestQuery(query);
+    }
+
+    [Theory]
+    [InlineData("""
                 SELECT turbine_id, production_date, power_output,
                        SUM(power_output) OVER (PARTITION BY turbine_id ORDER BY production_date)
                 FROM wind_turbine_production
