@@ -56,6 +56,8 @@ public class TableGenerator(SQLExecutor sqlExecutor, TableOriginColumnsGenerator
     private void GenerateFromTablesHaving(List<Table> fromTables, SQLDecompositionComponent currStep,
         List<SQLDecompositionComponent> currSteps)
     {
+        if(fromTables[0].Entries.Count == 0) return;
+        
         //normalize so count(*) is treated as count()
         var clause = Regex.Replace(currStep.Clause, @"\b[^ ]+?\((?:|\*)\)", "COUNT()");
 
@@ -71,8 +73,7 @@ public class TableGenerator(SQLExecutor sqlExecutor, TableOriginColumnsGenerator
         }
 
         var selectStatement = new SQLDecompositionComponent(SQLKeyword.SELECT, string.Join(",", aggregations));
-        var temp = currSteps.ToList();
-        temp.Remove(temp.Last());
+        var temp = currSteps.ToList()[..^1];
         temp.Add(selectStatement);
         var aggregationResults = sqlExecutor.Execute(temp).Result;
 
@@ -114,6 +115,33 @@ public class TableGenerator(SQLExecutor sqlExecutor, TableOriginColumnsGenerator
                 toTables.Add(
                     sqlExecutor.Execute(currSteps).Result);
                 break;
+        }
+
+        if (toTables.Count == 0)
+        {
+            if (currStep.Keyword.IsJoin())
+            {
+                var table = new Table
+                {
+                    ColumnNames = [],
+                    Entries = []
+                };
+                table.ColumnNames.AddRange(fromTables[0].ColumnNames);
+                table.ColumnNames.AddRange(fromTables[1].ColumnNames);
+                table.ColumnsOriginalTableNames.AddRange(fromTables[0].ColumnsOriginalTableNames);
+                table.ColumnsOriginalTableNames.AddRange(fromTables[1].ColumnsOriginalTableNames);
+                toTables.Add(table);
+            }
+            else
+            {
+                var table = new Table
+                {
+                    ColumnNames = fromTables[0].ColumnNames.ToList(),
+                    Entries = []
+                };
+                // table.ColumnsOriginalTableNames.AddRange(fromTables[0].ColumnsOriginalTableNames);
+                toTables.Add(table);
+            }
         }
 
         return new Visualisation
@@ -169,6 +197,17 @@ public class TableGenerator(SQLExecutor sqlExecutor, TableOriginColumnsGenerator
         var temp = currSteps.ToList();
         temp.Add(selectStatement);
         var aggregationResults = sqlExecutor.Execute(temp).Result;
+        if (aggregationResults.Entries.Count == 0)
+        {
+            var table = new Table
+            {
+                ColumnNames = fromTables[0].ColumnNames.ToList(), 
+                Entries = []
+            };
+            table.ColumnsOriginalTableNames.AddRange(fromTables[0].ColumnsOriginalTableNames);
+            toTables.Add(table);
+            return;
+        }
 
         //filter out tables
         var aggregationIndex = 0;

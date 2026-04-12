@@ -66,7 +66,10 @@ public class VisualisationsGenerator(ISQLDecomposer decomposer, TableGenerator t
     {
         foreach (var vis in visualisations)
         {
-            vis.Animation = AnimationGenerator.Generate(vis.FromTables, vis.ToTables, vis.Component);
+            if (vis.ToTables.TrueForAll(t => t.Entries.Count == 0))
+                vis.Animation = new Animation(new List<Action>());
+            else
+                vis.Animation = AnimationGenerator.Generate(vis.FromTables, vis.ToTables, vis.Component);
         }
     }
 

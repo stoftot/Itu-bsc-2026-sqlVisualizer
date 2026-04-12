@@ -59,7 +59,7 @@ public class DuckDbSQLDecomposer : ISQLDecomposer
 
     // ── Step 1: DuckDB validation ────────────────────────────────────────────
 
-    private static void ValidateWithDuckDb(string sql)
+    public static void ValidateWithDuckDb(string sql)
     {
         // Escape single quotes so the SQL can be embedded as a literal argument.
         var escaped = sql.Replace("'", "''");
