@@ -12,12 +12,25 @@ public partial class SchemaView : ComponentBase, IDisposable
     [Inject] public required HomeState HomeState { get; init; }
     [Inject] public required IUserRepository UserRepository { get; init; }
     public required Database Database { get; set; }
-    [Parameter]
-    public EventCallback<Table> OnTableSelected { get; set; }
+    [Parameter] public EventCallback<Table> OnTableSelected { get; set; }
+
+    private string _selectedDatabase = "";
+
+    protected string SelectedDatabase
+    {
+        get => _selectedDatabase;
+        set
+        {
+            _selectedDatabase = value;
+            DatabaseChanged(value);
+        }
+    }
 
     protected override void OnInitialized()
     {
         CurrentDatabaseContext.ActiveConnectionString = "Data Source=data/database.db";
+        _selectedDatabase = HomeState.SelectedDatabase;
+        HomeState.DatabaseNames = UserRepository.GetUserDatabaseNames(HomeState.SessionId);
         Database = SQLExecutor.GetDatabase().Result;
         StateHasChanged();
         HomeState.StateChanged += OnHomeStateChanged;
@@ -32,9 +45,9 @@ public partial class SchemaView : ComponentBase, IDisposable
         StateHasChanged();
     }
 
-    private void DatabaseChanged(ChangeEventArgs e)
+    private void DatabaseChanged(string databaseName)
     {
-        HomeState.SelectedDatabase = e.Value!.ToString()!;
+        HomeState.SelectedDatabase = databaseName;
         if (string.Equals(HomeState.SelectedDatabase, "Example Database"))
         {
             CurrentDatabaseContext.ActiveConnectionString = "Data Source=data/database.db";
@@ -77,6 +90,8 @@ public partial class SchemaView : ComponentBase, IDisposable
         await sourceFileStream.CopyToAsync(targetFileStream);
         targetFileStream.Close();
         UserRepository.SaveUserDatabaseName(HomeState.SessionId, safeFileName);
+        HomeState.DatabaseNames = UserRepository.GetUserDatabaseNames(HomeState.SessionId);
+        SelectedDatabase = safeFileName;
     }
     
     public void Dispose()

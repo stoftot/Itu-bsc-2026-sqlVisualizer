@@ -5,7 +5,7 @@
         <div class="schema-section-label">DATABASE</div>
         <div class="schema-source-select">
             <span class="schema-source-label">SELECTED SOURCE</span>
-            <select class="schema-source-dropdown" @onclick="GetDatabaseNames" @onchange="DatabaseChanged">
+            <select class="schema-source-dropdown" @onclick="GetDatabaseNames" @bind="SelectedDatabase">
                 <option value="Example Database">Example Database</option>
                 <option value="PreTest DB">PreTest DB</option>
                 <option value="PostTest DB">PostTest DB</option>
