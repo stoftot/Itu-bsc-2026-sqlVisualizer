@@ -30,14 +30,22 @@ public class HomeState
     public bool IsViewingTable = false;
     public event Action? StateChanged;
     public void NotifyStateChanged() => StateChanged?.Invoke();
-    public string SelectedDatabase { get; set; } = "Example Database";
+    public string SelectedDatabase { get; set; } = "PreTest DB";
     public List<String> DatabaseNames = [];
     public List<Query> Queries = [
         new()
         {
             Type = ActionType.Custom,
-            SQL = "SELECT shift.day FROM shift"
-                  
+            SQL = """
+                  SELECT name, sum(price) AS sale
+                  FROM coffees c
+                  JOIN coffee_sales cs ON c.coffee_id = cs.coffee_id
+                  WHERE c.name not like '%Espresso'
+                  GROUP BY name
+                  HAVING sale > 12
+                  ORDER BY sale DESC
+                  LIMIT 1
+                  """
         },
         new()
         {

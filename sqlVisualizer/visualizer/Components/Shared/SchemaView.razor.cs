@@ -28,7 +28,7 @@ public partial class SchemaView : ComponentBase, IDisposable
 
     protected override void OnInitialized()
     {
-        CurrentDatabaseContext.ActiveConnectionString = "Data Source=data/database.db";
+        CurrentDatabaseContext.ActiveConnectionString = "Data Source=data/pretest.db";
         _selectedDatabase = HomeState.SelectedDatabase;
         HomeState.DatabaseNames = UserRepository.GetUserDatabaseNames(HomeState.SessionId);
         Database = SQLExecutor.GetDatabase().Result;
