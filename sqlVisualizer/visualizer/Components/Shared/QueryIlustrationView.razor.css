@@ -1,13 +1,13 @@
 .query-illustration {
-    display: inline-flex;
+    display: flex;
     align-items: flex-start;
     gap: 2rem;
-    min-width: max-content;
+    width: max(100%, max-content);
 }
 
 .query-illustration__section {
-    flex: 0 0 auto;
-    min-width: 0;
+    flex: 1 0 0;
+    min-width: max-content;
 }
 
 .query-illustration__spacer {
