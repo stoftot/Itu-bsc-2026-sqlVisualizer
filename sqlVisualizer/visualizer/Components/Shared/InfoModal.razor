@@ -15,19 +15,82 @@
 
             <h1>SQL Visualizer</h1>
             <p>This project visualizes SQL to help students break up complex queries into smaller parts.</p>
-            <p>This tool consists of 3 parts;</p>
-            <ul>
+            <h3>The idea behind</h3>
+            <p>The idea behind the tool is to take an SQL query, brake it down into its steps,
+                then via animations show a way that step could be executed the database system.
+                What we mean by breaking the query into steps is e.g. if we have the query <br/>
+                <span style="display:inline-block; margin-left: 20px; margin-top: 5px; margin-bottom: 5px;">
+                    <i>SELECT * <br/>
+                        FROM table <br/>
+                        JOIN other_table ON table.id = other_table.tableId</i>
+                </span><br/>
+                Then this query can be broken down into the following steps.
+                The <i>"FROM table"</i> step, that selects the base table to query.
+                The "JOIN other_table ON table.id = other_table.tableId" step,
+                that takes another table and combines it with the base table, to create a new table.
+                The "SELECT *" step that from this new combined table,
+                selects what should be shown in the final result table e.g. specific columns.<br/>
+                To see more about how this works look under the how to us, 
+            </p>
+            
+            <h3>The tool</h3>
+            <img src="Images/HowToUse/OverViewOfTheApplication.png"
+                 style="width: 100%; height: 100%; display: block; margin: 0 auto;"/>
+            <p>The tool consists of 4 parts</p>
+            <ul style="width: 95%;">
                 <li>
-                    The database schema <br/>
-                    This shows you the tables and column names that are available to you
+                    <b>1. - The database controller</b> <br/>
+                    Here you can control which database the application is running against via the drop down, 
+                    which also tells which database is currently is in use. <br/>
+                    Under the drop down is the schema viewer. 
+                    This tells you which tables are present in the currently selected database, 
+                    and which columns these tables have. <br/>
+                    If you click on one of the table names, that table is selected and its data is shown in the visualization view.
+                    @* TODO: Add how "new database" works *@
                 </li>
+                <br/>
                 <li>
-                    The SQL editor <br/>
-                    Here you can edit one of our example queries or write your own from scratch
+                    <b>2. - The visualization view</b> <br/>
+                    This is where the visualizations are shown
                 </li>
+                <br/>
                 <li>
-                    The visualization view <br/>
-                    When you have written yor query pres Run Query
+                    <b>3. - The visualization controller</b> <br/>
+                    Here you find the buttons to generate the visualisation, and control its animation.
+                    <ul>
+                        <li>
+                            <b>Example queries.</b> <br/>
+                            If the example database is selected, 
+                            you are abel to choose between some different example queries to help you get a feel for the application
+                        </li>
+                        <li>
+                            <b>Run query</b> <br/>
+                            @* TODO: if we dont change so you can always click the button, 
+                            we should describe when and why it gets disabled *@
+                            When clicked, it takes what you have written in the SQL editor, 
+                            validates it, and try to generate a visualisation for it. <br/>
+                            If there is an error in the sql, or an error generating the visualisation, 
+                            this would be communicated to you.
+                        </li>
+                        <li>
+                            <b>Step controller</b> <br/>
+                            This shows the different steps the query was broken down into, 
+                            as well as the order they are being executed in from left being first to right being last.
+                            You can either use the arrows to move between the steps, 
+                            or click directly on the step you wanna go to.
+                        </li>
+                        <li>
+                            <b>Animation controller</b> <br/>
+                            This is what is used to control the animation, when you hit play the animation starts, 
+                            fell free at any moment to pause the animation to get a closer look at a specific step,
+                            or use arrows to go back or forth one frame at a time to take it in your own tempo.
+                        </li>
+                    </ul>
+                </li>
+                <br/>
+                <li>
+                    <b>4. - The SQL editor</b> <br/>
+                    This is where you write the SQL queries you want visualized.
                 </li>
             </ul>
 

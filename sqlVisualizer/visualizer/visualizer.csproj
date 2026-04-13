@@ -19,6 +19,7 @@
     <ItemGroup>
       <Folder Include="data\" />
       <Folder Include="data\*\" />
+      <Folder Include="wwwroot\Images\HowToUse\" />
     </ItemGroup>
 
 </Project>
