@@ -28,6 +28,17 @@
     padding: 6px 12px;
     align-items: center;
 }
+/*height of the editor*/
+.editor-shell {
+    flex: 0 0 165px;
+    min-height: 165px;
+    max-height: 165px;
+    overflow: hidden;
+}
+
+.editor-shell :global(.editor-shell__editor) {
+    height: 165px;
+}
 
 .text-button {
     display: flex;

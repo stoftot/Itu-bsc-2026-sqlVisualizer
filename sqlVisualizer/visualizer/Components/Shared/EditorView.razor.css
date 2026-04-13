@@ -1,1 +1,11 @@
-﻿
+/*This controls the height of the editor*/
+.editor-shell {
+    flex: 0 0 130px;
+    min-height: 130px;
+    max-height: 130px;
+    overflow: hidden;
+}
+
+.editor-shell :global(.editor-shell__editor) {
+    height: 130px;
+}

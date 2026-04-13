@@ -1,5 +1,8 @@
-﻿@rendermode InteractiveServer
-<StandaloneCodeEditor @ref="HomeState.Editor" 
-                      Id="my-code-editor" 
-                      ConstructionOptions="EditorConstructionOptions"
-                      OnDidChangeModelContent="OnDidChangeModelContent" />
+@rendermode InteractiveServer
+<div class="editor-shell">
+    <StandaloneCodeEditor @ref="HomeState.Editor"
+                          Id="my-code-editor"
+                          CssClass="editor-shell__editor"
+                          ConstructionOptions="EditorConstructionOptions"
+                          OnDidChangeModelContent="OnDidChangeModelContent" />
+</div>
