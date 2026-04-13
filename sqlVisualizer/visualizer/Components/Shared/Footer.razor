@@ -1,5 +1,10 @@
+@rendermode InteractiveServer
+
 <footer class="status-bar">
-    <span class="session-id">Session ID: @HomeState.SessionId</span>
+    <span @onclick="CopySessionIdToClipboard" class="session-id">
+        Session ID: @HomeState.SessionId
+        <button class="bi bi-copy copy-btn"></button>
+    </span>
     <!-- <span><span class="status-bar__dot">●</span> CONNECTED: LOCAL_DB_01</span> -->
     <span>V2.4.1-ACADEMIC</span>
 </footer>
