@@ -2,21 +2,24 @@
     display: flex;
     flex-grow: 1;
     min-height: 100px;
+    min-width: 0;
 }
 
 /* ── Main content ────────────────────────────────────── */
 .main-content {
-    flex-grow: 1;
+    flex: 1 1 auto;
     display: flex;
     flex-direction: column;
+    min-width: 0;
 }
 
 /* ── View ────────────────────────────────────────────── */
 .view {
-    flex-grow: 1;
+    flex: 1 1 auto;
     padding: 32px 96px;
     background: #f8fafc;
     overflow: auto;
+    min-width: 0;
 }
 
 /* ── Toolbar ─────────────────────────────────────────── */
