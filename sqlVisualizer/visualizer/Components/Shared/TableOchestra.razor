@@ -1,11 +1,15 @@
-﻿@inherits TableOchestraBase
+@inherits TableOchestraBase
 @if (Tables != null)
 {
-    @foreach (var table in Tables)
-    {
-        <TableView @key="@Guid.NewGuid()"
-            Table="table"/>
-    }
+    <div class="table-orchestra">
+        @foreach (var table in Tables)
+        {
+            <div class="table-orchestra__item">
+                <TableView @key="@Guid.NewGuid()"
+                    Table="table"/>
+            </div>
+        }
+    </div>
 }
 else
 {

@@ -1,0 +1,16 @@
+.table-orchestra {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1.5rem;
+    width: max-content;
+}
+
+.table-orchestra__item {
+    flex: 0 0 auto;
+    width: 100%;
+}
+
+.table-orchestra__item ::deep .table-view {
+    width: 100%;
+}

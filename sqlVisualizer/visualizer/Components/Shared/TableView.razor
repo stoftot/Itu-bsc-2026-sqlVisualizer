@@ -7,8 +7,8 @@
 }
 else
 {
-        <div class="row align-items-center">
-            <div class="@(ShowAggregation ? "col-9" : "col-12")">
+        <div class="table-view @(ShowAggregation ? "table-view--with-aggregation" : null)">
+            <div class="table-view__table">
                 <table class="table table-striped table-bordered table-sm">
                     <thead class="table-dark table-header-sm">
                     <tr>
@@ -35,7 +35,7 @@ else
 
             @if (ShowAggregation)
             {
-                <div class="col-3">
+                <div class="table-view__aggregations">
                     @foreach (var aggr in Table.Aggregations)
                     {
                         <div style="@(aggr.IsHighlighted ? $"background-color: {aggr.HexBackGroundColor}" : null)"

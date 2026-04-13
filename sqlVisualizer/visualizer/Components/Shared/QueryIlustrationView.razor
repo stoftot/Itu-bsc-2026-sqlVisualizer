@@ -1,8 +1,8 @@
 ﻿@rendermode InteractiveServer
 @inherits QueryIllustrationViewBase
 
-<div class="row">
-    <div class="@(ShowAggregation ? "col-7" : "col-5")">
+<div class="query-illustration">
+    <div class="query-illustration__section">
         <h3>Source</h3>
         <TableOchestra
             Tables="@FromTables"/>
@@ -10,10 +10,10 @@
 
     @if (!ShowAggregation)
     {
-        <div class="col-2"></div>
+        <div class="query-illustration__spacer"></div>
     }
 
-    <div class="col-5">
+    <div class="query-illustration__section">
         <h3>Result</h3>
         <TableOchestra
             Tables="ToTables"/>
