@@ -37,9 +37,9 @@ public class HomeState
         {
             Type = ActionType.Custom,
             SQL = """
-                  SELECT name, sum(price) AS sale
+                  SELECT c.name, sum(c.price) AS sale
                   FROM coffees c
-                  JOIN coffee_sales cs ON c.coffee_id = cs.coffee_id
+                  JOIN sales s ON c.coffee_id = s.coffee_id
                   WHERE c.name not like '%Espresso'
                   GROUP BY name
                   HAVING sale > 12
