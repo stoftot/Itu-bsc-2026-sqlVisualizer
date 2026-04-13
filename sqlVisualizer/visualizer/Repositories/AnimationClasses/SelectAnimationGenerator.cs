@@ -320,6 +320,9 @@ public static class SelectAnimationGenerator
         
 
         // Generating Animation
+        var indexOfArgument = fromTable.IndexOfColumn(windowFunction.Argument);
+        if (indexOfArgument == -1) indexOfArgument = 0; // Handles the case where the argument is *
+        
         for (int i = 0; i < sourcePartitions.Count; i++)
         {
             var sourcePartition = sourcePartitions[i];
@@ -337,8 +340,8 @@ public static class SelectAnimationGenerator
                 int resultRowIndex = resultPartition[j];
                 steps.Add(tvm.CombineActions(
                 [
-                    tvm.ChangeHighlightColourCell(fromTable, sourceRowIndex, fromTable.IndexOfColumn(windowFunction.Argument), UtilColor.SecondaryHighlightColor),
-                    tvm.GenerateToggleHighlightCell(fromTable, sourceRowIndex, fromTable.IndexOfColumn(windowFunction.Argument)),
+                    tvm.ChangeHighlightColourCell(fromTable, sourceRowIndex, indexOfArgument, UtilColor.SecondaryHighlightColor),
+                    tvm.GenerateToggleHighlightCell(fromTable, sourceRowIndex, indexOfArgument),
                     tvm.GenerateToggleVisibleCell(toTable, resultRowIndex, columnIndex),
                     tvm.GenerateToggleHighlightCell(toTable, resultRowIndex, columnIndex)
                 ]));
@@ -346,7 +349,7 @@ public static class SelectAnimationGenerator
             
             // Unhighlight
             var unhighlightSourceCells = sourcePartition
-                .Select(rowIdx => tvm.GenerateToggleHighlightCell(fromTable, rowIdx, fromTable.IndexOfColumn(windowFunction.Argument)))
+                .Select(rowIdx => tvm.GenerateToggleHighlightCell(fromTable, rowIdx, indexOfArgument))
                 .ToList();
             
             var unhighlightResultCells = resultPartition
