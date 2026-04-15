@@ -395,6 +395,7 @@ public class DbInitializer(IConfiguration config)
         tableCmd.CommandText =
             """
             -- Drop tables if they already exist
+            Drop TABLE IF EXISTS sales_products;
             DROP TABLE IF EXISTS sales;
             DROP TABLE IF EXISTS products;
             DROP TABLE IF EXISTS users;
