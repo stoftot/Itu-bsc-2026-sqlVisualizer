@@ -16,13 +16,23 @@
             </div>
         }
         <span title="@(HomeState is { IsShowingLatestVisualisation: true, IsViewingTable: false }
-                         ? "Already showing the latest visualization. Change the query to run again."
+                         ? "Already showing the latest visualization. Change the query and run again."
                          : null)">
-            <button @onclick="RunQuery" class="text-button"
-                    disabled="@(HomeState is { IsShowingLatestVisualisation: true, IsViewingTable: false })">
-                <p class="text-button__text">Run Query</p>
-                <i class="bi bi-play-fill"></i>
-            </button>
+            @if (HomeState is { IsShowingLatestVisualisation: true, IsViewingTable: false })
+            {
+                <button @onclick="RunQuery" class="text-button grayed-out">
+                    <p class="text-button__text">Run Query</p>
+                    <i class="bi bi-play-fill"></i>
+                </button>
+            }
+            else
+            {
+                <button @onclick="RunQuery" class="text-button">
+                    <p class="text-button__text">Run Query</p>
+                    <i class="bi bi-play-fill"></i>
+                </button>
+            }
+            
         </span>
     </div>
     
