@@ -2,10 +2,10 @@ namespace visualizer.Repositories;
 
 public class DummyUserRepository : IUserRepository
 {
-    public void SaveUserQuery(string sessionId, string query)
+    public void SaveUserQuery(string sessionId, string databaseName, string query)
     { }
 
-    public string? GetUserQuery(string sessionId)
+    public string? GetUserQuery(string sessionId, string databaseName)
     {
         return null;
     }

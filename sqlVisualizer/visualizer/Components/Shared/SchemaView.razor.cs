@@ -14,22 +14,12 @@ public partial class SchemaView : ComponentBase, IDisposable
     public required Database Database { get; set; }
     [Parameter] public EventCallback<Table> OnTableSelected { get; set; }
 
-    private string _selectedDatabase = "";
-
-    protected string SelectedDatabase
-    {
-        get => _selectedDatabase;
-        set
-        {
-            _selectedDatabase = value;
-            DatabaseChanged(value);
-        }
-    }
+    protected string SelectedDatabase { get; private set; }
 
     protected override void OnInitialized()
     {
         CurrentDatabaseContext.ActiveConnectionString = "Data Source=data/pretest.db";
-        _selectedDatabase = HomeState.SelectedDatabase;
+        SelectedDatabase = HomeState.SelectedDatabase;
         HomeState.DatabaseNames = UserRepository.GetUserDatabaseNames(HomeState.SessionId);
         Database = SQLExecutor.GetDatabase().Result;
         StateHasChanged();
@@ -45,8 +35,32 @@ public partial class SchemaView : ComponentBase, IDisposable
         StateHasChanged();
     }
 
-    private void DatabaseChanged(string databaseName)
+    private async Task OnSelectedDatabaseChanged(ChangeEventArgs e)
     {
+        var databaseName = e.Value?.ToString();
+        if (string.IsNullOrWhiteSpace(databaseName) || databaseName == SelectedDatabase)
+        {
+            return;
+        }
+
+        await DatabaseChanged(databaseName);
+    }
+
+    private async Task DatabaseChanged(string databaseName)
+    {
+        if (HomeState.Editor is not null)
+        {
+            var currentQuery = await HomeState.Editor.GetValue() ?? string.Empty;
+            var queryToPersist = currentQuery;
+            if (HomeState.SelectedDatabase == "Example Database" && HomeState.SelectedExampleQueryIndex != 0)
+            {
+                queryToPersist = HomeState.Queries[0].SQL;
+            }
+
+            UserRepository.SaveUserQuery(HomeState.SessionId, HomeState.SelectedDatabase, queryToPersist);
+        }
+
+        SelectedDatabase = databaseName;
         HomeState.SelectedDatabase = databaseName;
         if (string.Equals(HomeState.SelectedDatabase, "Example Database"))
         {
@@ -67,6 +81,15 @@ public partial class SchemaView : ComponentBase, IDisposable
         }
 
         Database = SQLExecutor.GetDatabase().Result;
+        var savedQuery = UserRepository.GetUserQuery(HomeState.SessionId, HomeState.SelectedDatabase) ?? string.Empty;
+        HomeState.Queries[0].SQL = savedQuery;
+        HomeState.SelectedExampleQueryIndex = 0;
+        if (HomeState.Editor is not null)
+        {
+            await HomeState.Editor.SetValue(savedQuery);
+        }
+
+        HomeState.CurrentEditorQuery = savedQuery;
         HomeState.NotifyStateChanged();
     }
 
@@ -91,7 +114,7 @@ public partial class SchemaView : ComponentBase, IDisposable
         targetFileStream.Close();
         UserRepository.SaveUserDatabaseName(HomeState.SessionId, safeFileName);
         HomeState.DatabaseNames = UserRepository.GetUserDatabaseNames(HomeState.SessionId);
-        SelectedDatabase = safeFileName;
+        await DatabaseChanged(safeFileName);
     }
     
     public void Dispose()

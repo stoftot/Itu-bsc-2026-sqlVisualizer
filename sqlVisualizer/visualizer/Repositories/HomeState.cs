@@ -28,6 +28,7 @@ public class HomeState
     public bool IsAnimationPaused => !IsAnimationPlaying && CurrentAnimationStepIndex > 0 && CurrentAnimationStepIndex < CurrentAnimationStepCount;
     public bool ViewSidebar { get; set; } = true;
     public bool IsViewingTable = false;
+    public int SelectedExampleQueryIndex { get; set; } = 0;
     public event Action? StateChanged;
     public void NotifyStateChanged() => StateChanged?.Invoke();
     public string SelectedDatabase { get; set; } = "PreTest DB";
@@ -37,14 +38,7 @@ public class HomeState
         {
             Type = ActionType.Custom,
             SQL = """
-                  SELECT c.name, sum(c.price) AS sale
-                  FROM coffees c
-                  JOIN sales s ON c.coffee_id = s.coffee_id
-                  WHERE c.name not like '%Espresso'
-                  GROUP BY name
-                  HAVING sale > 12
-                  ORDER BY sale DESC
-                  LIMIT 1
+                  
                   """
         },
         new()
@@ -66,6 +60,21 @@ public class HomeState
                   "GROUP BY productname",
         }
     ];
+
+    public Query InitQuery { get; } = new()
+    {
+        Type = ActionType.Custom,
+        SQL = """
+              SELECT c.name, sum(c.price) AS sale
+              FROM coffees c
+              JOIN sales s ON c.coffee_id = s.coffee_id
+              WHERE c.name not like '%Espresso'
+              GROUP BY name
+              HAVING sale > 12
+              ORDER BY sale DESC
+              LIMIT 1
+              """
+    };
 
     private static string NormalizeSql(string sql)
     {

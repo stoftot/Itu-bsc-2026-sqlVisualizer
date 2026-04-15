@@ -15,7 +15,7 @@ public partial class Home : ComponentBase, IDisposable
 
     protected override void OnInitialized()
     {
-        _query = HomeState.Queries[0].SQL;
+        _query = HomeState.InitQuery.SQL;
         HomeState.LastVisualizedQuery = _query;
         HomeState.SessionId = Http.HttpContext?.Request.Cookies["session_id"] ?? "unknown";
         HomeState.StateChanged += OnHomeStateChanged;

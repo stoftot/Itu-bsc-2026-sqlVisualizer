@@ -3,8 +3,8 @@ using DuckDB.NET.Data;
 
 public interface IUserRepository
 {
-    void SaveUserQuery(string sessionId, string query);
-    string? GetUserQuery(string sessionId);
+    void SaveUserQuery(string sessionId, string databaseName, string query);
+    string? GetUserQuery(string sessionId, string databaseName);
     void SaveUserDatabaseName(string sessionId, string databaseName);
     List<string> GetUserDatabaseNames(string sessionId);
 }
@@ -12,26 +12,35 @@ public interface IUserRepository
 public class UserRepository(string connectionString) : IUserRepository
 {
     
-    public void SaveUserQuery(string sessionId, string query)
+    public void SaveUserQuery(string sessionId, string databaseName, string query)
     {
         using var connection = new DuckDBConnection(connectionString);
         connection.Open();
         using var command = connection.CreateCommand();
         
-        command.CommandText = "INSERT OR REPLACE INTO user_queries (session_id, query) VALUES ($sessionId, $query)";
+        command.CommandText = """
+                              INSERT OR REPLACE INTO user_queries_by_database (session_id, database_name, query)
+                              VALUES ($sessionId, $databaseName, $query)
+                              """;
         command.Parameters.Add(new DuckDBParameter("sessionId", sessionId));
+        command.Parameters.Add(new DuckDBParameter("databaseName", databaseName));
         command.Parameters.Add(new DuckDBParameter("query", query));
         command.ExecuteNonQuery();
     }
     
-    public string? GetUserQuery(string sessionId)
+    public string? GetUserQuery(string sessionId, string databaseName)
     {
         using var connection = new DuckDBConnection(connectionString);
         connection.Open();
         using var command = connection.CreateCommand();
         
-        command.CommandText = "SELECT query FROM user_queries WHERE session_id = $sessionId";
+        command.CommandText = """
+                              SELECT query
+                              FROM user_queries_by_database
+                              WHERE session_id = $sessionId AND database_name = $databaseName
+                              """;
         command.Parameters.Add(new DuckDBParameter("sessionId", sessionId));
+        command.Parameters.Add(new DuckDBParameter("databaseName", databaseName));
         using var reader = command.ExecuteReader();
         if (reader.Read())
         {

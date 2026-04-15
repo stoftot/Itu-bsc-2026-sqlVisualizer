@@ -545,8 +545,11 @@ public class DbInitializer(IConfiguration config)
         var tableCmd = connection.CreateCommand();
         tableCmd.CommandText = 
             """
-            CREATE TABLE IF NOT EXISTS user_queries (
-                session_id TEXT PRIMARY KEY, query TEXT
+            CREATE TABLE IF NOT EXISTS user_queries_by_database (
+                session_id TEXT,
+                database_name TEXT,
+                query TEXT,
+                PRIMARY KEY (session_id, database_name)
             );
             
             CREATE TABLE IF NOT EXISTS user_databases (

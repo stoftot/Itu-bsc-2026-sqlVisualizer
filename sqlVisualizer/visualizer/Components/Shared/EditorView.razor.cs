@@ -11,7 +11,8 @@ public partial class EditorView : ComponentBase
 
     private StandaloneEditorConstructionOptions EditorConstructionOptions(StandaloneCodeEditor editor)
     {
-        var initialQuery = UserRepository.GetUserQuery(sessionId: HomeState.SessionId) ?? HomeState.Queries[0].SQL;
+        var initialQuery = UserRepository.GetUserQuery(HomeState.SessionId, HomeState.SelectedDatabase) ?? HomeState.InitQuery.SQL;
+        HomeState.Queries[0].SQL = initialQuery;
         HomeState.CurrentEditorQuery = initialQuery;
 
         return new StandaloneEditorConstructionOptions
@@ -26,6 +27,11 @@ public partial class EditorView : ComponentBase
     private async Task OnDidChangeModelContent(ModelContentChangedEvent _)
     {
         HomeState.CurrentEditorQuery = await HomeState.Editor.GetValue() ?? string.Empty;
+        if (HomeState.SelectedDatabase == "Example Database" && HomeState.SelectedExampleQueryIndex == 0)
+        {
+            HomeState.Queries[0].SQL = HomeState.CurrentEditorQuery;
+        }
+
         HomeState.NotifyStateChanged();
     }
 }

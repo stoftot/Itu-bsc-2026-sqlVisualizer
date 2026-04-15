@@ -9,7 +9,6 @@ public partial class ToolBar : ComponentBase, IDisposable
     [Inject] public required HomeState HomeState { get; init; }
     [Inject] public required IMetricsHandler MetricsHandler { get; init; }
     [Inject] public required IUserRepository UserRepository { get; init; }
-    string _current = "Custom";
     
     [Parameter]
     public EventCallback RunQueryCallback { get; set; }
@@ -23,14 +22,20 @@ public partial class ToolBar : ComponentBase, IDisposable
 
     async Task SelectChanged(ChangeEventArgs e)
     {
-        if (_current == "Custom")
+        if (HomeState.SelectedExampleQueryIndex == 0)
         {
-            UserRepository.SaveUserQuery(sessionId: HomeState.SessionId, query: await HomeState.Editor.GetValue());
-            HomeState.Queries[0].SQL = await HomeState.Editor.GetValue();
+            var currentCustomQuery = await HomeState.Editor.GetValue() ?? string.Empty;
+            UserRepository.SaveUserQuery(
+                sessionId: HomeState.SessionId,
+                databaseName: HomeState.SelectedDatabase,
+                query: currentCustomQuery);
+            HomeState.Queries[0].SQL = currentCustomQuery;
         }
-        _current = e.Value!.ToString()!;
-        MetricsHandler.IncrementAction(HomeState.SessionId, HomeState.Queries[Int32.Parse((String)e.Value)].Type);
-        var newSQL = HomeState.Queries[Int32.Parse((String)e.Value)].SQL;
+
+        var selectedIndex = Int32.Parse((string)e.Value!);
+        HomeState.SelectedExampleQueryIndex = selectedIndex;
+        MetricsHandler.IncrementAction(HomeState.SessionId, HomeState.Queries[selectedIndex].Type);
+        var newSQL = HomeState.Queries[selectedIndex].SQL;
         await HomeState.Editor.SetValue(newSQL);
         HomeState.CurrentEditorQuery = newSQL;
         HomeState.NotifyStateChanged();
@@ -41,6 +46,7 @@ public partial class ToolBar : ComponentBase, IDisposable
     {
         await RunQueryCallback.InvokeAsync();
         var editorContent = await HomeState.Editor.GetValue() ?? "";
+        UserRepository.SaveUserQuery(HomeState.SessionId, HomeState.SelectedDatabase, editorContent);
         HomeState.CurrentEditorQuery = editorContent;
         MetricsHandler.RecordQuery(HomeState.SessionId, editorContent);
         await HomeState.RunSQL(editorContent);
