@@ -262,21 +262,13 @@ public class TableGenerator(SQLExecutor sqlExecutor, TableOriginColumnsGenerator
     {
         var sourceTable = fromTables[0];
         var joiningTable = fromTables[1];
-        var newResultTable = resultTable.DeepClone();
-        newResultTable.Entries.Clear();
+        var newResultTable = CreateEmptyResultTable(resultTable);
         
         foreach (var source in sourceTable.Entries)
         {
-            foreach (var joining in joiningTable.Entries)
-            {
-                var result = resultTable.Entries.FirstOrDefault(r => 
-                    source.AreJoinEquivalentToResult(joining, r));
-
-                if (result == null) continue;
-                newResultTable.Entries.Add(result);
-                resultTable.Entries.Remove(result);
-            }
+            AddMatchesForSource(source, joiningTable.Entries, resultTable, newResultTable);
         }
+
         toTables.Add(newResultTable);
     }
     
@@ -284,41 +276,19 @@ public class TableGenerator(SQLExecutor sqlExecutor, TableOriginColumnsGenerator
     {
         var sourceTable = fromTables[0];
         var joiningTable = fromTables[1];
-        var newResultTable = resultTable.DeepClone();
-        newResultTable.Entries.Clear();
+        var newResultTable = CreateEmptyResultTable(resultTable);
 
-        var numberOfNullColumns = joiningTable.Entries[0].Values.Count;
-        var nullEntryValues = Enumerable.Repeat(
-            new TableValue
-            {
-                Value = "NULL",
-                RawValue = null
-            }, numberOfNullColumns)
-            .ToList();
+        var nullJoiningValues = CreateNullValues(joiningTable.Entries[0].Values.Count);
         
         var numberOfEntriesToGenerate = resultTable.Entries.Count;
         foreach (var source in sourceTable.Entries)
         {
-            TableEntry? result;
-            var foundaMatch = false;
-            foreach (var joining in joiningTable.Entries)
-            {
-                result = resultTable.Entries.FirstOrDefault(r => 
-                    source.AreJoinEquivalentToResult(joining, r));
+            var foundMatch = AddMatchesForSource(source, joiningTable.Entries, resultTable, newResultTable);
+            if (foundMatch) continue;
 
-                if (result == null) continue;
-                foundaMatch = true;
-                newResultTable.Entries.Add(result);
-                resultTable.Entries.Remove(result);
-            }
-            if(foundaMatch) continue;
-            var sourceWithNullForJoiningColumns = source.DeepClone();
-            sourceWithNullForJoiningColumns.Values.AddRange(nullEntryValues.Select(e => e.DeepClone()));
+            var sourceWithNullForJoiningColumns = AppendValues(source, nullJoiningValues);
             
-            result = resultTable.Entries.FirstOrDefault(e => e.Equals(sourceWithNullForJoiningColumns));
-            if (result == null)
-                throw new ArgumentException("Supposed to find null entry, but didn't");
-            resultTable.Entries.Remove(result);
+            RemoveExpectedEntry(resultTable, sourceWithNullForJoiningColumns);
             
             newResultTable.Entries.Add(sourceWithNullForJoiningColumns);
         }
@@ -334,43 +304,19 @@ public class TableGenerator(SQLExecutor sqlExecutor, TableOriginColumnsGenerator
     {
         var sourceTable = fromTables[0];
         var joiningTable = fromTables[1];
-        var newResultTable = resultTable.DeepClone();
-        newResultTable.Entries.Clear();
+        var newResultTable = CreateEmptyResultTable(resultTable);
 
-        var numberOfNullColumns = sourceTable.Entries.First().Values.Count;
-        var nullEntry = sourceTable.Entries.First().DeepClone();
-        nullEntry.Values.Clear();
-        nullEntry.Values.AddRange(Enumerable.Repeat(
-                    new TableValue
-                    {
-                        Value = "NULL",
-                        RawValue = null
-                    }, numberOfNullColumns)
-            );
+        var nullSourceValues = CreateNullValues(sourceTable.Entries.First().Values.Count);
         
         var numberOfEntriesToGenerate = resultTable.Entries.Count;
         foreach (var joining in joiningTable.Entries)
         {
-            TableEntry? result;
-            var foundaMatch = false;
-            foreach (var source in sourceTable.Entries)
-            {
-                result = resultTable.Entries.FirstOrDefault(r => 
-                    source.AreJoinEquivalentToResult(joining, r));
+            var foundMatch = AddMatchesForJoining(joining, sourceTable.Entries, resultTable, newResultTable);
+            if (foundMatch) continue;
 
-                if (result == null) continue;
-                foundaMatch = true;
-                newResultTable.Entries.Add(result);
-                resultTable.Entries.Remove(result);
-            }
-            if(foundaMatch) continue;
-            var joiningWithNullForSourceColumns = nullEntry.DeepClone();
-            joiningWithNullForSourceColumns.Values.AddRange(joining.Values.Select(e => e.DeepClone()));
+            var joiningWithNullForSourceColumns = PrependValues(joining, nullSourceValues);
             
-            result = resultTable.Entries.FirstOrDefault(e => e.Equals(joiningWithNullForSourceColumns));
-            if (result == null)
-                throw new ArgumentException("Supposed to find null entry, but didn't");
-            resultTable.Entries.Remove(result);
+            RemoveExpectedEntry(resultTable, joiningWithNullForSourceColumns);
             
             newResultTable.Entries.Add(joiningWithNullForSourceColumns);
         }
@@ -383,83 +329,37 @@ public class TableGenerator(SQLExecutor sqlExecutor, TableOriginColumnsGenerator
     
     private void GenerateToTablesFullJoin(List<Table> fromTables, List<Table> toTables, Table resultTable)
     {
-        //do source then do the missing ones in the joining
         var sourceTable = fromTables[0];
         var joiningTable = fromTables[1];
-        var newResultTable = resultTable.DeepClone();
-        newResultTable.Entries.Clear();
+        var newResultTable = CreateEmptyResultTable(resultTable);
         
-        var nullEntryValues = Enumerable.Repeat(
-                new TableValue
-                {
-                    Value = "NULL",
-                    RawValue = null
-                }, joiningTable.Entries.First().Values.Count)
-            .ToList();
+        var nullJoiningValues = CreateNullValues(joiningTable.Entries.First().Values.Count);
+        var nullSourceValues = CreateNullValues(sourceTable.Entries.First().Values.Count);
 
-        var foundEntries = new HashSet<TableEntry>();
+        var matchedJoiningEntries = new HashSet<TableEntry>();
         var numberOfEntriesToGenerate = resultTable.Entries.Count;
         
         foreach (var source in sourceTable.Entries)
         {
-            TableEntry? result;
-            var foundaMatch = false;
-            foreach (var joining in joiningTable.Entries)
-            {
-                result = resultTable.Entries.FirstOrDefault(r => 
-                    source.AreJoinEquivalentToResult(joining, r));
+            var foundMatch = AddMatchesForSource(
+                source, joiningTable.Entries, resultTable, newResultTable, matchedJoiningEntries);
+            if (foundMatch) continue;
 
-                if (result == null) continue;
-                foundaMatch = true;
-                newResultTable.Entries.Add(result);
-                resultTable.Entries.Remove(result);
-                foundEntries.Add(joining);
-            }
-            if(foundaMatch) continue;
-            var sourceWithNullForJoiningColumns = source.DeepClone();
-            sourceWithNullForJoiningColumns.Values.AddRange(nullEntryValues.Select(e => e.DeepClone()));
+            var sourceWithNullForJoiningColumns = AppendValues(source, nullJoiningValues);
             
-            result = resultTable.Entries.FirstOrDefault(e => e.Equals(sourceWithNullForJoiningColumns));
-            if (result == null)
-                throw new ArgumentException("Supposed to find null entry, but didn't");
-            resultTable.Entries.Remove(result);
+            RemoveExpectedEntry(resultTable, sourceWithNullForJoiningColumns);
             
             newResultTable.Entries.Add(sourceWithNullForJoiningColumns);
-            foundEntries.Add(sourceWithNullForJoiningColumns);
         }
 
-        //do joining ones that didn't have a match
-        var nullEntry = sourceTable.Entries.First().DeepClone();
-        nullEntry.Values.Clear();
-        nullEntry.Values.AddRange(Enumerable.Repeat(
-            new TableValue
-            {
-                Value = "NULL",
-                RawValue = null
-            }, sourceTable.Entries.First().Values.Count)
-        );
-        foreach (var joining in joiningTable.Entries.Where(j => !foundEntries.Contains(j)))
+        foreach (var joining in joiningTable.Entries.Where(j => !matchedJoiningEntries.Contains(j)))
         {
-            TableEntry? result;
-            var foundaMatch = false;
-            foreach (var source in sourceTable.Entries)
-            {
-                result = resultTable.Entries.FirstOrDefault(r => 
-                    source.AreJoinEquivalentToResult(joining, r));
+            var foundMatch = AddMatchesForJoining(joining, sourceTable.Entries, resultTable, newResultTable);
+            if (foundMatch) continue;
 
-                if (result == null) continue;
-                foundaMatch = true;
-                newResultTable.Entries.Add(result);
-                resultTable.Entries.Remove(result);
-            }
-            if(foundaMatch) continue;
-            var joiningWithNullForSourceColumns = nullEntry.DeepClone();
-            joiningWithNullForSourceColumns.Values.AddRange(joining.Values.Select(e => e.DeepClone()));
+            var joiningWithNullForSourceColumns = PrependValues(joining, nullSourceValues);
             
-            result = resultTable.Entries.FirstOrDefault(e => e.Equals(joiningWithNullForSourceColumns));
-            if (result == null)
-                throw new ArgumentException("Supposed to find null entry, but didn't");
-            resultTable.Entries.Remove(result);
+            RemoveExpectedEntry(resultTable, joiningWithNullForSourceColumns);
             
             newResultTable.Entries.Add(joiningWithNullForSourceColumns);
         }
@@ -469,6 +369,95 @@ public class TableGenerator(SQLExecutor sqlExecutor, TableOriginColumnsGenerator
                                         $"{numberOfEntriesToGenerate-newResultTable.Entries.Count}");
         
         toTables.Add(newResultTable);
+    }
+
+    private static Table CreateEmptyResultTable(Table resultTable)
+    {
+        var newResultTable = resultTable.DeepClone();
+        newResultTable.Entries.Clear();
+        return newResultTable;
+    }
+
+    private static List<TableValue> CreateNullValues(int count)
+    {
+        return Enumerable.Range(0, count)
+            .Select(_ => new TableValue
+            {
+                Value = "NULL",
+                RawValue = null
+            })
+            .ToList();
+    }
+
+    private static TableEntry AppendValues(TableEntry entry, IEnumerable<TableValue> valuesToAppend)
+    {
+        var copy = entry.DeepClone();
+        copy.Values.AddRange(valuesToAppend.Select(value => value.DeepClone()));
+        return copy;
+    }
+
+    private static TableEntry PrependValues(TableEntry entry, IEnumerable<TableValue> valuesToPrepend)
+    {
+        var copy = entry.DeepClone();
+        copy.Values.InsertRange(0, valuesToPrepend.Select(value => value.DeepClone()));
+        return copy;
+    }
+
+    private static void RemoveExpectedEntry(Table resultTable, TableEntry expectedEntry)
+    {
+        var result = resultTable.Entries.FirstOrDefault(entry => entry.Equals(expectedEntry));
+        if (result == null)
+            throw new ArgumentException("Supposed to find null entry, but didn't");
+
+        resultTable.Entries.Remove(result);
+    }
+
+    private static bool AddMatchesForSource(
+        TableEntry source,
+        IEnumerable<TableEntry> joiningEntries,
+        Table remainingResults,
+        Table outputTable,
+        HashSet<TableEntry>? matchedJoiningEntries = null)
+    {
+        var foundMatch = false;
+
+        foreach (var joining in joiningEntries)
+        {
+            var result = remainingResults.Entries.FirstOrDefault(r =>
+                source.AreJoinEquivalentToResult(joining, r));
+
+            if (result == null) continue;
+
+            foundMatch = true;
+            outputTable.Entries.Add(result);
+            remainingResults.Entries.Remove(result);
+            matchedJoiningEntries?.Add(joining);
+        }
+
+        return foundMatch;
+    }
+
+    private static bool AddMatchesForJoining(
+        TableEntry joining,
+        IEnumerable<TableEntry> sourceEntries,
+        Table remainingResults,
+        Table outputTable)
+    {
+        var foundMatch = false;
+
+        foreach (var source in sourceEntries)
+        {
+            var result = remainingResults.Entries.FirstOrDefault(r =>
+                source.AreJoinEquivalentToResult(joining, r));
+
+            if (result == null) continue;
+
+            foundMatch = true;
+            outputTable.Entries.Add(result);
+            remainingResults.Entries.Remove(result);
+        }
+
+        return foundMatch;
     }
     
     private sealed class CompositeKey : IEquatable<CompositeKey>
