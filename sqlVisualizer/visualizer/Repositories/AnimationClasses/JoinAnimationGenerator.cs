@@ -77,8 +77,7 @@ public static class JoinAnimationGenerator
                 deToggle.Add(joiningStep);
                 
                 if (currentResultIndex < toTable.Entries.Count
-                    && AreJoinEquivalentToResult(
-                        primaryEntry, joiningEntry, toTable.Entries[currentResultIndex]
+                    && primaryEntry.AreJoinEquivalentToResult(joiningEntry, toTable.Entries[currentResultIndex]
                     ))
                 {
                     toToggle.AddRange(
@@ -146,8 +145,7 @@ public static class JoinAnimationGenerator
                 deToggle.Add(joiningStep);
                 
                 if (currentResultIndex < toTable.Entries.Count
-                    && AreJoinEquivalentToResult(
-                        primaryEntry, joiningEntry, toTable.Entries[currentResultIndex]
+                    && primaryEntry.AreJoinEquivalentToResult(joiningEntry, toTable.Entries[currentResultIndex]
                     ))
                 {
                     foundMatcInJoiningTable = true;
@@ -231,8 +229,7 @@ public static class JoinAnimationGenerator
                 deToggle.Add(primaryStep);
                 
                 if (currentResultIndex < toTable.Entries.Count
-                    && AreJoinEquivalentToResult(
-                        primaryEntry, joiningEntry, toTable.Entries[currentResultIndex]
+                    && primaryEntry.AreJoinEquivalentToResult(joiningEntry, toTable.Entries[currentResultIndex]
                     ))
                 {
                     foundMatchInPrimaryTable = true;
@@ -324,8 +321,7 @@ public static class JoinAnimationGenerator
                 ]);
 
                 if (currentResultIndex < toTable.Entries.Count
-                    && AreJoinEquivalentToResult(
-                        primaryEntry, joiningEntry, toTable.Entries[currentResultIndex]
+                    && primaryEntry.AreJoinEquivalentToResult(joiningEntry, toTable.Entries[currentResultIndex]
                     ))
                 {
                     foundMatchInJoiningTable = true;
@@ -410,16 +406,6 @@ public static class JoinAnimationGenerator
         steps.Add(tvm.ResetTables([joiningTable, toTable]));
         
         return new Animation(steps);
-    }
-
-    private static bool AreJoinEquivalentToResult(TableEntry primary, TableEntry joining, TableEntry result)
-    {
-        var p = primary.Values.ToList();
-        var j = joining.Values.ToList();
-        var r = result.Values.ToList();
-
-        return p.Concat(j)
-            .SequenceEqual(r);
     }
 
     /// <summary>

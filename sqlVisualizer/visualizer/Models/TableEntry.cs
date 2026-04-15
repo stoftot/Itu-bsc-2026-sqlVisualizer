@@ -37,4 +37,14 @@ public class TableEntry : TableObjectBase
             Values = values
         };
     }
+    
+    public bool AreJoinEquivalentToResult(TableEntry joining, TableEntry result)
+    {
+        var p = Values.ToList();
+        var j = joining.Values.ToList();
+        var r = result.Values.ToList();
+
+        return p.Concat(j)
+            .SequenceEqual(r);
+    }
 }

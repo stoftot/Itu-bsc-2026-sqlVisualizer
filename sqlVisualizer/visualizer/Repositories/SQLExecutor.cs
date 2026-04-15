@@ -82,11 +82,6 @@ public class SQLExecutor
             UtilRegex.ContainsWindowFunctionPattern, RegexOptions.IgnoreCase | RegexOptions.Singleline)
                 .Success
             && components.All(c => c.Keyword != SQLKeyword.ORDER_BY);
-        
-        var containsJoinAndNotOrderBy = components.Any(c =>
-                                            c.Keyword.IsJoin()) &&
-                                        components.All(c =>
-                                            c.Keyword != SQLKeyword.ORDER_BY);
             
         var queryBuilder = new StringBuilder();
 
@@ -114,45 +109,6 @@ public class SQLExecutor
         {
             var groupBy = components.First(c => c.Keyword == SQLKeyword.GROUP_BY);
             components.Add(new SQLDecompositionComponent(SQLKeyword.ORDER_BY, groupBy.Clause));
-        }
-        else if (containsJoinAndNotOrderBy)
-        {
-            var lastJoin = components.Last(c => c.Keyword.IsJoin());
-            var orderBy = "";
-            
-            switch (lastJoin.Keyword)
-            {
-                case SQLKeyword.JOIN:
-                case SQLKeyword.INNER_JOIN:
-                case SQLKeyword.LEFT_JOIN:
-                case SQLKeyword.LEFT_OUTER_JOIN:
-                {
-                    //extract from table
-                    var fromComponent = components.First(c => c.Keyword == SQLKeyword.FROM);
-                    orderBy = fromComponent.Clause.Trim().Split(' ').Last() + ".rowid";
-                }
-                    break;
-                case SQLKeyword.RIGHT_JOIN:
-                case SQLKeyword.RIGHT_OUTER_JOIN:
-                {
-                    //extract joining table
-                    orderBy = UtilRegex.Match(lastJoin.Clause, ".*(?=ON)")
-                        .Value.Trim().Split(' ').Last() + ".rowid";
-                }
-                    break;
-                case SQLKeyword.FULL_JOIN:
-                case SQLKeyword.FULL_OUTER_JOIN:
-                {
-                    var fromComponent = components.First(c => c.Keyword == SQLKeyword.FROM);
-                    orderBy = fromComponent.Clause.Trim().Split(' ').Last() + ".rowid";
-
-                    orderBy += ","+UtilRegex.Match(lastJoin.Clause, ".*(?=ON)")
-                        .Value.Trim().Split(' ').Last() + ".rowid";
-                }
-                    break;
-            }
-
-            components.Add(new SQLDecompositionComponent(SQLKeyword.ORDER_BY, orderBy));
         }
 
         foreach (var component in components.Where(c => c.Keyword != SQLKeyword.WITH).OrderBy(c => c.Keyword.SyntaxPrecedence()))

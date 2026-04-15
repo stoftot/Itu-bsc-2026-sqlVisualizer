@@ -21,7 +21,7 @@ public class Table
 
     public List<string> ColumnTypes { get; set; } = [];
     public required List<string> ColumnNames { get; init; }
-    public required IList<TableEntry> Entries { get; init; }
+    public required List<TableEntry> Entries { get; init; }
     public const string RowIndexColumnName = "RowIndex";
 
     public List<Aggregation> Aggregations { get; set; } = [];

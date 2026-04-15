@@ -91,12 +91,27 @@ public class VisulisationGenerationTest : IClassFixture<DuckDbFixture>
                 INNER JOIN purchase ON product.productname = purchase.productname
                 """)]
     [InlineData("""
+                SELECT product.productname, purchase.purchasetime, user.username FROM product
+                JOIN purchase ON product.productname = purchase.productname
+                JOIN user on purchase.username = user.username
+                """)]
+    [InlineData("""
                 SELECT * FROM product
                 LEFT JOIN purchase ON product.productname = purchase.productname
                 """)]
     [InlineData("""
+                SELECT product.productname, purchase.purchasetime, user.username FROM product
+                LEFT JOIN purchase ON product.productname = purchase.productname
+                LEFT JOIN user on purchase.username = user.username
+                """)]
+    [InlineData("""
                 SELECT * FROM purchase
                 RIGHT JOIN product ON product.productname = purchase.productname
+                """)]
+    [InlineData("""
+                SELECT product.productname, purchase.purchasetime, user.username FROM product
+                RIGHT JOIN purchase ON product.productname = purchase.username
+                RIGHT JOIN user on purchase.productname = user.username
                 """)]
     [InlineData("""
                 SELECT * FROM product
@@ -108,9 +123,10 @@ public class VisulisationGenerationTest : IClassFixture<DuckDbFixture>
                 """)]
     [InlineData("""
                 SELECT product.productname, purchase.purchasetime, user.username FROM product
-                JOIN purchase ON product.productname = purchase.productname
-                JOIN user on purchase.username = user.username
+                FULL JOIN purchase ON product.productname = purchase.productname
+                FULL JOIN user on purchase.username = user.username
                 """)]
+    
     public void Join(string query)
     {
         TestQuery(query);
