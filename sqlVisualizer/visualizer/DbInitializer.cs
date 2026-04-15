@@ -395,7 +395,6 @@ public class DbInitializer(IConfiguration config)
         tableCmd.CommandText =
             """
             -- Drop tables if they already exist
-            DROP TABLE IF EXISTS sales_products;
             DROP TABLE IF EXISTS sales;
             DROP TABLE IF EXISTS products;
             DROP TABLE IF EXISTS users;
@@ -426,20 +425,12 @@ public class DbInitializer(IConfiguration config)
                 sale_id INTEGER PRIMARY KEY,
                 user_id INTEGER,
                 cashier_id INTEGER,
+                product_id INTEGER,
                 sale_date TIMESTAMP,
                 FOREIGN KEY (user_id) REFERENCES users(user_id),
                 FOREIGN KEY (cashier_id) REFERENCES cashiers(cashier_id)
             );
             
-            -- Sales_Products table (many-to-many: sales ↔ products)
-            CREATE TABLE sales_products (
-                sale_id INTEGER,
-                product_id INTEGER,
-                quantity INTEGER,
-                PRIMARY KEY (sale_id, product_id),
-                FOREIGN KEY (sale_id) REFERENCES sales(sale_id),
-                FOREIGN KEY (product_id) REFERENCES products(product_id)
-            );
             
             -- Insert users (5 users)
             INSERT INTO users VALUES
@@ -465,38 +456,16 @@ public class DbInitializer(IConfiguration config)
             
             -- Insert sales (10 sales referencing users & cashiers)
             INSERT INTO sales VALUES
-            (1, 1, 1, '2026-01-01 10:00:00'),
-            (2, 2, 2, '2026-01-02 11:00:00'),
-            (3, 3, 3, '2026-01-03 12:00:00'),
-            (4, 4, 1, '2026-01-04 13:00:00'),
-            (5, 5, 2, '2026-01-05 14:00:00'),
-            (6, 1, 3, '2026-01-06 15:00:00'),
-            (7, 2, 1, '2026-01-07 16:00:00'),
-            (8, 3, 2, '2026-01-08 17:00:00'),
-            (9, 4, 3, '2026-01-09 18:00:00'),
-            (10, 5, 1, '2026-01-10 19:00:00');
-            
-            -- Insert sales_products (linking products to sales)
-            INSERT INTO sales_products VALUES
-            (1, 1, 1),
-            (1, 5, 2),
-            (2, 2, 1),
-            (2, 3, 1),
-            (3, 3, 2),
-            (3, 4, 1),
-            (4, 1, 1),
-            (4, 2, 1),
-            (5, 5, 3),
-            (6, 4, 2),
-            (6, 5, 1),
-            (7, 2, 2),
-            (8, 1, 1),
-            (8, 3, 1),
-            (9, 4, 1),
-            (9, 5, 2),
-            (10, 1, 1),
-            (10, 2, 1),
-            (10, 3, 1);
+            (1, 1, 1, 1, '2026-01-01 10:00:00'),
+            (2, 2, 2, 2, '2026-01-02 11:00:00'),
+            (3, 3, 3, 2, '2026-01-03 12:00:00'),
+            (4, 4, 1, 4, '2026-01-04 13:00:00'),
+            (5, 5, 2, 5, '2026-01-05 14:00:00'),
+            (6, 1, 3, 5, '2026-01-06 15:00:00'),
+            (7, 2, 1, 1, '2026-01-07 16:00:00'),
+            (8, 3, 2, 1, '2026-01-08 17:00:00'),
+            (9, 4, 3, 3, '2026-01-09 18:00:00'),
+            (10, 5, 1, 2,'2026-01-10 19:00:00');
             """;
         tableCmd.ExecuteNonQuery();
     }
