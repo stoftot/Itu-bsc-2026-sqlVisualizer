@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components;
+using visualizer.Exceptions;
 using visualizer.Models;
 using visualizer.Repositories;
 
@@ -53,14 +54,20 @@ public class QueryIllustrationViewBase : ComponentBase, IDisposable
         {
             Steps = VisualisationsGenerator.Generate(Query);
         }
+        catch (SQLParseException e)
+        {
+            await HandleException(e, e.Message);
+            return;
+        }
+        catch (NotImplementedException e)
+        {
+            await HandleException(e, "This is still a new tool, " +
+                                     "and it seems that what you are trying to do hasn't been implemented yet.");
+            return;
+        }
         catch (Exception e)
         {
-            Console.WriteLine(e.ToString());
-            HomeState.ExceptionOccured = true;
-            HomeState.ExceptionMessage = e.Message;
-            Steps = [];
-            HomeState.NotifyStateChanged();
-            await InvokeAsync(StateHasChanged);
+            await HandleException(e, "An internal error occured, sorry for the inconvenience");
             return;
         }
         
@@ -78,6 +85,17 @@ public class QueryIllustrationViewBase : ComponentBase, IDisposable
         await SelectStepAsync(stepIndex: 0, trackMetrics: true);
     }
 
+
+    private async Task HandleException(Exception e, string messageToUser)
+    {
+        Console.WriteLine(e.ToString());
+        HomeState.ExceptionOccured = true;
+        HomeState.ExceptionMessage = messageToUser;
+        Steps = [];
+        HomeState.NotifyStateChanged();
+        await InvokeAsync(StateHasChanged);
+    }
+    
     private async Task SelectStepAsync(int stepIndex, bool trackMetrics)
     {
         if(Steps.Count == 0) return;

@@ -1,5 +1,6 @@
 using System.Text.Json;
 using DuckDB.NET.Data;
+using visualizer.Exceptions;
 using visualizer.Models;
 
 namespace visualizer.Repositories;
@@ -77,7 +78,7 @@ public class DuckDbSQLDecomposer : ISQLDecomposer
             var message = doc.RootElement.TryGetProperty("error_message", out var msg)
                 ? msg.GetString()
                 : "Unknown SQL parse error.";
-            throw new Exception($"SQL parse error: {message}");
+            throw new SQLParseException($"SQL parse error: {message}");
         }
     }
 
