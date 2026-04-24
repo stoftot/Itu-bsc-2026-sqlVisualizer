@@ -41,7 +41,7 @@ namespace visualizer.Repositories;
 ///             The original query text is preserved character-for-character in
 ///             each clause, so no information is lost.
 /// </summary>
-public class DuckDbSQLDecomposer : ISQLDecomposer
+public class DuckDbSQLDecomposer(SQLExecutor sqlExecutor) : ISQLDecomposer
 {
     // json_serialize_sql() is a pure parse function — no tables needed.
     private const string InMemoryConnectionString = "DataSource=:memory:";
@@ -51,6 +51,17 @@ public class DuckDbSQLDecomposer : ISQLDecomposer
         // Step 1: validate through DuckDB's own parser.
         ValidateWithDuckDb(sql);
 
+        //validate by running against the database.
+        try
+        { 
+            sqlExecutor.Execute(sql).Wait();
+        }
+        catch (Exception e)
+        {
+            throw new SQLParseException($"SQL parse error: {e.Message}");
+        }
+        
+        
         // Step 2: split into components using a depth-aware tokenizer.
         var components = SplitByDepthAwareTokenizer(sql);
 
@@ -69,7 +80,7 @@ public class DuckDbSQLDecomposer : ISQLDecomposer
         connection.Open();
         using var command = new DuckDBCommand($"SELECT json_serialize_sql('{escaped}')", connection);
         var raw = command.ExecuteScalar()?.ToString()
-            ?? throw new Exception("DuckDB returned null from json_serialize_sql.");
+            ?? throw new SQLParseException("DuckDB returned null from json_serialize_sql.");
 
         using var doc = JsonDocument.Parse(raw);
 
