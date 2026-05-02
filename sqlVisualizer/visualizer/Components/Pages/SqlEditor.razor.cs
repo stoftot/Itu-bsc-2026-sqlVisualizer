@@ -1,17 +1,21 @@
 using Microsoft.AspNetCore.Components;
 using BlazorMonaco.Editor;
+using visualizer.Contracts;
 using visualizer.Models;
 using visualizer.Repositories;
+using visualizer.Utility;
 
 namespace visualizer.Components.Pages;
 
 public partial class SqlEditor : ComponentBase
 {
-    [Inject] public required SQLExecutor SQLExecutor { get; init; }
-
+    [Inject] public required ISQLExecutor SQLExecutor { get; init; }
+    [Inject] public required ISQLInputValidator SQLInputValidator { get; init; }
+    [Inject] public required IDisplayTableGenerator DisplayTableGenerator { get; init; }
+    
     protected StandaloneCodeEditor Editor = null!;
-    protected Table? tableSelected;
-    protected Table? resultTable;
+    protected IDisplayTable? tableSelected;
+    protected IDisplayTable? resultTable;
     protected bool viewResult = true;
     protected bool HasExecutionError;
     protected string ExecutionErrorMessage = string.Empty;
@@ -42,10 +46,10 @@ public partial class SqlEditor : ComponentBase
     {
         try
         {
-            DuckDbSQLDecomposer.ValidateWithDuckDb(sql);
+            SQLInputValidator.Validate(sql);
             HasExecutionError = false;
             ExecutionErrorMessage = string.Empty;
-            resultTable = await SQLExecutor.Execute(sql);
+            resultTable = DisplayTableGenerator.Generate(await SQLExecutor.Execute(sql));
         }
         catch (Exception e)
         {
@@ -57,7 +61,7 @@ public partial class SqlEditor : ComponentBase
         await InvokeAsync(StateHasChanged);
     }
 
-    protected void HandTabledSchemaTableSelected(Table table)
+    protected void HandTabledSchemaTableSelected(IDisplayTable table)
     {
         viewResult = false;
         tableSelected = table;

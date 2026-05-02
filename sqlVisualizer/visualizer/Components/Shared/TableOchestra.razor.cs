@@ -5,5 +5,5 @@ namespace visualizer.Components.Shared;
 
 public class TableOchestraBase : ComponentBase
 {
-    [Parameter] public required List<Table> Tables { get; init; }
+    [Parameter] public required IList<IDisplayTable> Tables { get; init; }
 }

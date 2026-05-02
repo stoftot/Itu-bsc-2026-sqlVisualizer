@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components;
+using visualizer.Contracts;
 using visualizer.Exceptions;
 using visualizer.Models;
 using visualizer.Repositories;
@@ -14,17 +15,19 @@ public class QueryIllustrationViewBase : ComponentBase, IDisposable
     [Inject] private MetricsConfig MetricsConfig { get; init; } = null!;
     [Inject] public required VisualisationsGenerator VisualisationsGenerator { get; init; }
     [Inject] public required IMetricsHandler MetricsHandler { get; init; }
-    public List<Table> FromTables { get; set; } = [];
-    public List<Table> ToTables { get; set; } = [];
-    private List<Visualisation> Steps { get; set; } = [];
+    [Inject] public required IAnimationGenerator AnimationGenerator { get; init; }
+    
+    public IList<IDisplayTable> FromTables { get; set; } = [];
+    public IList<IDisplayTable> ToTables { get; set; } = [];
+    private IList<IAnimation> Steps { get; set; } = [];
     private int _indexOfStepToHighlight;
     private CancellationTokenSource? _animationCancellationTokenSource;
     private Task? _animationPlaybackTask;
     private bool _animationMetricsRunning;
 
     private int IndexOfStepToHighlight => _indexOfStepToHighlight;
-    private Visualisation CurrStep => Steps[IndexOfStepToHighlight];
-    protected bool ShowAggregation => FromTables.Count != 0 && FromTables[0].Aggregations.Count != 0;
+    private IAnimation CurrStep => Steps[IndexOfStepToHighlight];
+    protected bool ShowAggregation => FromTables.Count != 0 && FromTables[0].Aggregations().Count != 0;
 
     protected override void OnInitialized()
     {
@@ -52,7 +55,7 @@ public class QueryIllustrationViewBase : ComponentBase, IDisposable
         await CancelAnimationPlaybackAsync();
         try
         {
-            Steps = VisualisationsGenerator.Generate(Query);
+            Steps = AnimationGenerator.Generate(Query);
         }
         catch (SQLParseException e)
         {
@@ -106,7 +109,7 @@ public class QueryIllustrationViewBase : ComponentBase, IDisposable
 
         if (trackMetrics)
         {
-            MetricsHandler.EnterStep(HomeState.SessionId, CurrStep.Component.Keyword);
+            MetricsHandler.EnterStep(HomeState.SessionId, CurrStep.Keyword());
         }
 
         await RefreshCurrentViewAsync();
@@ -114,13 +117,13 @@ public class QueryIllustrationViewBase : ComponentBase, IDisposable
 
     private void ResetCurrentAnimation()
     {
-        CurrStep.Animation.Reset();
+        CurrStep.Reset();
     }
 
     private void ReplayCurrentAnimationTo(int animationStepIndex)
     {
         ResetCurrentAnimation();
-        CurrStep.Animation.ReplayTo(Math.Clamp(animationStepIndex, 0, CurrStep.Animation.StepCount));
+        CurrStep.ReplayTo(Math.Clamp(animationStepIndex, 0, CurrStep.NumberOfAnimationSteps()));
     }
 
     private void UpdateStepShown()
@@ -132,8 +135,8 @@ public class QueryIllustrationViewBase : ComponentBase, IDisposable
             return;
         }
 
-        FromTables = CurrStep.FromTables;
-        ToTables = CurrStep.ToTables;
+        FromTables = CurrStep.FromTables();
+        ToTables = CurrStep.ToTables();
     }
 
     private void RefreshAnimationState()
@@ -147,9 +150,9 @@ public class QueryIllustrationViewBase : ComponentBase, IDisposable
             return;
         }
 
-        var animation = CurrStep.Animation;
-        HomeState.CurrentAnimationStepIndex = animation.CurrentStepIndex;
-        HomeState.CurrentAnimationStepCount = animation.StepCount;
+        var animation = CurrStep;
+        HomeState.CurrentAnimationStepIndex = animation.StepIndex();
+        HomeState.CurrentAnimationStepCount = animation.StepCount();
         HomeState.NotifyStateChanged();
     }
 
@@ -164,7 +167,7 @@ public class QueryIllustrationViewBase : ComponentBase, IDisposable
     {
         try
         {
-            while (!cancellationToken.IsCancellationRequested && CurrStep.Animation.TryStepForward())
+            while (!cancellationToken.IsCancellationRequested && CurrStep.TryStepForward())
             {
                 UpdateStepShown();
                 RefreshAnimationState();
@@ -172,7 +175,7 @@ public class QueryIllustrationViewBase : ComponentBase, IDisposable
                 await Task.Delay(AnimationDelayMs, cancellationToken);
             }
             // Animation completed naturally
-            if (_animationMetricsRunning && CurrStep.Animation.IsComplete)
+            if (_animationMetricsRunning && CurrStep.IsComplete())
             {
                 RecordAnimationViewPercentage(100);
             }
@@ -191,7 +194,7 @@ public class QueryIllustrationViewBase : ComponentBase, IDisposable
 
     private Task StartAnimationPlaybackAsync()
     {
-        if (Steps.Count == 0 || HomeState.IsAnimationPlaying || !CurrStep.Animation.CanStepForward)
+        if (Steps.Count == 0 || HomeState.IsAnimationPlaying || !CurrStep.CanStepForward())
         {
             RefreshAnimationState();
             return Task.CompletedTask;
@@ -244,20 +247,20 @@ public class QueryIllustrationViewBase : ComponentBase, IDisposable
     private double GetCurrentAnimationPercentage()
     {
         if (Steps.Count == 0) return 0;
-        return CurrStep.Animation.StepCount == 0 ? 0 : (double)CurrStep.Animation.CurrentStepIndex / CurrStep.Animation.StepCount * 100;
+        return CurrStep.StepCount() == 0 ? 0 : (double)CurrStep.StepIndex() / CurrStep.StepCount() * 100;
     }
     
     private void RecordAnimationViewPercentage(double percentage)
     {
         if (Steps.Count == 0) return;
-        MetricsHandler.RecordAnimationViewPercentage(HomeState.SessionId, CurrStep.Component.Keyword, percentage);
+        MetricsHandler.RecordAnimationViewPercentage(HomeState.SessionId, CurrStep.Keyword(), percentage);
     }
 
     private void StopAnimationMetricsIfRunning()
     {
         if (!_animationMetricsRunning) return;
         MetricsHandler.StopAnimation(HomeState.SessionId);
-        MetricsHandler.EnterStep(HomeState.SessionId, CurrStep.Component.Keyword);
+        MetricsHandler.EnterStep(HomeState.SessionId, CurrStep.Keyword());
         _animationMetricsRunning = false;
     }
 
@@ -265,7 +268,7 @@ public class QueryIllustrationViewBase : ComponentBase, IDisposable
     {
         if (Steps.Count == 0 || IndexOfStepToHighlight >= Steps.Count) return;
 
-        if (CurrStep.Animation.CurrentStepIndex == 0) return;
+        if (CurrStep.StepIndex() == 0) return;
         var percentage = GetCurrentAnimationPercentage();
         RecordAnimationViewPercentage(percentage);
     }
@@ -275,7 +278,7 @@ public class QueryIllustrationViewBase : ComponentBase, IDisposable
 
         if (Steps.Count == 0) return;
 
-        if (CurrStep.Animation.IsComplete)
+        if (CurrStep.IsComplete())
         {
             ResetCurrentAnimation();
             await RefreshCurrentViewAsync();
@@ -293,9 +296,9 @@ public class QueryIllustrationViewBase : ComponentBase, IDisposable
     {
         await CancelAnimationPlaybackAsync();
 
-        CurrStep.Animation.TryStepForward();
+        CurrStep.TryStepForward();
         
-        if (CurrStep.Animation.IsComplete)
+        if (CurrStep.IsComplete())
         {
             RecordAnimationViewPercentage(100);
         }
@@ -308,14 +311,14 @@ public class QueryIllustrationViewBase : ComponentBase, IDisposable
     {
         await CancelAnimationPlaybackAsync();
 
-        if (Steps.Count == 0 || !CurrStep.Animation.CanStepBackward)
+        if (Steps.Count == 0 || !CurrStep.CanStepBackward())
         {
             RefreshAnimationState();
             await InvokeAsync(StateHasChanged);
             return;
         }
 
-        ReplayCurrentAnimationTo(CurrStep.Animation.CurrentStepIndex - 1);
+        ReplayCurrentAnimationTo(CurrStep.StepIndex() - 1);
         await RefreshCurrentViewAsync();
     }
     

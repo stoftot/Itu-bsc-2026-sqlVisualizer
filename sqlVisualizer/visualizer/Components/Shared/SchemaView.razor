@@ -18,17 +18,17 @@
     </div>
 
     <div class="schema-viewer">
-        @foreach(var table in Database.Tables)
+        @foreach(var table in Database.Tables())
         {
             <div class="schema-table-box">
                 
-                <div class="schema-table" @onclick="@(() => HandleTableClick(table))">
+                <div class="schema-table" @onclick="@(() => HandleTableClick(DisplayTableGenerator.Generate(table)))">
                     <i class="bi bi-table schema-table__icon"></i>
-                    <span class="schema-table__name">@table.Name</span>
+                    <span class="schema-table__name">@table.Name()</span>
                 </div>
                 
                 <div class="schema-columns">
-                    @foreach (var (column, type) in table.ColumnNames.Zip(table.ColumnTypes))
+                    @foreach (var (column, type) in table.ColumnNames().Zip(table.ColumnTypes()))
                     {
                         <div class="schema-column">
                             <span class="schema-column__name">@column</span>

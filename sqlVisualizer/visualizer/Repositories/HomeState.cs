@@ -15,7 +15,7 @@ public class HomeState
     public Func<Task> AnimatePause { get; set; } = () => Task.CompletedTask;
     public Func<Task> AnimateStepNext { get; set; } = () => Task.CompletedTask;
     public Func<Task> AnimateStepPrevious { get; set; } = () => Task.CompletedTask;
-    public List<Visualisation> Steps { get; set; } = [];
+    public IList<IAnimation> Steps { get; set; } = [];
     public int CurrentStepIndex { get; set; } = 0;
     public int CurrentAnimationStepIndex { get; set; } = 0;
     public int CurrentAnimationStepCount { get; set; } = 0;

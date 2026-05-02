@@ -80,7 +80,7 @@ public partial class ToolBar : ComponentBase, IDisposable
         else
         {
             MetricsHandler.IncrementAction(HomeState.SessionId, ActionType.Animate);
-            MetricsHandler.RecordActionKeyword(HomeState.SessionId, ActionType.Animate, HomeState.Steps[HomeState.CurrentStepIndex].Component.Keyword.ToString());
+            MetricsHandler.RecordActionKeyword(HomeState.SessionId, ActionType.Animate, HomeState.Steps[HomeState.CurrentStepIndex].Keyword().ToString());
             await HomeState.AnimatePlay();
         }
     }
@@ -88,14 +88,14 @@ public partial class ToolBar : ComponentBase, IDisposable
     async Task StepAnimationPrevious()
     { 
         MetricsHandler.IncrementAction(HomeState.SessionId, ActionType.AnimationPrevious);
-        MetricsHandler.RecordActionKeyword(HomeState.SessionId, ActionType.AnimationPrevious, HomeState.Steps[HomeState.CurrentStepIndex].Component.Keyword.ToString());
+        MetricsHandler.RecordActionKeyword(HomeState.SessionId, ActionType.AnimationPrevious, HomeState.Steps[HomeState.CurrentStepIndex].Keyword().ToString());
         await HomeState.AnimateStepPrevious();
     }
 
     async Task StepAnimationNext()
     {
         MetricsHandler.IncrementAction(HomeState.SessionId, ActionType.AnimationNext);
-        MetricsHandler.RecordActionKeyword(HomeState.SessionId, ActionType.AnimationNext, HomeState.Steps[HomeState.CurrentStepIndex].Component.Keyword.ToString());
+        MetricsHandler.RecordActionKeyword(HomeState.SessionId, ActionType.AnimationNext, HomeState.Steps[HomeState.CurrentStepIndex].Keyword().ToString());
         await HomeState.AnimateStepNext();
     }
 

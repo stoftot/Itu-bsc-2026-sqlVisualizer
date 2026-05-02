@@ -2,17 +2,20 @@
 using Microsoft.AspNetCore.Components.Forms;
 using visualizer.Repositories;
 using visualizer.Models;
+using visualizer.Utility;
 
 namespace visualizer.Components.Shared;
 
 public partial class SchemaView : ComponentBase, IDisposable
 {
-    [Inject] public required SQLExecutor SQLExecutor { get; init; }
+    [Inject] public required ISQLExecutor SQLExecutor { get; init; }
     [Inject] public required ICurrentDatabaseContext CurrentDatabaseContext { get; init; }
     [Inject] public required HomeState HomeState { get; init; }
     [Inject] public required IUserRepository UserRepository { get; init; }
-    public required Database Database { get; set; }
-    [Parameter] public EventCallback<Table> OnTableSelected { get; set; }
+    [Inject] public required IDisplayTableGenerator DisplayTableGenerator { get; init; }
+    
+    public required IDatabase Database { get; set; }
+    [Parameter] public EventCallback<IDisplayTable> OnTableSelected { get; set; }
 
     protected string SelectedDatabase { get; private set; }
 
@@ -93,7 +96,7 @@ public partial class SchemaView : ComponentBase, IDisposable
         HomeState.NotifyStateChanged();
     }
 
-    private async Task HandleTableClick(Table table)
+    private async Task HandleTableClick(IDisplayTable table)
     {
         await OnTableSelected.InvokeAsync(table);
     }

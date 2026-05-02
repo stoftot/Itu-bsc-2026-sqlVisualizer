@@ -11,7 +11,7 @@ public partial class Home : ComponentBase, IDisposable
     [Inject] public required HomeState HomeState { get; init; }
     private QueryIlustrationView QueryView = null!;
     private string _query = "";
-    protected Table tableSelected = null;
+    protected IDisplayTable tableSelected = null;
 
     protected override void OnInitialized()
     {
@@ -35,7 +35,7 @@ public partial class Home : ComponentBase, IDisposable
         };
     }
 
-    protected void HandTabledSchemaTableSelected(Table table)
+    protected void HandTabledSchemaTableSelected(IDisplayTable table)
     {
         HomeState.IsViewingTable = true;
         tableSelected = table;
