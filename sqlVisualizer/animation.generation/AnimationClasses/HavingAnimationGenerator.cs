@@ -1,5 +1,6 @@
 ﻿using visualizer.Exstensions;
 using visualizer.Models;
+using visualizer.Repositories.Contracts;
 
 namespace visualizer.Repositories.AnimationClasses;
 
@@ -7,7 +8,7 @@ public static class HavingAnimationGenerator
 {
     private static TableVisualModifier tvm = new();
 
-    public static Animation Generate(List<Table> fromTables, List<Table> toTables, SQLDecompositionComponent action)
+    public static List<Action> Generate(List<DisplayTable> fromTables, List<DisplayTable> toTables)
     {
         var steps = new List<Action> { tvm.HideTablesCellBased(toTables) };
 
@@ -19,7 +20,7 @@ public static class HavingAnimationGenerator
             steps.Add(toggleAggregate);
 
             if (toTableIndex < toTables.Count &&
-                fromTable.Entries.SequenceEqual(toTables[toTableIndex].Entries))
+                fromTable.Rows.SequenceEqual(toTables[toTableIndex].Rows))
             {
                 var step = new List<Action>()
                 {
@@ -41,6 +42,6 @@ public static class HavingAnimationGenerator
                 steps.Add(toggleAggregate);
         }
 
-        return new Animation(steps);
+        return steps;
     }
 }

@@ -7,4 +7,8 @@
         <RootNamespace>animationGeneration</RootNamespace>
     </PropertyGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\visualizer\visualizer.csproj" />
+    </ItemGroup>
+
 </Project>

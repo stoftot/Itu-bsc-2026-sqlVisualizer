@@ -1,6 +1,8 @@
 using visualizer.Exstensions;
 using visualizer.Models;
 using System.Text.RegularExpressions;
+using commonDataModels.Models;
+using visualizer.Repositories.Contracts;
 using visualizer.Utility;
 
 namespace visualizer.Repositories.AnimationClasses;
@@ -53,24 +55,24 @@ public static class SelectAnimationGenerator
         return columns;
     }
 
-    public static Animation Generate(List<Table> fromTables, Table toTable,
-        SQLDecompositionComponent action)
+    public static List<Action> Generate(List<DisplayTable> fromTables, DisplayTable toTable,
+        ISQLComponent sql)
     {
         var steps = new List<Action>();
         
-        if (action.Clause.Trim().Equals("*"))
+        if (sql.Clause().Trim().Equals("*"))
         {
             var step = tvm.CombineActions([
                 tvm.GenerateToggleHighlightTables(fromTables),
                 tvm.GenerateToggleHighlightTable(toTable)
             ]);
             
-            return new Animation([step, step]);
+            return [step, step];
         }
 
         steps.Add(tvm.HideTableCellBased(toTable));
         
-        var columns = SplitClauseIntoColumns(action.Clause);
+        var columns = SplitClauseIntoColumns(sql.Clause());
 
         var toColumnIndex = 0;
         foreach (var column in columns)
@@ -107,10 +109,10 @@ public static class SelectAnimationGenerator
             }
         }
 
-        return new Animation(steps);
+        return steps;
     }
 
-    private static void HandleAggregateColumn(List<Table> fromTables, Table toTable,
+    private static void HandleAggregateColumn(List<DisplayTable> fromTables, DisplayTable toTable,
         string column, int toColumnIndex, List<Action> steps)
     {
         var parts = column.Split('(', 2);
@@ -137,7 +139,7 @@ public static class SelectAnimationGenerator
         }
     }
 
-    private static void HandleCountAggregate(List<Table> fromTables, Table toTable,
+    private static void HandleCountAggregate(List<DisplayTable> fromTables, DisplayTable toTable,
         string parameter, int toColumnIndex, List<Action> steps)
     {
         if (string.IsNullOrEmpty(parameter))
@@ -166,19 +168,19 @@ public static class SelectAnimationGenerator
         }
     }
 
-    private static void HandleSumAndAvgAggregate(List<Table> fromTables, Table toTable,
+    private static void HandleSumAndAvgAggregate(List<DisplayTable> fromTables, DisplayTable toTable,
         string parameter, int toColumnIndex, List<Action> steps)
     {
         HandleAggregateSpecificColumns(fromTables, toTable, UtilRegex.ExtractReferencedColumns(parameter), toColumnIndex, steps);
     }
     
-    private static void HandleMinAndMaxAggregate(List<Table> fromTables, Table toTable,
+    private static void HandleMinAndMaxAggregate(List<DisplayTable> fromTables, DisplayTable toTable,
         string parameter, int toColumnIndex, List<Action> steps)
     {
         HandleAggregateSpecificColumns(fromTables, toTable, UtilRegex.ExtractReferencedColumns(parameter), toColumnIndex, steps);
     }
 
-    private static void HandleAggregateSpecificColumns(List<Table> fromTables, Table toTable,
+    private static void HandleAggregateSpecificColumns(List<DisplayTable> fromTables, DisplayTable toTable,
         IEnumerable<string> columnNames, int toColumnIndex, List<Action> steps)
     {
         var fromColumnIndexes = fromTables[0].IndexOfColumns(columnNames).ToList();
@@ -201,7 +203,7 @@ public static class SelectAnimationGenerator
         }
     }
     
-    private static int HandleNormalSelect(List<Table> fromTables, Table toTable,
+    private static int HandleNormalSelect(List<DisplayTable> fromTables, DisplayTable toTable,
         string column, int columnIndex, List<Action> steps,
         Func<int, Action> generateFromAnimation)
     {
@@ -252,7 +254,7 @@ public static class SelectAnimationGenerator
         return 1;
     }
 
-    private static void HandleWindowFunction(Table fromTable, Table toTable,
+    private static void HandleWindowFunction(DisplayTable fromTable, DisplayTable toTable,
         string column, int columnIndex, List<Action> steps)
     {
         WindowFunction windowFunction = WindowFunction.FromString(column);
@@ -284,10 +286,10 @@ public static class SelectAnimationGenerator
         }
     }
     
-    private static void HandleAggregateWindowFunction(Table fromTable, Table toTable, WindowFunction windowFunction, 
+    private static void HandleAggregateWindowFunction(DisplayTable fromTable, DisplayTable toTable, WindowFunction windowFunction, 
         int columnIndex, List<Action> steps)
     {
-        Table fromTableWithRowIndex = fromTable.DeepClone().AppendRowIndex();
+        var fromTableWithRowIndex = fromTable.DeepClone().AppendRowIndex();
 
         if (windowFunction.Orders.Count > 0)
         {
@@ -298,21 +300,21 @@ public static class SelectAnimationGenerator
         }
 
         List<List<int>> sourcePartitions = [];
-        int rowIndexColumnIndex = fromTableWithRowIndex.IndexOfColumn(Table.RowIndexColumnName);
+        int rowIndexColumnIndex = fromTableWithRowIndex.IndexOfColumn(DisplayTable.RowIndexColumnName);
 
         if (windowFunction.PartitionNames.Count > 0)
         {
             List<int> partitionIndices = windowFunction.PartitionNames
                 .Select(p => fromTableWithRowIndex.IndexOfColumn(p)).ToList();
-            sourcePartitions = fromTableWithRowIndex.Entries
-                .GroupBy(e => string.Join(", ", partitionIndices.Select(i => e.Values[i].Value)))
+            sourcePartitions = fromTableWithRowIndex.Rows
+                .GroupBy(e => string.Join(", ", partitionIndices.Select(i => e[i].Value)))
                 .OrderBy(g => g.Key)
-                .Select(g => g.Select(e => int.Parse(e.Values[rowIndexColumnIndex].Value)).ToList())
+                .Select(g => g.Select(e => int.Parse(e[rowIndexColumnIndex].Value)).ToList())
                 .ToList();
         }
         else
         {
-            sourcePartitions = [fromTableWithRowIndex.Entries.Select(e => int.Parse(e.Values[rowIndexColumnIndex].Value)).ToList()];
+            sourcePartitions = [fromTableWithRowIndex.Rows.Select(e => int.Parse(e[rowIndexColumnIndex].Value)).ToList()];
         }
 
         int resultTableRowIndex = 0;
@@ -330,7 +332,7 @@ public static class SelectAnimationGenerator
 
             // First, highlight all rows in this partition in the source table
             var partitionRowActions = sourcePartition
-                .Select(rowIdx => tvm.GenerateToggleHighlightRow(fromTable.Entries[rowIdx]))
+                .Select(rowIdx => tvm.GenerateToggleHighlightRow(fromTable[rowIdx]))
                 .ToList();
             steps.Add(tvm.CombineActions(partitionRowActions));
 
@@ -362,10 +364,10 @@ public static class SelectAnimationGenerator
         }
     }
     
-    private static void HandleRankingWindowFunction(Table fromTable, Table toTable, WindowFunction windowFunction,
+    private static void HandleRankingWindowFunction(DisplayTable fromTable, DisplayTable toTable, WindowFunction windowFunction,
         int columnIndex, List<Action> steps)
     {
-        Table fromTableWithRowIndex = fromTable.DeepClone().AppendRowIndex();
+        var fromTableWithRowIndex = fromTable.DeepClone().AppendRowIndex();
 
         if (windowFunction.Orders.Count > 0)
         {
@@ -376,21 +378,21 @@ public static class SelectAnimationGenerator
         }
 
         List<List<int>> sourcePartitions = [];
-        int rowIndexColumnIndex = fromTableWithRowIndex.IndexOfColumn(Table.RowIndexColumnName);
+        int rowIndexColumnIndex = fromTableWithRowIndex.IndexOfColumn(DisplayTable.RowIndexColumnName);
 
         if (windowFunction.PartitionNames.Count > 0)
         {
             List<int> partitionIndices = windowFunction.PartitionNames
                 .Select(p => fromTableWithRowIndex.IndexOfColumn(p)).ToList();
-            sourcePartitions = fromTableWithRowIndex.Entries
-                .GroupBy(e => string.Join(", ", partitionIndices.Select(i => e.Values[i].Value)))
+            sourcePartitions = fromTableWithRowIndex.Rows
+                .GroupBy(e => string.Join(", ", partitionIndices.Select(i => e[i].Value)))
                 .OrderBy(g => g.Key)
-                .Select(g => g.Select(e => int.Parse(e.Values[rowIndexColumnIndex].Value)).ToList())
+                .Select(g => g.Select(e => int.Parse(e[rowIndexColumnIndex].Value)).ToList())
                 .ToList();
         }
         else
         {
-            sourcePartitions = [fromTableWithRowIndex.Entries.Select(e => int.Parse(e.Values[rowIndexColumnIndex].Value)).ToList()];
+            sourcePartitions = [fromTableWithRowIndex.Rows.Select(e => int.Parse(e[rowIndexColumnIndex].Value)).ToList()];
         }
 
         int resultTableRowIndex = 0;
@@ -408,7 +410,7 @@ public static class SelectAnimationGenerator
 
             // First, highlight all rows in this partition in the source table
             var partitionRowActions = sourcePartition
-                .Select(rowIdx => tvm.GenerateToggleHighlightRow(fromTable.Entries[rowIdx]))
+                .Select(rowIdx => tvm.GenerateToggleHighlightRow(fromTable[rowIdx]))
                 .ToList();
             steps.Add(tvm.CombineActions(partitionRowActions));
 
@@ -446,10 +448,10 @@ public static class SelectAnimationGenerator
         }
     }
 
-    private static void HandleValueWindowFunction(Table fromTable, Table toTable, WindowFunction windowFunction,
+    private static void HandleValueWindowFunction(DisplayTable fromTable, DisplayTable toTable, WindowFunction windowFunction,
         int columnIndex, List<Action> steps)
     {
-        Table fromTableWithRowIndex = fromTable.DeepClone().AppendRowIndex();
+        var fromTableWithRowIndex = fromTable.DeepClone().AppendRowIndex();
 
         if (windowFunction.Orders.Count > 0)
         {
@@ -460,21 +462,21 @@ public static class SelectAnimationGenerator
         }
 
         List<List<int>> sourcePartitions = [];
-        int rowIndexColumnIndex = fromTableWithRowIndex.IndexOfColumn(Table.RowIndexColumnName);
+        int rowIndexColumnIndex = fromTableWithRowIndex.IndexOfColumn(DisplayTable.RowIndexColumnName);
 
         if (windowFunction.PartitionNames.Count > 0)
         {
             List<int> partitionIndices = windowFunction.PartitionNames
                 .Select(p => fromTableWithRowIndex.IndexOfColumn(p)).ToList();
-            sourcePartitions = fromTableWithRowIndex.Entries
-                .GroupBy(e => string.Join(", ", partitionIndices.Select(i => e.Values[i].Value)))
+            sourcePartitions = fromTableWithRowIndex.Rows
+                .GroupBy(e => string.Join(", ", partitionIndices.Select(i => e[i].Value)))
                 .OrderBy(g => g.Key)
-                .Select(g => g.Select(e => int.Parse(e.Values[rowIndexColumnIndex].Value)).ToList())
+                .Select(g => g.Select(e => int.Parse(e[rowIndexColumnIndex].Value)).ToList())
                 .ToList();
         }
         else
         {
-            sourcePartitions = [fromTableWithRowIndex.Entries.Select(e => int.Parse(e.Values[rowIndexColumnIndex].Value)).ToList()];
+            sourcePartitions = [fromTableWithRowIndex.Rows.Select(e => int.Parse(e[rowIndexColumnIndex].Value)).ToList()];
         }
 
         int resultTableRowIndex = 0;
@@ -490,7 +492,7 @@ public static class SelectAnimationGenerator
             var resultPartition = resultPartitions[i];
 
             var partitionRowActions = sourcePartition
-                .Select(rowIdx => tvm.GenerateToggleHighlightRow(fromTable.Entries[rowIdx]))
+                .Select(rowIdx => tvm.GenerateToggleHighlightRow(fromTable[rowIdx]))
                 .ToList();
             steps.Add(tvm.CombineActions(partitionRowActions));
 

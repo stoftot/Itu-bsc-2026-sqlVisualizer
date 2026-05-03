@@ -1,4 +1,5 @@
 using visualizer.Models;
+using visualizer.Repositories.Contracts;
 using visualizer.Utility;
 
 namespace visualizer.Repositories.AnimationClasses;
@@ -7,9 +8,10 @@ public static class WhereAnimationGenerator
 {
     private static TableVisualModifier tvm = new();
 
-    public static Animation Generate(Table fromTable, Table toTable, SQLDecompositionComponent action)
+    public static List<Action> Generate(DisplayTable fromTable, DisplayTable toTable, 
+        ISQLComponent sql)
     {
-        var columnsInClause = UtilRegex.ExtractReferencedColumns(action.Clause);
+        var columnsInClause = UtilRegex.ExtractReferencedColumns(sql.Clause());
         var columnsInClauseIndexes = fromTable.IndexOfColumns(columnsInClause, ignoreColumnsNotFound: true);
 
         var steps = new List<Action>
@@ -21,11 +23,11 @@ public static class WhereAnimationGenerator
             ])
         };
 
-        var remainingResultRows = toTable.Entries.ToList();
+        var remainingResultRows = toTable.Rows.ToList();
         
-        for(int i = 0; i < fromTable.Entries.Count; i++)
+        for(int i = 0; i < fromTable.Rows.Count; i++)
         {
-            var fromEntry = fromTable.Entries[i];
+            var fromEntry = fromTable[i];
             var highlightSource = tvm.CombineActions(
                 [
                     tvm.GenerateToggleHighlightRow(fromEntry),
@@ -33,8 +35,8 @@ public static class WhereAnimationGenerator
                 ]);
 
             var matchingResult = remainingResultRows.FirstOrDefault(r =>
-                r.Values.Select(v => v.Value)
-                    .SequenceEqual(fromEntry.Values.Select(v => v.Value)));
+                r.Cells.Select(v => v.Value)
+                    .SequenceEqual(fromEntry.Cells.Select(v => v.Value)));
 
             if (matchingResult != null)
             {
@@ -58,6 +60,6 @@ public static class WhereAnimationGenerator
             }
         }
 
-        return new Animation(steps);
+        return steps;
     }
 }

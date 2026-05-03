@@ -2,8 +2,8 @@
 
 public interface IAnimation
 {
-    public IList<IDisplayTable> FromTables();
-    public IList<IDisplayTable> ToTables();
+    public IReadOnlyList<IDisplayTable> FromTables();
+    public IReadOnlyList<IDisplayTable> ToTables();
     public SQLKeyword Keyword();
     public int NumberOfAnimationSteps();
     public int StepIndex();

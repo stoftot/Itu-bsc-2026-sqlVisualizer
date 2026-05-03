@@ -17,9 +17,9 @@ public class QueryIllustrationViewBase : ComponentBase, IDisposable
     [Inject] public required IMetricsHandler MetricsHandler { get; init; }
     [Inject] public required IAnimationGenerator AnimationGenerator { get; init; }
     
-    public IList<IDisplayTable> FromTables { get; set; } = [];
-    public IList<IDisplayTable> ToTables { get; set; } = [];
-    private IList<IAnimation> Steps { get; set; } = [];
+    public IReadOnlyList<IDisplayTable> FromTables { get; set; } = [];
+    public IReadOnlyList<IDisplayTable> ToTables { get; set; } = [];
+    private IReadOnlyList<IAnimation> Steps { get; set; } = [];
     private int _indexOfStepToHighlight;
     private CancellationTokenSource? _animationCancellationTokenSource;
     private Task? _animationPlaybackTask;

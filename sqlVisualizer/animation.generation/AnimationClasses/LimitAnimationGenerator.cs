@@ -1,4 +1,5 @@
 ﻿using visualizer.Models;
+using visualizer.Repositories.Contracts;
 
 namespace visualizer.Repositories.AnimationClasses;
 
@@ -6,23 +7,23 @@ public static class LimitAnimationGenerator
 {
     private static TableVisualModifier tvm = new();
 
-    public static Animation Generate(Table fromTable, Table toTable, SQLDecompositionComponent action)
+    public static List<Action> Generate(DisplayTable fromTable, DisplayTable toTable, ISQLComponent sql)
     {
         var steps = new List<Action>{tvm.HideTableCellBased(toTable)};
         
-        if (!int.TryParse(action.Clause.Trim(), out var limitCount) || limitCount <= 0)
+        if (!int.TryParse(sql.Clause().Trim(), out var limitCount) || limitCount <= 0)
         {
-            throw new ArgumentException($"Invalid LIMIT value: {action.Clause}");
+            throw new ArgumentException($"Invalid LIMIT value: {sql.Clause()}");
         }
         
-        for (int i = 0; i < fromTable.Entries.Count && i < limitCount; i++)
+        for (int i = 0; i < fromTable.Rows.Count && i < limitCount; i++)
         {
-            var fromEntry = fromTable.Entries[i];
+            var fromEntry = fromTable[i];
             var highlightSource = tvm.GenerateToggleHighlightRow(fromEntry);
 
-            var matchingResult = toTable.Entries.FirstOrDefault(r =>
-                r.Values.Select(v => v.Value)
-                    .SequenceEqual(fromEntry.Values.Select(v => v.Value)));
+            var matchingResult = toTable.Rows.FirstOrDefault(r =>
+                r.Cells.Select(v => v.Value)
+                    .SequenceEqual(fromEntry.Cells.Select(v => v.Value)));
 
             if (matchingResult != null)
             {
@@ -39,7 +40,7 @@ public static class LimitAnimationGenerator
             }
         }
 
-        return new Animation(steps);
+        return steps;
     }
 }
 

@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using visualizer.Models;
+using visualizer.Repositories.Contracts;
 using visualizer.Utility;
 
 namespace visualizer.Repositories.AnimationClasses;
@@ -7,29 +8,29 @@ namespace visualizer.Repositories.AnimationClasses;
 public static class GroupByAnimationGenerator
 {
     private static TableVisualModifier tvm = new();
-    public static Animation Generate(Table fromTable, List<Table> toTables,
-        SQLDecompositionComponent action)
+    public static List<Action> Generate(DisplayTable fromTable, List<DisplayTable> toTables,
+        ISQLComponent sql)
     {
         var steps = new List<Action>();
 
         steps.Add(tvm.HideTablesCellBased(toTables));
 
-        var columnNamesToGroupBy = action.Clause.Split(',');
+        var columnNamesToGroupBy = sql.Clause().Split(',');
 
         var groupByIndexes = columnNamesToGroupBy
             .Select(columName => fromTable
                 .IndexOfColumn(columName.Trim())).ToList();
 
         var toTableEntryValueMap =
-            new Dictionary<ImmutableArray<TableValue>, int>(new ImmutableArrayComparer<TableValue>());
+            new Dictionary<ImmutableArray<DisplayTableTableCell>, int>(new ImmutableArrayComparer<DisplayTableTableCell>());
 
         toTables.ForEach(table => toTableEntryValueMap
-            .Add(table.Entries[0].ValuesAsImmutableArray(groupByIndexes), 0));
+            .Add(table[0].ValuesAsImmutableArray(groupByIndexes), 0));
 
-        for (int row = 0; row < fromTable.Entries.Count; row++)
+        for (int row = 0; row < fromTable.Rows.Count; row++)
         {
             var fromAnimations = new List<Action>();
-            var currRow = fromTable.Entries[row];
+            var currRow = fromTable[row];
             
             fromAnimations.AddRange(
             [
@@ -40,28 +41,28 @@ public static class GroupByAnimationGenerator
 
             var fromValues = currRow.ValuesAsImmutableArray(groupByIndexes);
             var toTable = toTables
-                .First(t => t.Entries[0]
+                .First(t => t[0]
                     .ValuesAsImmutableArray(groupByIndexes)
                     .SequenceEqual(fromValues));
 
-            var indexOfToRow = toTableEntryValueMap[toTable.Entries[0].ValuesAsImmutableArray(groupByIndexes)]++;
+            var indexOfToRow = toTableEntryValueMap[toTable[0].ValuesAsImmutableArray(groupByIndexes)]++;
 
             steps.Add(tvm.CombineActions(fromAnimations,
             [
                 tvm.ChangeHighlightColourCells(toTable, indexOfToRow, groupByIndexes, UtilColor.SecondaryHighlightColor),
-                tvm.GenerateToggleVisibleCellsInRow(toTable.Entries[indexOfToRow]),
-                tvm.GenerateToggleHighlightRow(toTable.Entries[indexOfToRow]),
+                tvm.GenerateToggleVisibleCellsInRow(toTable[indexOfToRow]),
+                tvm.GenerateToggleHighlightRow(toTable[indexOfToRow]),
                 tvm.GenerateToggleHighlightCells(toTable, indexOfToRow, groupByIndexes)
             ]));
 
             steps.Add(tvm.CombineActions(fromAnimations,
             [
-                tvm.GenerateToggleHighlightRow(toTable.Entries[indexOfToRow]),
+                tvm.GenerateToggleHighlightRow(toTable[indexOfToRow]),
                 tvm.GenerateToggleHighlightCells(toTable, indexOfToRow, groupByIndexes)
             ]));
         }
 
-        return new Animation(steps);
+        return steps;
     }
     
     private sealed class ImmutableArrayComparer<T> : IEqualityComparer<ImmutableArray<T>>

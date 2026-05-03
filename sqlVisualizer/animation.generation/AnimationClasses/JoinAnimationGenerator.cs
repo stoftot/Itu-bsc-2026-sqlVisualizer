@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Text.RegularExpressions;
 using visualizer.Exstensions;
 using visualizer.Models;
+using visualizer.Repositories.Contracts;
 using visualizer.Utility;
 
 namespace visualizer.Repositories.AnimationClasses;
@@ -10,20 +11,20 @@ public static class JoinAnimationGenerator
 {
     private static TableVisualModifier tvm = new();
 
-    public static Animation Generate(List<Table> fromTables, Table toTable,
-        SQLDecompositionComponent action)
+    public static List<Action> Generate(List<DisplayTable> fromTables, DisplayTable toTable,
+        ISQLComponent sql)
     {
-        var joiningTableName = UtilRegex.ExtractTableNameFromJoin(action.Clause);
+        var joiningTableName = UtilRegex.ExtractTableNameFromJoin(sql.Clause());
 
         var primaryTable = fromTables.First(t => t.Name != joiningTableName);
         var joiningTable = fromTables.First(t => t.Name == joiningTableName);
         
-        var conditionColumns = ExtractPotentialConditionColumns(action.Clause);
+        var conditionColumns = ExtractPotentialConditionColumns(sql.Clause());
         
         var primaryColumnsToHighlightIndexes = primaryTable.IndexOfColumns(conditionColumns, ignoreColumnsNotFound: true);
         var joiningColumnsToHighlightIndexes = joiningTable.IndexOfColumns(conditionColumns, ignoreColumnsNotFound: true);
 
-        return action.Keyword switch
+        return sql.Keyword() switch
         {
             SQLKeyword.JOIN or SQLKeyword.INNER_JOIN 
                 => GenerateJoinAndInnerJoin(primaryTable, joiningTable, toTable, primaryColumnsToHighlightIndexes, joiningColumnsToHighlightIndexes),
@@ -33,12 +34,13 @@ public static class JoinAnimationGenerator
                 => GenerateRightJoinAndRightOuterJoin(primaryTable, joiningTable, toTable, primaryColumnsToHighlightIndexes, joiningColumnsToHighlightIndexes),
             SQLKeyword.FULL_JOIN or SQLKeyword.FULL_OUTER_JOIN 
                 => GenerateFullJoinAndFullOuterJoin(primaryTable, joiningTable, toTable, primaryColumnsToHighlightIndexes, joiningColumnsToHighlightIndexes),
-            _ => throw new NotImplementedException("not supported keyword: " + action.Keyword)
+            _ => throw new NotImplementedException("not supported keyword: " + sql.Keyword())
         };
     }
 
-    private static Animation GenerateJoinAndInnerJoin(Table primaryTable, Table joiningTable,
-        Table toTable, IList<int> primaryColumnsToHighlightIndexes, IList<int> joiningColumnsToHighlightIndexes)
+    private static List<Action> GenerateJoinAndInnerJoin(DisplayTable primaryTable, DisplayTable joiningTable,
+        DisplayTable toTable, IList<int> primaryColumnsToHighlightIndexes, 
+        IList<int> joiningColumnsToHighlightIndexes)
     {
         var steps = new List<Action>();
         
@@ -54,9 +56,9 @@ public static class JoinAnimationGenerator
         var currentResultIndex = 0;
         List<Action> toToggle = [];
         List<Action> deToggle = [];
-        for(int primaryRow = 0; primaryRow < primaryTable.Entries.Count; primaryRow++)
+        for(int primaryRow = 0; primaryRow < primaryTable.Rows.Count; primaryRow++)
         {
-            var primaryEntry = primaryTable.Entries[primaryRow];
+            var primaryEntry = primaryTable[primaryRow];
             var primaryToggle = tvm.CombineActions(
                 [
                     tvm.GenerateToggleHighlightRow(primaryEntry),
@@ -65,9 +67,9 @@ public static class JoinAnimationGenerator
             
             toToggle.Add(primaryToggle);
             
-            for(int joiningRow = 0; joiningRow < joiningTable.Entries.Count; joiningRow++)
+            for(int joiningRow = 0; joiningRow < joiningTable.Rows.Count; joiningRow++)
             {
-                var joiningEntry = joiningTable.Entries[joiningRow];
+                var joiningEntry = joiningTable[joiningRow];
                 var joiningStep = tvm.CombineActions(
                 [
                     tvm.GenerateToggleHighlightRow(joiningEntry),
@@ -76,16 +78,16 @@ public static class JoinAnimationGenerator
                 toToggle.Add(joiningStep);
                 deToggle.Add(joiningStep);
                 
-                if (currentResultIndex < toTable.Entries.Count
-                    && primaryEntry.AreJoinEquivalentToResult(joiningEntry, toTable.Entries[currentResultIndex]
+                if (currentResultIndex < toTable.Rows.Count
+                    && primaryEntry.AreJoinEquivalentToResult(joiningEntry, toTable[currentResultIndex]
                     ))
                 {
                     toToggle.AddRange(
                     [
-                        tvm.GenerateToggleVisibleCellsInRow(toTable.Entries[currentResultIndex]),
-                        tvm.GenerateToggleHighlightRow(toTable.Entries[currentResultIndex])
+                        tvm.GenerateToggleVisibleCellsInRow(toTable[currentResultIndex]),
+                        tvm.GenerateToggleHighlightRow(toTable[currentResultIndex])
                     ]);
-                    deToggle.Add(tvm.GenerateToggleHighlightRow(toTable.Entries[currentResultIndex]));
+                    deToggle.Add(tvm.GenerateToggleHighlightRow(toTable[currentResultIndex]));
                     currentResultIndex++;
                 }
 
@@ -100,11 +102,12 @@ public static class JoinAnimationGenerator
 
         steps.Add(toToggle.ToOneAction());
 
-        return new Animation(steps);
+        return steps;
     }
 
-    private static Animation GenerateLeftJoinAndLeftOuterJoin(Table primaryTable, Table joiningTable,
-        Table toTable, IList<int> primaryColumnsToHighlightIndexes, IList<int> joiningColumnsToHighlightIndexes)
+    private static List<Action> GenerateLeftJoinAndLeftOuterJoin(DisplayTable primaryTable, DisplayTable joiningTable,
+        DisplayTable toTable, IList<int> primaryColumnsToHighlightIndexes, 
+        IList<int> joiningColumnsToHighlightIndexes)
     {
         var steps = new List<Action>();
         
@@ -120,11 +123,11 @@ public static class JoinAnimationGenerator
         var currentResultIndex = 0;
         List<Action> toToggle = [];
         List<Action> deToggle = [];
-        for(int primaryRow = 0; primaryRow < primaryTable.Entries.Count; primaryRow++)
+        for(int primaryRow = 0; primaryRow < primaryTable.Rows.Count; primaryRow++)
         {
             var foundMatcInJoiningTable = false;
             
-            var primaryEntry = primaryTable.Entries[primaryRow];
+            var primaryEntry = primaryTable[primaryRow];
             var primaryToggle = tvm.CombineActions(
                 [
                     tvm.GenerateToggleHighlightRow(primaryEntry),
@@ -133,9 +136,9 @@ public static class JoinAnimationGenerator
             
             toToggle.Add(primaryToggle);
             
-            for(int joiningRow = 0; joiningRow < joiningTable.Entries.Count; joiningRow++)
+            for(int joiningRow = 0; joiningRow < joiningTable.Rows.Count; joiningRow++)
             {
-                var joiningEntry = joiningTable.Entries[joiningRow];
+                var joiningEntry = joiningTable[joiningRow];
                 var joiningStep = tvm.CombineActions(
                 [
                     tvm.GenerateToggleHighlightRow(joiningEntry),
@@ -144,17 +147,17 @@ public static class JoinAnimationGenerator
                 toToggle.Add(joiningStep);
                 deToggle.Add(joiningStep);
                 
-                if (currentResultIndex < toTable.Entries.Count
-                    && primaryEntry.AreJoinEquivalentToResult(joiningEntry, toTable.Entries[currentResultIndex]
+                if (currentResultIndex < toTable.Rows.Count
+                    && primaryEntry.AreJoinEquivalentToResult(joiningEntry, toTable[currentResultIndex]
                     ))
                 {
                     foundMatcInJoiningTable = true;
                     toToggle.AddRange(
                     [
-                        tvm.GenerateToggleVisibleCellsInRow(toTable.Entries[currentResultIndex]),
-                        tvm.GenerateToggleHighlightRow(toTable.Entries[currentResultIndex])
+                        tvm.GenerateToggleVisibleCellsInRow(toTable[currentResultIndex]),
+                        tvm.GenerateToggleHighlightRow(toTable[currentResultIndex])
                     ]);
-                    deToggle.Add(tvm.GenerateToggleHighlightRow(toTable.Entries[currentResultIndex]));
+                    deToggle.Add(tvm.GenerateToggleHighlightRow(toTable[currentResultIndex]));
                     currentResultIndex++;
                 }
 
@@ -168,14 +171,14 @@ public static class JoinAnimationGenerator
             {
                steps.Add(tvm.CombineActions(toToggle,
                    [
-                       tvm.GenerateToggleVisibleCellsInRow(toTable.Entries[currentResultIndex]),
-                       tvm.GenerateToggleHighlightRow(toTable.Entries[currentResultIndex])
+                       tvm.GenerateToggleVisibleCellsInRow(toTable[currentResultIndex]),
+                       tvm.GenerateToggleHighlightRow(toTable[currentResultIndex])
                    ]));
                toToggle.Clear();
                toToggle.AddRange(
                [
                    primaryToggle,
-                   tvm.GenerateToggleHighlightRow(toTable.Entries[currentResultIndex])
+                   tvm.GenerateToggleHighlightRow(toTable[currentResultIndex])
                ]);
                currentResultIndex++;
             } else
@@ -184,11 +187,12 @@ public static class JoinAnimationGenerator
 
         steps.Add(toToggle.ToOneAction());
 
-        return new Animation(steps);
+        return steps;
     }
     
-    private static Animation GenerateRightJoinAndRightOuterJoin(Table primaryTable, Table joiningTable,
-        Table toTable, IList<int> primaryColumnsToHighlightIndexes, IList<int> joiningColumnsToHighlightIndexes)
+    private static List<Action> GenerateRightJoinAndRightOuterJoin(DisplayTable primaryTable, DisplayTable joiningTable,
+        DisplayTable toTable, IList<int> primaryColumnsToHighlightIndexes, 
+        IList<int> joiningColumnsToHighlightIndexes)
     {
         var steps = new List<Action>();
         
@@ -204,11 +208,11 @@ public static class JoinAnimationGenerator
         var currentResultIndex = 0;
         List<Action> toToggle = [];
         List<Action> deToggle = [];
-        for(int joiningRow = 0; joiningRow < joiningTable.Entries.Count; joiningRow++)
+        for(int joiningRow = 0; joiningRow < joiningTable.Rows.Count; joiningRow++)
         {
             var foundMatchInPrimaryTable = false;
 
-            var joiningEntry = joiningTable.Entries[joiningRow];
+            var joiningEntry = joiningTable[joiningRow];
             var joiningToggle = tvm.CombineActions(
                 [
                     tvm.GenerateToggleHighlightRow(joiningEntry),
@@ -217,9 +221,9 @@ public static class JoinAnimationGenerator
             
             toToggle.Add(joiningToggle);
             
-            for(int primaryRow = 0; primaryRow < primaryTable.Entries.Count; primaryRow++)
+            for(int primaryRow = 0; primaryRow < primaryTable.Rows.Count; primaryRow++)
             {
-                var primaryEntry = primaryTable.Entries[primaryRow];
+                var primaryEntry = primaryTable[primaryRow];
                 var primaryStep = tvm.CombineActions(
                 [
                     tvm.GenerateToggleHighlightRow(primaryEntry),
@@ -228,17 +232,17 @@ public static class JoinAnimationGenerator
                 toToggle.Add(primaryStep);
                 deToggle.Add(primaryStep);
                 
-                if (currentResultIndex < toTable.Entries.Count
-                    && primaryEntry.AreJoinEquivalentToResult(joiningEntry, toTable.Entries[currentResultIndex]
+                if (currentResultIndex < toTable.Rows.Count
+                    && primaryEntry.AreJoinEquivalentToResult(joiningEntry, toTable[currentResultIndex]
                     ))
                 {
                     foundMatchInPrimaryTable = true;
                     toToggle.AddRange(
                     [
-                        tvm.GenerateToggleVisibleCellsInRow(toTable.Entries[currentResultIndex]),
-                        tvm.GenerateToggleHighlightRow(toTable.Entries[currentResultIndex])
+                        tvm.GenerateToggleVisibleCellsInRow(toTable[currentResultIndex]),
+                        tvm.GenerateToggleHighlightRow(toTable[currentResultIndex])
                     ]);
-                    deToggle.Add(tvm.GenerateToggleHighlightRow(toTable.Entries[currentResultIndex]));
+                    deToggle.Add(tvm.GenerateToggleHighlightRow(toTable[currentResultIndex]));
                     currentResultIndex++;
                 }
 
@@ -252,14 +256,14 @@ public static class JoinAnimationGenerator
             {
                steps.Add(tvm.CombineActions(toToggle,
                    [
-                       tvm.GenerateToggleVisibleCellsInRow(toTable.Entries[currentResultIndex]),
-                       tvm.GenerateToggleHighlightRow(toTable.Entries[currentResultIndex])
+                       tvm.GenerateToggleVisibleCellsInRow(toTable[currentResultIndex]),
+                       tvm.GenerateToggleHighlightRow(toTable[currentResultIndex])
                    ]));
                toToggle.Clear();
                toToggle.AddRange(
                [
                    joiningToggle,
-                   tvm.GenerateToggleHighlightRow(toTable.Entries[currentResultIndex])
+                   tvm.GenerateToggleHighlightRow(toTable[currentResultIndex])
                ]);
                currentResultIndex++;
             } else
@@ -268,11 +272,12 @@ public static class JoinAnimationGenerator
 
         steps.Add(toToggle.ToOneAction());
 
-        return new Animation(steps);
+        return steps;
     }
     
-    private static Animation GenerateFullJoinAndFullOuterJoin(Table primaryTable, Table joiningTable,
-        Table toTable, IList<int> primaryColumnsToHighlightIndexes, IList<int> joiningColumnsToHighlightIndexes)
+    private static List<Action> GenerateFullJoinAndFullOuterJoin(DisplayTable primaryTable, DisplayTable joiningTable,
+        DisplayTable toTable, IList<int> primaryColumnsToHighlightIndexes, 
+        IList<int> joiningColumnsToHighlightIndexes)
     {
         var steps = new List<Action>();
 
@@ -289,11 +294,11 @@ public static class JoinAnimationGenerator
         List<Action> toToggle = [];
         List<Action> deToggle = [];
 
-        for (int primaryRow = 0; primaryRow < primaryTable.Entries.Count; primaryRow++)
+        for (int primaryRow = 0; primaryRow < primaryTable.Rows.Count; primaryRow++)
         {
             var foundMatchInJoiningTable = false;
 
-            var primaryEntry = primaryTable.Entries[primaryRow];
+            var primaryEntry = primaryTable[primaryRow];
             var primaryToggle = tvm.CombineActions(
                 [
                     tvm.GenerateToggleHighlightRow(primaryEntry),
@@ -302,9 +307,9 @@ public static class JoinAnimationGenerator
 
             toToggle.Add(primaryToggle);
 
-            for (int joiningRow = 0; joiningRow < joiningTable.Entries.Count; joiningRow++)
+            for (int joiningRow = 0; joiningRow < joiningTable.Rows.Count; joiningRow++)
             {
-                var joiningEntry = joiningTable.Entries[joiningRow];
+                var joiningEntry = joiningTable[joiningRow];
                 var joiningCellToggle = tvm.GenerateToggleHighlightCells(joiningTable, joiningRow, joiningColumnsToHighlightIndexes);
                 var joiningRowAlreadyMatched = matchedJoiningRowIndexes.Contains(joiningRow);
 
@@ -320,8 +325,8 @@ public static class JoinAnimationGenerator
                     joiningStep
                 ]);
 
-                if (currentResultIndex < toTable.Entries.Count
-                    && primaryEntry.AreJoinEquivalentToResult(joiningEntry, toTable.Entries[currentResultIndex]
+                if (currentResultIndex < toTable.Rows.Count
+                    && primaryEntry.AreJoinEquivalentToResult(joiningEntry, toTable[currentResultIndex]
                     ))
                 {
                     foundMatchInJoiningTable = true;
@@ -336,10 +341,10 @@ public static class JoinAnimationGenerator
       
                     toToggle.AddRange(
                     [
-                        tvm.GenerateToggleVisibleCellsInRow(toTable.Entries[currentResultIndex]),
-                        tvm.GenerateToggleHighlightRow(toTable.Entries[currentResultIndex])
+                        tvm.GenerateToggleVisibleCellsInRow(toTable[currentResultIndex]),
+                        tvm.GenerateToggleHighlightRow(toTable[currentResultIndex])
                     ]);
-                    deToggle.Add(tvm.GenerateToggleHighlightRow(toTable.Entries[currentResultIndex]));
+                    deToggle.Add(tvm.GenerateToggleHighlightRow(toTable[currentResultIndex]));
                     currentResultIndex++;
                 }
                 else
@@ -361,14 +366,14 @@ public static class JoinAnimationGenerator
             {
                 steps.Add(tvm.CombineActions(toToggle,
                     [
-                        tvm.GenerateToggleVisibleCellsInRow(toTable.Entries[currentResultIndex]),
-                        tvm.GenerateToggleHighlightRow(toTable.Entries[currentResultIndex])
+                        tvm.GenerateToggleVisibleCellsInRow(toTable[currentResultIndex]),
+                        tvm.GenerateToggleHighlightRow(toTable[currentResultIndex])
                     ]));
                 toToggle.Clear();
                 toToggle.AddRange(
                 [
                     primaryToggle,
-                    tvm.GenerateToggleHighlightRow(toTable.Entries[currentResultIndex])
+                    tvm.GenerateToggleHighlightRow(toTable[currentResultIndex])
                 ]);
                 currentResultIndex++;
             }
@@ -380,12 +385,12 @@ public static class JoinAnimationGenerator
 
         var finalActions = new List<Action>();
 
-        for (int joiningRow = 0; joiningRow < joiningTable.Entries.Count; joiningRow++)
+        for (int joiningRow = 0; joiningRow < joiningTable.Rows.Count; joiningRow++)
         {
             if (matchedJoiningRowIndexes.Contains(joiningRow))
                 continue;
 
-            var joiningEntry = joiningTable.Entries[joiningRow];
+            var joiningEntry = joiningTable[joiningRow];
             finalActions.Add(() =>
             {
                 joiningEntry.SetHighlightColorDefault();
@@ -393,10 +398,10 @@ public static class JoinAnimationGenerator
             });
         }
 
-        for (int resultRow = currentResultIndex; resultRow < toTable.Entries.Count; resultRow++)
+        for (int resultRow = currentResultIndex; resultRow < toTable.Rows.Count; resultRow++)
         {
-            finalActions.Add(tvm.GenerateToggleVisibleCellsInRow(toTable.Entries[resultRow]));
-            finalActions.Add(tvm.GenerateToggleHighlightRow(toTable.Entries[resultRow]));
+            finalActions.Add(tvm.GenerateToggleVisibleCellsInRow(toTable[resultRow]));
+            finalActions.Add(tvm.GenerateToggleHighlightRow(toTable[resultRow]));
         }
         
         steps.Add(toToggle.ToOneAction());
@@ -405,7 +410,7 @@ public static class JoinAnimationGenerator
         
         steps.Add(tvm.ResetTables([joiningTable, toTable]));
         
-        return new Animation(steps);
+        return steps;
     }
 
     /// <summary>
