@@ -1,6 +1,6 @@
-﻿using visualizer.Utility;
+﻿using commonDataModels;
 
-namespace visualizer.Models;
+namespace visualizer.service.Contracts;
 
 public interface IDisplayTable
 {

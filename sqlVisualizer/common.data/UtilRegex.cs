@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace visualizer.Utility;
+namespace commonDataModels;
 
 public static class UtilRegex
 {

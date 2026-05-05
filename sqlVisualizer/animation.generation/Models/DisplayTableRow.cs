@@ -1,6 +1,7 @@
 ﻿using System.Collections.Immutable;
+using visualizer.service.Contracts;
 
-namespace visualizer.Models;
+namespace animationGeneration.Models;
 
 public class DisplayTableRow : DisplayableBase, IDisplayTableRow
 {

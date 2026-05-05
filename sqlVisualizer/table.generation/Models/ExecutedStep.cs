@@ -1,6 +1,6 @@
-﻿using visualizer.Repositories.Contracts;
+﻿using animationGeneration.Contracts;
 
-namespace visualizer.Models;
+namespace tableGeneration.Models;
 
 public class ExecutedStep : ISqlExecutedStep
 {

@@ -1,7 +1,7 @@
 ﻿using System.Net;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
-using visualizer.Repositories;
+using visualizer.service.Repositories;
 
 namespace visualizer.Components.Pages;
 

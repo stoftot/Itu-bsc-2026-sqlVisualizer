@@ -1,6 +1,7 @@
-﻿using visualizer.Repositories.Contracts;
+﻿using animationGeneration.Contracts;
+using commonDataModels.Models;
 
-namespace visualizer.Models;
+namespace tableGeneration.Models;
 
 public class SQLDecompositionComponent(SQLKeyword keyword, string clause) : ISQLComponent
 {

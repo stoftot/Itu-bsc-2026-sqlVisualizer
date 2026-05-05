@@ -1,7 +1,9 @@
-﻿using visualizer.Models;
-using visualizer.Repositories.Contracts;
+﻿using animationGeneration.Contracts;
+using commonDataModels.Models;
+using tableGeneration.Contracts;
+using tableGeneration.Models;
 
-namespace visualizer.Repositories;
+namespace tableGeneration;
 
 public class TablesPerExecutionStepGenerator(SQLExecutorWrapper executorWrapper, ISQLParser parser)
     : ITablesPerExecutionStepGenerator

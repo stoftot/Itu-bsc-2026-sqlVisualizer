@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Components;
 using visualizer.Components.Shared;
-using visualizer.Models;
-using visualizer.Repositories;
+using visualizer.service.Contracts;
+using visualizer.service.Repositories;
 
 namespace visualizer.Components.Pages;
 

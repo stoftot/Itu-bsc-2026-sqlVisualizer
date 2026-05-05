@@ -1,4 +1,4 @@
-﻿namespace visualizer.Models;
+﻿namespace visualizer.service.Models;
 
 public class Query
 {

@@ -1,4 +1,7 @@
-﻿namespace visualizer.Models;
+﻿using commonDataModels.Models;
+using visualizer.service.Contracts;
+
+namespace animationGeneration.Models;
 
 public class Animation(IReadOnlyList<Action> steps, SQLKeyword keyword, 
     List<DisplayTable> fromTables, List<DisplayTable> toTables) : IAnimation

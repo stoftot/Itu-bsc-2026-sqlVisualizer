@@ -1,4 +1,4 @@
-namespace visualizer.Utility;
+namespace commonDataModels;
 
 public static class UtilColor
 {

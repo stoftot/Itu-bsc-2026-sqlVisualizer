@@ -1,6 +1,6 @@
-﻿using visualizer.Exceptions;
+﻿using visualizer.service.Exceptions;
 
-namespace visualizer.Contracts;
+namespace visualizer.service.Contracts;
 
 public interface ISQLInputValidator
 {

@@ -1,8 +1,9 @@
-﻿using Microsoft.AspNetCore.Components;
+﻿using commonDataModels;
+using commonDataModels.Models;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
-using visualizer.Repositories;
-using visualizer.Models;
-using visualizer.Utility;
+using visualizer.service.Contracts;
+using visualizer.service.Repositories;
 
 namespace visualizer.Components.Shared;
 

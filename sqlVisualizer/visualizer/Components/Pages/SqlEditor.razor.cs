@@ -1,9 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using BlazorMonaco.Editor;
-using visualizer.Contracts;
-using visualizer.Models;
-using visualizer.Repositories;
-using visualizer.Utility;
+using commonDataModels;
+using visualizer.service.Contracts;
 
 namespace visualizer.Components.Pages;
 

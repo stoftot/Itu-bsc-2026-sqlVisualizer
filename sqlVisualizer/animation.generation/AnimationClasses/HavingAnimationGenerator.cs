@@ -1,8 +1,6 @@
-﻿using visualizer.Exstensions;
-using visualizer.Models;
-using visualizer.Repositories.Contracts;
+﻿using animationGeneration.Models;
 
-namespace visualizer.Repositories.AnimationClasses;
+namespace animationGeneration.AnimationClasses;
 
 public static class HavingAnimationGenerator
 {

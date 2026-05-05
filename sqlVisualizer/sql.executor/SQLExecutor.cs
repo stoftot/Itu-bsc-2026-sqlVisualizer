@@ -1,11 +1,7 @@
 ﻿using System.Data.Common;
-using System.Text;
-using System.Text.RegularExpressions;
 using DuckDB.NET.Data;
-using visualizer.Models;
-using visualizer.Utility;
 
-namespace visualizer.Repositories;
+namespace sql.executor;
 
 public class SQLExecutor
 {

@@ -1,7 +1,8 @@
 ﻿using BlazorMonaco.Editor;
-using visualizer.Models;
+using visualizer.service.Contracts;
+using visualizer.service.Models;
 
-namespace visualizer.Repositories;
+namespace visualizer.service.Repositories;
 
 public class HomeState
 {

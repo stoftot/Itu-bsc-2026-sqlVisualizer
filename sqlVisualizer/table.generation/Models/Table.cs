@@ -1,7 +1,6 @@
-﻿using visualizer.Repositories.Contracts;
-using visualizer.Utility;
+﻿using animationGeneration.Contracts;
 
-namespace visualizer.Models;
+namespace tableGeneration.Models;
 
 public class Table : ITable
 {

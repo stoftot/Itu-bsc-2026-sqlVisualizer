@@ -1,7 +1,7 @@
-using visualizer.Exstensions;
-using visualizer.Models;
+using animationGeneration.Extensions;
+using animationGeneration.Models;
 
-namespace visualizer.Repositories;
+namespace animationGeneration;
 
 public class TableVisualModifier
 {

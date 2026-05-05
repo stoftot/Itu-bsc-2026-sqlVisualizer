@@ -1,7 +1,8 @@
-﻿using visualizer.Models;
-using visualizer.Utility;
+﻿using commonDataModels;
+using commonDataModels.Models;
+using tableGeneration.Models;
 
-namespace visualizer.Repositories;
+namespace tableGeneration;
 
 public class TableOriginColumnsGenerator
 {

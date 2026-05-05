@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Components;
-using visualizer.Models;
-using visualizer.Repositories;
+using visualizer.service.Models;
+using visualizer.service.Repositories;
 
 namespace visualizer.Components.Shared;
 

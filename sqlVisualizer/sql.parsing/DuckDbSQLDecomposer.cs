@@ -1,9 +1,10 @@
 using System.Text.Json;
+using commonDataModels.Models;
 using DuckDB.NET.Data;
-using visualizer.Exceptions;
-using visualizer.Models;
+using tableGeneration.Models;
+using visualizer.service.Exceptions;
 
-namespace visualizer.Repositories;
+namespace inputParsing;
 
 /// <summary>
 /// A replacement for <see cref="SQLDecomposer"/> that uses DuckDB's built-in

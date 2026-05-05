@@ -1,4 +1,4 @@
-﻿namespace visualizer.Exceptions;
+﻿namespace visualizer.service.Exceptions;
 
 public class SQLParseException : Exception
 {

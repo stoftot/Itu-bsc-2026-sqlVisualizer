@@ -1,8 +1,9 @@
 ﻿using System.Collections.Concurrent;
-using visualizer.Models;
+using commonDataModels.Models;
 using DuckDB.NET.Data;
+using visualizer.service.Models;
 
-namespace visualizer.Repositories;
+namespace visualizer.service.Repositories;
 
 public interface IMetricsHandler
 {

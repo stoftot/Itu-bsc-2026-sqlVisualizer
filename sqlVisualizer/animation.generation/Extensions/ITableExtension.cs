@@ -1,7 +1,7 @@
-﻿using visualizer.Models;
-using visualizer.Repositories.Contracts;
+﻿using animationGeneration.Contracts;
+using animationGeneration.Models;
 
-namespace visualizer.Exstensions;
+namespace animationGeneration.Extensions;
 
 public static class ITableExtension
 {

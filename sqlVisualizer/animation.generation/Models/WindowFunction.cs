@@ -1,6 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 
-namespace visualizer.Models;
+namespace animationGeneration.Models;
 
 public record Order(string ColumnName, bool IsAscending);
 public class WindowFunction

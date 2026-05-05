@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics.Metrics;
 
-namespace visualizer;
+namespace visualizer.service;
 
 public class MetricsConfig
 {

@@ -1,6 +1,7 @@
 ﻿using System.Text;
+using visualizer.service.Contracts;
 
-namespace visualizer.Models;
+namespace animationGeneration.Models;
 
 public class DisplayTableTableCell : DisplayableBase, IDisplayTableCell
 {

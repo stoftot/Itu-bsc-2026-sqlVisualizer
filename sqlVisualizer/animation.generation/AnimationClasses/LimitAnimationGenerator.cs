@@ -1,7 +1,7 @@
-﻿using visualizer.Models;
-using visualizer.Repositories.Contracts;
+﻿using animationGeneration.Contracts;
+using animationGeneration.Models;
 
-namespace visualizer.Repositories.AnimationClasses;
+namespace animationGeneration.AnimationClasses;
 
 public static class LimitAnimationGenerator
 {

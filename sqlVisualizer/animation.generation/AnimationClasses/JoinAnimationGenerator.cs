@@ -1,11 +1,11 @@
-using System.Diagnostics;
 using System.Text.RegularExpressions;
-using visualizer.Exstensions;
-using visualizer.Models;
-using visualizer.Repositories.Contracts;
-using visualizer.Utility;
+using animationGeneration.Contracts;
+using animationGeneration.Extensions;
+using animationGeneration.Models;
+using commonDataModels;
+using commonDataModels.Models;
 
-namespace visualizer.Repositories.AnimationClasses;
+namespace animationGeneration.AnimationClasses;
 
 public static class JoinAnimationGenerator
 {

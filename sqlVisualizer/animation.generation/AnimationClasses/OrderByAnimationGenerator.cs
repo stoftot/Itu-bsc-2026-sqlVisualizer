@@ -1,9 +1,9 @@
 ﻿using System.Text.RegularExpressions;
-using visualizer.Models;
-using visualizer.Repositories.Contracts;
-using visualizer.Utility;
+using animationGeneration.Contracts;
+using animationGeneration.Models;
+using commonDataModels;
 
-namespace visualizer.Repositories.AnimationClasses;
+namespace animationGeneration.AnimationClasses;
 
 public static class OrderByAnimationGenerator
 {

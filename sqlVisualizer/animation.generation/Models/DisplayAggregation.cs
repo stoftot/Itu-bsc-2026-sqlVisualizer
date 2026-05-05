@@ -1,6 +1,6 @@
-﻿using visualizer.Utility;
+﻿using visualizer.service.Contracts;
 
-namespace visualizer.Models;
+namespace animationGeneration.Models;
 
 public class DisplayAggregation : IDisplayAggregation
 {

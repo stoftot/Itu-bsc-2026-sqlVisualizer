@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components;
-using visualizer.Models;
+using visualizer.service.Contracts;
 
 namespace visualizer.Components.Shared;
 

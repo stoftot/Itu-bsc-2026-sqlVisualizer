@@ -1,6 +1,7 @@
-using visualizer.Models;
+using commonDataModels.Models;
+using visualizer.service.Models;
 
-namespace visualizer.Repositories;
+namespace visualizer.service.Repositories.Dummies;
 
 public class DummyMetricsHandler : IMetricsHandler
 {

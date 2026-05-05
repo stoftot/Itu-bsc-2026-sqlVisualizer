@@ -1,8 +1,9 @@
 ﻿using System.Text;
 using System.Text.RegularExpressions;
-using visualizer.Utility;
+using commonDataModels;
+using commonDataModels.Models;
 
-namespace visualizer.Models;
+namespace tableGeneration.Models;
 
 public class SQLExecutorWrapper(ISQLExecutor executor)
 {

@@ -1,6 +1,7 @@
-﻿using visualizer.Utility;
+﻿using commonDataModels;
+using visualizer.service.Contracts;
 
-namespace visualizer.Models;
+namespace animationGeneration.Models;
 
 public class DisplayTable : IDisplayTable
 {

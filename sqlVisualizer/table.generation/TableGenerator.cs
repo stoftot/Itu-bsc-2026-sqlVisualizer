@@ -1,8 +1,9 @@
 ﻿using System.Text.RegularExpressions;
-using visualizer.Models;
-using visualizer.Utility;
+using commonDataModels;
+using commonDataModels.Models;
+using tableGeneration.Models;
 
-namespace visualizer.Repositories;
+namespace tableGeneration;
 
 public class TableGenerator(SQLExecutorWrapper sqlExecutor, TableOriginColumnsGenerator tocg)
 {

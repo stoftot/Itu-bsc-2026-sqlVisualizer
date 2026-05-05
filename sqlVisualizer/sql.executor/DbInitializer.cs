@@ -1,7 +1,7 @@
 ﻿using DuckDB.NET.Data;
 using Microsoft.Extensions.Configuration;
 
-namespace visualizer;
+namespace sql.executor;
 
 public class DbInitializer(IConfiguration config)
 {

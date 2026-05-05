@@ -1,11 +1,10 @@
-using visualizer.Exstensions;
-using visualizer.Models;
-using System.Text.RegularExpressions;
+using animationGeneration.Contracts;
+using animationGeneration.Extensions;
+using animationGeneration.Models;
+using commonDataModels;
 using commonDataModels.Models;
-using visualizer.Repositories.Contracts;
-using visualizer.Utility;
 
-namespace visualizer.Repositories.AnimationClasses;
+namespace animationGeneration.AnimationClasses;
 
 public static class SelectAnimationGenerator
 {

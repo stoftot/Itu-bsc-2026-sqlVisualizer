@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Components;
-using visualizer.Contracts;
-using visualizer.Exceptions;
-using visualizer.Models;
-using visualizer.Repositories;
+using visualizer.service;
+using visualizer.service.Contracts;
+using visualizer.service.Exceptions;
+using visualizer.service.Repositories;
 
 namespace visualizer.Components.Shared;
 

@@ -1,6 +1,6 @@
-using visualizer.Models;
+using tableGeneration.Models;
 
-namespace visualizer.Repositories;
+namespace inputParsing;
 
 public interface ISQLDecomposer
 {

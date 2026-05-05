@@ -1,5 +1,6 @@
-﻿namespace visualizer.Repositories;
-using DuckDB.NET.Data;
+﻿using DuckDB.NET.Data;
+
+namespace visualizer.service.Repositories;
 
 public interface IUserRepository
 {

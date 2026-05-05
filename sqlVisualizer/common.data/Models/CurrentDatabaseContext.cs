@@ -1,4 +1,4 @@
-﻿namespace visualizer.Repositories;
+﻿namespace commonDataModels.Models;
 
 public interface ICurrentDatabaseContext
 {

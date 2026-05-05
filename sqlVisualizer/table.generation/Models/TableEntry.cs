@@ -1,6 +1,4 @@
-﻿using System.Collections.Immutable;
-
-namespace visualizer.Models;
+﻿namespace tableGeneration.Models;
 
 public class TableEntry
 {

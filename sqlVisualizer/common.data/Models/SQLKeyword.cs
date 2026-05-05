@@ -1,4 +1,4 @@
-﻿namespace visualizer.Models;
+﻿namespace commonDataModels.Models;
 
 public enum SQLKeyword
 {

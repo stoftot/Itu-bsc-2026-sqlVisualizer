@@ -1,13 +1,11 @@
-﻿using System.Collections.Immutable;
-using System.Text.RegularExpressions;
-using Microsoft.VisualBasic;
-using visualizer.Contracts;
-using visualizer.Exstensions;
-using visualizer.Models;
-using visualizer.Repositories.AnimationClasses;
-using visualizer.Repositories.Contracts;
+﻿using animationGeneration.AnimationClasses;
+using animationGeneration.Contracts;
+using animationGeneration.Extensions;
+using animationGeneration.Models;
+using commonDataModels.Models;
+using visualizer.service.Contracts;
 
-namespace visualizer.Repositories;
+namespace animationGeneration;
 
 public class AnimationGenerator(ITablesPerExecutionStepGenerator generator) : IAnimationGenerator
 {

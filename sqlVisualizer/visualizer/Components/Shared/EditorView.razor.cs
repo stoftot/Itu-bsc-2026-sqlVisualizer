@@ -1,6 +1,6 @@
 ﻿using BlazorMonaco.Editor;
 using Microsoft.AspNetCore.Components;
-using visualizer.Repositories;
+using visualizer.service.Repositories;
 
 namespace visualizer.Components.Shared;
 

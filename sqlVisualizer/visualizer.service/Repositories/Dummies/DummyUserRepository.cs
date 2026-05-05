@@ -1,4 +1,4 @@
-namespace visualizer.Repositories;
+namespace visualizer.service.Repositories.Dummies;
 
 public class DummyUserRepository : IUserRepository
 {

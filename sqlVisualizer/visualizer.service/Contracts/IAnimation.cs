@@ -1,4 +1,6 @@
-﻿namespace visualizer.Models;
+﻿using commonDataModels.Models;
+
+namespace visualizer.service.Contracts;
 
 public interface IAnimation
 {

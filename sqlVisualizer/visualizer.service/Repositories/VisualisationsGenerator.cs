@@ -1,9 +1,7 @@
-﻿using System.ComponentModel;
-using System.Text.RegularExpressions;
-using Visualizer;
-using visualizer.Models;
+﻿using System.Text.RegularExpressions;
+using commonDataModels.Models;
 
-namespace visualizer.Repositories;
+namespace visualizer.service.Repositories;
 
 public class VisualisationsGenerator(ISQLDecomposer decomposer, TableGenerator tg, TableOriginColumnsGenerator tocg, AliasReplacer ar)
 {

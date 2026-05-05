@@ -1,4 +1,4 @@
-﻿namespace visualizer.Repositories.Contracts;
+﻿namespace tableGeneration.Contracts;
 
 public interface ISQLParser
 {

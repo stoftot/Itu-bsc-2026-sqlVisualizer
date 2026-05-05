@@ -1,6 +1,6 @@
-﻿using visualizer.Models;
+﻿using commonDataModels.Models;
 
-namespace visualizer.Repositories.Contracts;
+namespace tableGeneration.Contracts;
 
 public interface ISQLDecompositionComponent
 {

@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace Visualizer;
+namespace inputParsing;
 
 public class AliasReplacer
 {

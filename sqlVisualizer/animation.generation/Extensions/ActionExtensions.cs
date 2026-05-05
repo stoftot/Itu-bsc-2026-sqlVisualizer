@@ -1,4 +1,4 @@
-namespace visualizer.Exstensions;
+namespace animationGeneration.Extensions;
 
 public static class ActionExtensions
 {

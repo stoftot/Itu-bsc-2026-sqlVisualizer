@@ -1,4 +1,4 @@
-﻿namespace visualizer.Repositories.Contracts;
+﻿namespace animationGeneration.Contracts;
 
 public interface IAggregation
 {

@@ -1,6 +1,4 @@
-﻿using visualizer.Models;
-
-namespace visualizer.Contracts;
+﻿namespace visualizer.service.Contracts;
 
 public interface IAnimationGenerator
 {
