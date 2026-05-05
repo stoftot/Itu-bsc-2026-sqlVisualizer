@@ -5,9 +5,11 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <RootNamespace>animationGeneration</RootNamespace>
+        <DisableTransitiveProjectReferences>true</DisableTransitiveProjectReferences>
     </PropertyGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\common.data\common.data.csproj" />
       <ProjectReference Include="..\visualizer\visualizer.csproj" />
     </ItemGroup>
 
