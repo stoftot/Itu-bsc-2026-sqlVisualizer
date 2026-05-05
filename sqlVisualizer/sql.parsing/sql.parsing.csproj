@@ -7,4 +7,13 @@
         <RootNamespace>inputParsing</RootNamespace>
     </PropertyGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\common.data\common.data.csproj" />
+      <ProjectReference Include="..\table.generation\table.generation.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Models\" />
+    </ItemGroup>
+
 </Project>

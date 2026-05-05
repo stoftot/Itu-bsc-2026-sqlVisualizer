@@ -1,30 +1,12 @@
 ﻿using System.Text;
+using visualizer.Repositories.Contracts;
 
 namespace visualizer.Models;
 
-public class TableValue : TableObjectBase
+public class TableValue : ITableCell
 {
     public required string Value  { get; set; }
     public object? RawValue { get; set; }
-
-    public string GetStyle()
-    {
-        var styleBuilder = new StringBuilder();
-
-        if (IsHighlighted)
-        {
-            styleBuilder.Append(GetHighlightStyle());
-            styleBuilder.Append(';');
-        }
-
-        if (!IsVisible)
-        {
-            styleBuilder.Append("visibility:hidden");
-            styleBuilder.Append(';');
-        }
-        
-        return styleBuilder.ToString();
-    }
 
     public TableValue DeepClone()
     {
@@ -48,4 +30,7 @@ public class TableValue : TableObjectBase
 
         return string.Compare(left.ToString(), right.ToString(), StringComparison.Ordinal);
     }
+
+    string ITableCell.Value()  => Value;
+    object? ITableCell.RawValue() => RawValue;
 }

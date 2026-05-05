@@ -5,7 +5,7 @@ using visualizer.Utility;
 
 namespace visualizer.Repositories;
 
-public class TableGenerator(SQLExecutor sqlExecutor, TableOriginColumnsGenerator tocg)
+public class TableGenerator(SQLExecutorWrapper sqlExecutor, TableOriginColumnsGenerator tocg)
 {
     public void GenerateTablesIntialStepWithOriginColumns(List<Table> fromTables, SQLDecompositionComponent intialStep,
         List<SQLDecompositionComponent> currSteps)
@@ -99,7 +99,7 @@ public class TableGenerator(SQLExecutor sqlExecutor, TableOriginColumnsGenerator
         }
     }
 
-    public Visualisation GenerateToTable(SQLDecompositionComponent currStep,
+    public ExecutedStep GenerateToTable(SQLDecompositionComponent currStep,
         List<SQLDecompositionComponent> currSteps,
         List<Table> fromTables, List<Table> toTables)
     {
@@ -172,9 +172,9 @@ public class TableGenerator(SQLExecutor sqlExecutor, TableOriginColumnsGenerator
             }
         }
 
-        return new Visualisation
+        return new ExecutedStep
         {
-            Component = currStep,
+            Step= currStep,
             FromTables = fromTables.ToList(),
             ToTables = toTables.ToList()
         };

@@ -1,6 +1,8 @@
-﻿namespace visualizer.Models;
+﻿using visualizer.Repositories.Contracts;
 
-public class SQLDecompositionComponent(SQLKeyword keyword, string clause)
+namespace visualizer.Models;
+
+public class SQLDecompositionComponent(SQLKeyword keyword, string clause) : ISQLComponent
 {
     public SQLKeyword Keyword { get; } = keyword;
     public string Clause { get; } = clause;
@@ -23,4 +25,7 @@ public class SQLDecompositionComponent(SQLKeyword keyword, string clause)
         return new SQLDecompositionComponent
             (SQLKeyword.FROM, Clause[..Clause.IndexOf(' ')] );
     }
+
+    SQLKeyword ISQLComponent.Keyword() => Keyword;
+    string ISQLComponent.Clause()  => Clause;
 }

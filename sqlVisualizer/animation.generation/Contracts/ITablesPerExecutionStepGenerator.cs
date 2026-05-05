@@ -2,10 +2,10 @@
 
 public interface ITablesPerExecutionStepGenerator
 {
-    public IReadOnlyList<ISqlExecutionStep> Generate(string sql);
+    public IEnumerable<ISqlExecutedStep> Generate(string sql);
 }
 
-public interface ISqlExecutionStep
+public interface ISqlExecutedStep
 {
     public IReadOnlyList<ITable> FromTables();
     public IReadOnlyList<ITable> ToTables();

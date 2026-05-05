@@ -1,8 +1,9 @@
-﻿using visualizer.Utility;
+﻿using visualizer.Repositories.Contracts;
+using visualizer.Utility;
 
 namespace visualizer.Models;
 
-public class Table
+public class Table : ITable
 {
     /// <summary>
     /// A table is only given a name if is fetched with a single from clause,
@@ -10,22 +11,17 @@ public class Table
     /// </summary>
     public string Name { get; set; } = string.Empty;
 
-    public bool IsResultTable => Name == string.Empty;
-
     /// <summary>
     /// The names of the tables the columns originally comes from so things like table.columnName
     /// can be handled.
     /// If a name is "()" it means it's an aggregate function and it therefore dost have an original table
     /// </summary>
     public List<string> ColumnsOriginalTableNames { get; private init; } = [];
-
-    public List<string> ColumnTypes { get; set; } = [];
+    
     public required List<string> ColumnNames { get; init; }
     public required List<TableEntry> Entries { get; init; }
-    public const string RowIndexColumnName = "RowIndex";
 
     public List<Aggregation> Aggregations { get; set; } = [];
-
     public Table DeepClone()
     {
         return new Table
@@ -103,55 +99,18 @@ public class Table
         return indexes;
     }
 
-    public Table OrderBy(string column, bool ascending)
-    {
-        var columnIndex = IndexOfColumn(column);
-        var rawValueComparer = Comparer<object?>.Create(TableValue.CompareRawValues);
-        var orderedEntries = ascending
-            ? Entries.OrderBy(e => e.Values[columnIndex].RawValue, rawValueComparer).ToList()
-            : Entries.OrderByDescending(e => e.Values[columnIndex].RawValue, rawValueComparer).ToList();
-
-        return new Table
-        {
-            Name = Name,
-            ColumnNames = ColumnNames,
-            ColumnsOriginalTableNames = ColumnsOriginalTableNames,
-            Entries = orderedEntries
-        };
-    }
-
-    public Table AppendRowIndex()
-    {
-        List<TableEntry> entries = Entries.ToList();
-        for (int i = 0; i < entries.Count; i++)
-        {
-            entries[i] = entries[i].AppendRowIndex(i.ToString());
-        }
-
-        List<string> names = ColumnNames.ToList();
-        names.Add(RowIndexColumnName);
-
-        List<string> originNames = ColumnsOriginalTableNames.ToList();
-        originNames.Add(RowIndexColumnName);
-
-        return new Table
-        {
-            Name = Name,
-            ColumnNames = names,
-            ColumnsOriginalTableNames = originNames,
-            Entries = entries
-        };
-    }
+    string ITable.Name() => Name;
+    List<string> ITable.ColumnsOriginalTableNames() => ColumnsOriginalTableNames;
+    List<string> ITable.ColumnNames() => ColumnNames;
+    public IReadOnlyList<IReadOnlyList<ITableCell>> Data() => Entries.Select(e => e.Values).ToList();
+    IReadOnlyList<IAggregation> ITable.Aggregations() => Aggregations;
 }
 
-public class Aggregation
+public class Aggregation : IAggregation
 {
-    public required string Name { get; set; }
-    public required string Value { get; set; }
-
-    public string HexBackGroundColor { get; set; } = UtilColor.SecondaryHighlightColor;
-    public bool IsHighlighted { get; set; } = false;
-    public void ToggleHighlight() => IsHighlighted = !IsHighlighted;
-
-    public void ResetStyleAndVisual() => IsHighlighted = false;
+    public required string Name { get; init; }
+    public required string Value { get; init; }
+    
+    string IAggregation.Name() => Name;
+    string IAggregation.Value() => Value;
 }

@@ -5,9 +5,9 @@ namespace visualizer.Repositories;
 
 public class TableOriginColumnsGenerator
 {
-    public void GenerateTableOriginOnToTablesColumns(Visualisation vis)
+    public void GenerateTableOriginOnToTablesColumns(ExecutedStep step)
     {
-        switch (vis.Component.Keyword)
+        switch (step.Step.Keyword)
         {
             case SQLKeyword.JOIN:
             case SQLKeyword.INNER_JOIN:
@@ -20,13 +20,13 @@ public class TableOriginColumnsGenerator
             case SQLKeyword.WHERE:
             case SQLKeyword.LIMIT:
             case SQLKeyword.ORDER_BY:
-                DuplicateOriginOnColumnsToSingle(vis.FromTables, vis.ToTables[0]);
+                DuplicateOriginOnColumnsToSingle(step.FromTables, step.ToTables[0]);
                 break;
             case SQLKeyword.SELECT:
-                GenerateTableOriginOnColumnsForSelect(vis);
+                GenerateTableOriginOnColumnsForSelect(step);
                 break;
             case SQLKeyword.GROUP_BY:
-                DuplicateOriginOnColumnsToMulti(vis.FromTables[0], vis.ToTables);
+                DuplicateOriginOnColumnsToMulti(step.FromTables[0], step.ToTables);
                 break;
             case SQLKeyword.HAVING:
                 //since fromTables are copied to toTables, they already have origin
@@ -83,21 +83,21 @@ public class TableOriginColumnsGenerator
         }
     }
 
-    private void GenerateTableOriginOnColumnsForSelect(Visualisation vis)
+    private void GenerateTableOriginOnColumnsForSelect(ExecutedStep step)
     {
-        var allTablesHaveSameColumns = vis.FromTables
-            .All(t => t.ColumnNames.SequenceEqual(vis.FromTables[0].ColumnNames));
+        var allTablesHaveSameColumns = step.FromTables
+            .All(t => t.ColumnNames.SequenceEqual(step.FromTables[0].ColumnNames));
         if (!allTablesHaveSameColumns)
             throw new ArgumentException("select is only allowed when selecting from tabels" +
                                         ", that all contain the same colunmns");
 
-        var toTable = vis.ToTables[0];
-        var fromTable = vis.FromTables[0];
+        var toTable = step.ToTables[0];
+        var fromTable = step.FromTables[0];
 
-        if (vis.Component.Clause.Trim().Equals("*"))
+        if (step.Step.Clause.Trim().Equals("*"))
             DuplicateOriginOnColumnsToSingle(fromTable, toTable);
         else
-            GenerateTableOriginOnColumnsForSelectSpecificColumns(fromTable, toTable, vis.Component.Clause);
+            GenerateTableOriginOnColumnsForSelectSpecificColumns(fromTable, toTable, step.Step.Clause);
     }
 
     private void GenerateTableOriginOnColumnsForSelectSpecificColumns(Table fromTable, Table toTable, string clause)
