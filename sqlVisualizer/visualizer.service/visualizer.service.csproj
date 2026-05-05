@@ -4,13 +4,16 @@
         <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <RootNamespace>animationGeneration</RootNamespace>
         <DisableTransitiveProjectReferences>true</DisableTransitiveProjectReferences>
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\common.data\common.data.csproj" />
-      <ProjectReference Include="..\visualizer.service\visualizer.service.csproj" />
+        <PackageReference Include="BlazorMonaco" Version="3.4.0" />
+        <PackageReference Include="DuckDB.NET.Data.Full" Version="1.4.4"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\common.data\common.data.csproj"/>
     </ItemGroup>
 
 </Project>
