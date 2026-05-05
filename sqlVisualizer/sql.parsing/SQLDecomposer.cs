@@ -1,7 +1,9 @@
 using System.Text.Json;
+using commonDataModels;
 using commonDataModels.Models;
 using DuckDB.NET.Data;
-using tableGeneration.Models;
+using inputParsing.Models;
+using tableGeneration.Contracts;
 using visualizer.service.Exceptions;
 
 namespace inputParsing;
@@ -42,67 +44,23 @@ namespace inputParsing;
 ///             The original query text is preserved character-for-character in
 ///             each clause, so no information is lost.
 /// </summary>
-public class DuckDbSQLDecomposer(SQLExecutor sqlExecutor) : ISQLDecomposer
+public class SQLDecomposer()
 {
-    // json_serialize_sql() is a pure parse function — no tables needed.
-    private const string InMemoryConnectionString = "DataSource=:memory:";
-
-    public List<SQLDecompositionComponent>? Decompose(string sql)
+    public List<SQLDecomposedComponent>? Decompose(string sql)
     {
-        // Step 1: validate through DuckDB's own parser.
-        ValidateWithDuckDb(sql);
-
-        //validate by running against the database.
-        try
-        { 
-            sqlExecutor.Execute(sql).Wait();
-        }
-        catch (Exception e)
-        {
-            throw new SQLParseException($"SQL parse error: {e.Message}");
-        }
-        
-        
-        // Step 2: split into components using a depth-aware tokenizer.
         var components = SplitByDepthAwareTokenizer(sql);
 
         if (components.Count == 0) return null;
-        return components.OrderBy(c => c.Keyword.ExecutionPrecedence()).ToList();
+        return components.OrderBy(c => c.Keyword().ExecutionPrecedence()).ToList();
     }
-
-    // ── Step 1: DuckDB validation ────────────────────────────────────────────
-
-    public static void ValidateWithDuckDb(string sql)
-    {
-        // Escape single quotes so the SQL can be embedded as a literal argument.
-        var escaped = sql.Replace("'", "''");
-
-        using var connection = new DuckDBConnection(InMemoryConnectionString);
-        connection.Open();
-        using var command = new DuckDBCommand($"SELECT json_serialize_sql('{escaped}')", connection);
-        var raw = command.ExecuteScalar()?.ToString()
-            ?? throw new SQLParseException("DuckDB returned null from json_serialize_sql.");
-
-        using var doc = JsonDocument.Parse(raw);
-
-        if (doc.RootElement.TryGetProperty("error", out var errorFlag) && errorFlag.GetBoolean())
-        {
-            var message = doc.RootElement.TryGetProperty("error_message", out var msg)
-                ? msg.GetString()
-                : "Unknown SQL parse error.";
-            throw new SQLParseException($"SQL parse error: {message}");
-        }
-    }
-
-    // ── Step 2: Depth-aware clause splitting ────────────────────────────────
 
     /// <summary>
     /// Walks the token stream and records a boundary whenever a SQL clause keyword
     /// appears at depth 0 (outside all parentheses and string literals).
     /// Then slices the original SQL text between consecutive boundaries to produce
-    /// the clause content for each <see cref="SQLDecompositionComponent"/>.
+    /// the clause content for each <see cref="SQLDecomposedComponent"/>.
     /// </summary>
-    private static List<SQLDecompositionComponent> SplitByDepthAwareTokenizer(string sql)
+    private static List<SQLDecomposedComponent> SplitByDepthAwareTokenizer(string sql)
     {
         var tokens = Tokenize(sql);
         var boundaries = new List<(int kwStart, int kwEnd, SQLKeyword keyword)>();
@@ -194,7 +152,7 @@ public class DuckDbSQLDecomposer(SQLExecutor sqlExecutor) : ISQLDecomposer
         }
 
         // Slice the original SQL between consecutive boundary keyword ends.
-        var result = new List<SQLDecompositionComponent>();
+        var result = new List<SQLDecomposedComponent>();
         for (var b = 0; b < boundaries.Count; b++)
         {
             var clauseStart = boundaries[b].kwEnd;
@@ -203,7 +161,7 @@ public class DuckDbSQLDecomposer(SQLExecutor sqlExecutor) : ISQLDecomposer
                 : sql.Length;
 
             var clauseText = sql[clauseStart..clauseEnd].Trim().TrimEnd(';');
-            result.Add(new SQLDecompositionComponent(boundaries[b].keyword, clauseText));
+            result.Add(new SQLDecomposedComponent(boundaries[b].keyword, clauseText));
         }
 
         return result;

@@ -14,8 +14,4 @@
       <ProjectReference Include="..\visualizer.service\visualizer.service.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="Models\" />
-    </ItemGroup>
-
 </Project>
