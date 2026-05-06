@@ -1,6 +1,3 @@
-using Visualizer;
-using visualizer.Repositories;
-
 namespace TestProject1;
 
 [Collection("DuckDb seeded")]

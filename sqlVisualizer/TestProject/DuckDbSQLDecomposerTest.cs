@@ -1,6 +1,3 @@
-using visualizer.Models;
-using visualizer.Repositories;
-
 namespace TestProject1;
 
 /// <summary>

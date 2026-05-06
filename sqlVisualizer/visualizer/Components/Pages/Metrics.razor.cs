@@ -1,5 +1,4 @@
-﻿using System.Net;
-using Microsoft.AspNetCore.Components;
+﻿using Microsoft.AspNetCore.Components;
 using MudBlazor;
 using visualizer.service.Repositories;
 
