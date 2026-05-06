@@ -3,15 +3,18 @@ namespace TestProject1;
 [Collection("DuckDb seeded")]
 public class VisulisationGenerationTest : IClassFixture<DuckDbFixture>
 {
-    private readonly VisualisationsGenerator generator;
+    private readonly AnimationGenerator generator;
 
     public VisulisationGenerationTest(DuckDbFixture fixture)
     {
-        generator = new VisualisationsGenerator(
-            new DuckDbSQLDecomposer(),
-            new TableGenerator(new SQLExecutor(fixture.CreateConnection()), new TableOriginColumnsGenerator()),
-            new TableOriginColumnsGenerator(),
-            new AliasReplacer());
+        generator = new AnimationGenerator(
+            new TablesPerExecutionStepGenerator(
+                new SQLExecutorWrapper(
+                    new SQLExecutor(new CurrentDatabaseContext
+                    {
+                        ActiveConnectionString = fixture.ConnectionString
+                    })),
+                new SQLParser()));
     }
 
     // [Theory]

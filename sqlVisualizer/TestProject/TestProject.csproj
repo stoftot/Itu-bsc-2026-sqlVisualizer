@@ -13,6 +13,7 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.6.0"/>
+        <PackageReference Include="DuckDB.NET.Data.Full" Version="1.4.4" />
         <PackageReference Include="xunit" Version="2.4.2"/>
         <PackageReference Include="xunit.runner.visualstudio" Version="2.4.5">
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -25,7 +26,12 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\visualizer\visualizer.csproj" />
+        <ProjectReference Include="..\animation.generation\animation.generation.csproj" />
+        <ProjectReference Include="..\common.data\common.data.csproj" />
+        <ProjectReference Include="..\sql.executor\sql.executor.csproj" />
+        <ProjectReference Include="..\sql.parsing\sql.parsing.csproj" />
+        <ProjectReference Include="..\table.generation\table.generation.csproj" />
+        <ProjectReference Include="..\visualizer.service\visualizer.service.csproj" />
     </ItemGroup>
 
 </Project>

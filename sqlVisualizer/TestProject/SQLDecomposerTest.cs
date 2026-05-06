@@ -1,28 +1,28 @@
 namespace TestProject1;
 
 /// <summary>
-/// Tests for <see cref="DuckDbSQLDecomposer"/> covering edge cases that the original
+/// Tests for <see cref="SQLDecomposer"/> covering edge cases that the original
 /// regex-based <see cref="SQLDecomposer"/> cannot handle correctly.
 ///
 /// Each test group is paired with a comment explaining why the old regex approach
 /// would fail on that input.
 /// </summary>
-public class DuckDbSQLDecomposerTest
+public class SQLDecomposerTest
 {
-    private readonly DuckDbSQLDecomposer _decomposer = new();
+    private readonly SQLDecomposer _decomposer = new();
 
     // ── Helpers ──────────────────────────────────────────────────────────────
 
-    private List<SQLDecompositionComponent> Decompose(string sql)
+    private List<SQLDecomposedComponent> Decompose(string sql)
     {
         var result = _decomposer.Decompose(sql);
         Assert.NotNull(result);
         return result!;
     }
 
-    private static SQLDecompositionComponent Clause(
-        List<SQLDecompositionComponent> components, SQLKeyword keyword) =>
-        components.Single(c => c.Keyword == keyword);
+    private static SQLDecomposedComponent Clause(
+        List<SQLDecomposedComponent> components, SQLKeyword keyword) =>
+        components.Single(c => c.Keyword() == keyword);
 
     // ── Basic sanity: same queries the regex version already handles ─────────
 
@@ -40,8 +40,8 @@ public class DuckDbSQLDecomposerTest
         // These should work with both the old and new decomposer.
         var components = Decompose(sql);
         Assert.True(components.Count > 0);
-        Assert.Contains(components, c => c.Keyword == SQLKeyword.SELECT);
-        Assert.Contains(components, c => c.Keyword == SQLKeyword.FROM);
+        Assert.Contains(components, c => c.Keyword() == SQLKeyword.SELECT);
+        Assert.Contains(components, c => c.Keyword() == SQLKeyword.FROM);
     }
 
     // ── Edge case 1: SQL keyword inside a string literal ─────────────────────
@@ -59,11 +59,11 @@ public class DuckDbSQLDecomposerTest
         var sql = "SELECT day FROM shift WHERE day = 'from home'";
         var components = Decompose(sql);
 
-        Assert.Contains(components, c => c.Keyword == SQLKeyword.FROM);
-        Assert.Contains(components, c => c.Keyword == SQLKeyword.WHERE);
+        Assert.Contains(components, c => c.Keyword() == SQLKeyword.FROM);
+        Assert.Contains(components, c => c.Keyword() == SQLKeyword.WHERE);
 
         var where = Clause(components, SQLKeyword.WHERE);
-        Assert.Contains("'from home'", where.Clause);
+        Assert.Contains("'from home'", where.Clause());
     }
 
     [Fact]
@@ -73,13 +73,13 @@ public class DuckDbSQLDecomposerTest
         var sql = "SELECT day FROM shift WHERE day = 'select * from users'";
         var components = Decompose(sql);
 
-        Assert.Contains(components, c => c.Keyword == SQLKeyword.SELECT);
-        Assert.Contains(components, c => c.Keyword == SQLKeyword.FROM);
-        Assert.Contains(components, c => c.Keyword == SQLKeyword.WHERE);
+        Assert.Contains(components, c => c.Keyword() == SQLKeyword.SELECT);
+        Assert.Contains(components, c => c.Keyword() == SQLKeyword.FROM);
+        Assert.Contains(components, c => c.Keyword() == SQLKeyword.WHERE);
 
         var select = Clause(components, SQLKeyword.SELECT);
         // SELECT clause should just be "day", not anything from inside the literal
-        Assert.Equal("day", select.Clause, ignoreCase: true);
+        Assert.Equal("day", select.Clause(), ignoreCase: true);
     }
 
     [Fact]
@@ -89,7 +89,7 @@ public class DuckDbSQLDecomposerTest
         var sql = "SELECT day FROM shift WHERE day = 'where x > 1'";
         var components = Decompose(sql);
 
-        Assert.Single(components, c => c.Keyword == SQLKeyword.WHERE);
+        Assert.Single(components, c => c.Keyword() == SQLKeyword.WHERE);
     }
 
     // ── Edge case 2: Keywords inside subqueries ───────────────────────────────
@@ -108,11 +108,11 @@ public class DuckDbSQLDecomposerTest
         var components = Decompose(sql);
 
         // There should be exactly one FROM clause
-        Assert.Single(components, c => c.Keyword == SQLKeyword.FROM);
+        Assert.Single(components, c => c.Keyword() == SQLKeyword.FROM);
 
         var from = Clause(components, SQLKeyword.FROM);
         // The entire subquery should be in the FROM clause text
-        Assert.Contains("SELECT day FROM shift", from.Clause, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("SELECT day FROM shift", from.Clause(), StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -121,9 +121,9 @@ public class DuckDbSQLDecomposerTest
         var sql = "SELECT sub.day FROM (SELECT day FROM shift) sub WHERE sub.day > '2025-01-01'";
         var components = Decompose(sql);
 
-        Assert.Contains(components, c => c.Keyword == SQLKeyword.WHERE);
+        Assert.Contains(components, c => c.Keyword() == SQLKeyword.WHERE);
         // And still only one FROM
-        Assert.Single(components, c => c.Keyword == SQLKeyword.FROM);
+        Assert.Single(components, c => c.Keyword() == SQLKeyword.FROM);
     }
 
     [Fact]
@@ -134,9 +134,9 @@ public class DuckDbSQLDecomposerTest
         var components = Decompose(sql);
 
         // Exactly one of each top-level clause
-        Assert.Single(components, c => c.Keyword == SQLKeyword.SELECT);
-        Assert.Single(components, c => c.Keyword == SQLKeyword.FROM);
-        Assert.Single(components, c => c.Keyword == SQLKeyword.WHERE);
+        Assert.Single(components, c => c.Keyword() == SQLKeyword.SELECT);
+        Assert.Single(components, c => c.Keyword() == SQLKeyword.FROM);
+        Assert.Single(components, c => c.Keyword() == SQLKeyword.WHERE);
     }
 
     // ── Edge case 3: SQL comments ─────────────────────────────────────────────
@@ -154,8 +154,8 @@ public class DuckDbSQLDecomposerTest
         var components = Decompose(sql);
 
         // The commented WHERE should not appear as a clause
-        Assert.DoesNotContain(components, c => c.Keyword == SQLKeyword.WHERE);
-        Assert.Contains(components, c => c.Keyword == SQLKeyword.FROM);
+        Assert.DoesNotContain(components, c => c.Keyword() == SQLKeyword.WHERE);
+        Assert.Contains(components, c => c.Keyword() == SQLKeyword.FROM);
     }
 
     [Fact]
@@ -164,7 +164,7 @@ public class DuckDbSQLDecomposerTest
         var sql = "SELECT day FROM shift /* WHERE day = '2025-02-11' */";
         var components = Decompose(sql);
 
-        Assert.DoesNotContain(components, c => c.Keyword == SQLKeyword.WHERE);
+        Assert.DoesNotContain(components, c => c.Keyword() == SQLKeyword.WHERE);
     }
 
     // ── Edge case 4: parse errors give clear messages ─────────────────────────
@@ -176,7 +176,13 @@ public class DuckDbSQLDecomposerTest
     [Fact]
     public void InvalidSQL_ThrowsWithMessage()
     {
-        var ex = Assert.Throws<Exception>(() => _decomposer.Decompose("SELECT FROM FROM FROM"));
+        var validator = new SQLInputValidator(new SQLExecutor(new CurrentDatabaseContext
+        {
+            ActiveConnectionString = "DataSource=:memory:"
+        }));
+
+        var ex = Assert.Throws<visualizer.service.Exceptions.SQLParseException>(
+            () => validator.Validate("SELECT FROM FROM FROM"));
         Assert.Contains("parse error", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 
@@ -188,7 +194,7 @@ public class DuckDbSQLDecomposerTest
         var sql = "SELECT * FROM shift LEFT JOIN \"user\" ON shift.cashier = \"user\".username";
         var components = Decompose(sql);
 
-        Assert.Contains(components, c => c.Keyword == SQLKeyword.LEFT_JOIN);
+        Assert.Contains(components, c => c.Keyword() == SQLKeyword.LEFT_JOIN);
     }
 
     [Fact]
@@ -197,7 +203,7 @@ public class DuckDbSQLDecomposerTest
         var sql = "SELECT * FROM shift INNER JOIN \"user\" ON shift.cashier = \"user\".username";
         var components = Decompose(sql);
 
-        Assert.Contains(components, c => c.Keyword == SQLKeyword.INNER_JOIN);
+        Assert.Contains(components, c => c.Keyword() == SQLKeyword.INNER_JOIN);
     }
 
     // ── Execution order ───────────────────────────────────────────────────────
@@ -208,7 +214,7 @@ public class DuckDbSQLDecomposerTest
         var sql = "SELECT productname, COUNT() FROM purchase GROUP BY productname HAVING COUNT() > 1 ORDER BY productname";
         var components = Decompose(sql);
 
-        var precedences = components.Select(c => c.Keyword.ExecutionPrecedence()).ToList();
+        var precedences = components.Select(c => c.Keyword().ExecutionPrecedence()).ToList();
         Assert.Equal(precedences.OrderBy(x => x).ToList(), precedences);
     }
 
@@ -227,7 +233,7 @@ public class DuckDbSQLDecomposerTest
                   """;
         var components = Decompose(sql);
 
-        Assert.Contains(components, c => c.Keyword == SQLKeyword.WITH);
+        Assert.Contains(components, c => c.Keyword() == SQLKeyword.WITH);
     }
 
     [Fact]
@@ -240,9 +246,9 @@ public class DuckDbSQLDecomposerTest
         var components = Decompose(sql);
 
         // Exactly one FROM — the inner one inside the CTE is at depth 1
-        Assert.Single(components, c => c.Keyword == SQLKeyword.FROM);
+        Assert.Single(components, c => c.Keyword() == SQLKeyword.FROM);
         // Exactly one WHERE at the outer level
-        Assert.Single(components, c => c.Keyword == SQLKeyword.WHERE);
+        Assert.Single(components, c => c.Keyword() == SQLKeyword.WHERE);
     }
 
     [Fact]
@@ -254,9 +260,9 @@ public class DuckDbSQLDecomposerTest
                   """;
         var components = Decompose(sql);
 
-        var withComponent = components.Single(c => c.Keyword == SQLKeyword.WITH);
-        Assert.Contains("recent", withComponent.Clause, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("AS", withComponent.Clause, StringComparison.OrdinalIgnoreCase);
+        var withComponent = components.Single(c => c.Keyword() == SQLKeyword.WITH);
+        Assert.Contains("recent", withComponent.Clause(), StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("AS", withComponent.Clause(), StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -268,8 +274,8 @@ public class DuckDbSQLDecomposerTest
                   """;
         var components = Decompose(sql);
 
-        var withPrecedence = components.Single(c => c.Keyword == SQLKeyword.WITH).Keyword.ExecutionPrecedence();
-        var fromPrecedence = components.Single(c => c.Keyword == SQLKeyword.FROM).Keyword.ExecutionPrecedence();
+        var withPrecedence = components.Single(c => c.Keyword() == SQLKeyword.WITH).Keyword().ExecutionPrecedence();
+        var fromPrecedence = components.Single(c => c.Keyword() == SQLKeyword.FROM).Keyword().ExecutionPrecedence();
 
         Assert.True(withPrecedence < fromPrecedence);
     }
