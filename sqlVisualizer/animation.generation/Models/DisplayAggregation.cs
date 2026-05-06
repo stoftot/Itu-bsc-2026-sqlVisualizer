@@ -1,4 +1,5 @@
-﻿using visualizer.service.Contracts;
+﻿using commonDataModels;
+using visualizer.service.Contracts;
 
 namespace animationGeneration.Models;
 
@@ -18,8 +19,5 @@ internal class DisplayAggregation : IDisplayAggregation
 
     public bool IsHighlighted() => isHighlighted;
 
-    public string HexBackgroundColor()
-    {
-        throw new NotImplementedException();
-    }
+    public string HexBackgroundColor() => UtilColor.SecondaryHighlightColor;
 }
