@@ -15,6 +15,9 @@ public static class GroupByAnimationGenerator
 
         steps.Add(tvm.HideTablesCellBased(toTables));
 
+        if (toTables.Count == 0 || toTables.All(table => table.Rows.Count == 0))
+            return steps;
+
         var columnNamesToGroupBy = sql.Clause().Split(',');
 
         var groupByIndexes = columnNamesToGroupBy
@@ -24,8 +27,11 @@ public static class GroupByAnimationGenerator
         var toTableEntryValueMap =
             new Dictionary<ImmutableArray<DisplayTableTableCell>, int>(new ImmutableArrayComparer<DisplayTableTableCell>());
 
-        toTables.ForEach(table => toTableEntryValueMap
-            .Add(table[0].ValuesAsImmutableArray(groupByIndexes), 0));
+        toTables
+            .Where(table => table.Rows.Count > 0)
+            .ToList()
+            .ForEach(table => toTableEntryValueMap
+                .Add(table[0].ValuesAsImmutableArray(groupByIndexes), 0));
 
         for (int row = 0; row < fromTable.Rows.Count; row++)
         {
@@ -41,9 +47,12 @@ public static class GroupByAnimationGenerator
 
             var fromValues = currRow.ValuesAsImmutableArray(groupByIndexes);
             var toTable = toTables
-                .First(t => t[0]
-                    .ValuesAsImmutableArray(groupByIndexes)
-                    .SequenceEqual(fromValues));
+                .FirstOrDefault(t => t.Rows.Count > 0 &&
+                    t[0].ValuesAsImmutableArray(groupByIndexes)
+                        .SequenceEqual(fromValues));
+
+            if (toTable == null)
+                continue;
 
             var indexOfToRow = toTableEntryValueMap[toTable[0].ValuesAsImmutableArray(groupByIndexes)]++;
 
