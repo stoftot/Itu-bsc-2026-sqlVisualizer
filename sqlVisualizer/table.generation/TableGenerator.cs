@@ -5,7 +5,7 @@ using tableGeneration.Models;
 
 namespace tableGeneration;
 
-public class TableGenerator(SQLExecutorWrapper sqlExecutor, TableOriginColumnsGenerator tocg)
+internal class TableGenerator(SQLExecutorWrapper sqlExecutor, TableOriginColumnsGenerator tocg)
 {
     public void GenerateTablesIntialStepWithOriginColumns(List<Table> fromTables, SQLDecompositionComponent intialStep,
         List<SQLDecompositionComponent> currSteps)

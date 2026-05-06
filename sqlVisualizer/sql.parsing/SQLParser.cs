@@ -3,7 +3,7 @@ using tableGeneration.Contracts;
 
 namespace inputParsing;
 
-public class SQLParser : ISQLParser
+internal class SQLParser : ISQLParser
 {
     private AliasReplacer ar = new();
     private SQLDecomposer dec = new();

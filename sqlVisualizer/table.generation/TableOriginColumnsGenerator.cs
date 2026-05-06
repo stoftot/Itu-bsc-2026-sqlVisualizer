@@ -4,7 +4,7 @@ using tableGeneration.Models;
 
 namespace tableGeneration;
 
-public class TableOriginColumnsGenerator
+internal class TableOriginColumnsGenerator
 {
     public void GenerateTableOriginOnToTablesColumns(ExecutedStep step)
     {

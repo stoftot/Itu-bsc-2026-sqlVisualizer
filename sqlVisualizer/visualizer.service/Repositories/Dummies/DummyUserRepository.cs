@@ -1,6 +1,6 @@
 namespace visualizer.service.Repositories.Dummies;
 
-public class DummyUserRepository : IUserRepository
+internal class DummyUserRepository : IUserRepository
 {
     public void SaveUserQuery(string sessionId, string databaseName, string query)
     { }

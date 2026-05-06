@@ -2,7 +2,7 @@
 
 namespace tableGeneration.Models;
 
-public class TableValue : ITableCell
+internal class TableValue : ITableCell
 {
     public required string Value  { get; set; }
     public object? RawValue { get; set; }

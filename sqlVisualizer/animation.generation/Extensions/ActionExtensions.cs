@@ -1,6 +1,6 @@
 namespace animationGeneration.Extensions;
 
-public static class ActionExtensions
+internal static class ActionExtensions
 {
     public static Action ToOneAction(this IEnumerable<Action> actions)
     {

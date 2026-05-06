@@ -2,7 +2,7 @@
 
 namespace tableGeneration.Models;
 
-public class Table : ITable
+internal class Table : ITable
 {
     /// <summary>
     /// A table is only given a name if is fetched with a single from clause,
@@ -105,7 +105,7 @@ public class Table : ITable
     IReadOnlyList<IAggregation> ITable.Aggregations() => Aggregations;
 }
 
-public class Aggregation : IAggregation
+internal class Aggregation : IAggregation
 {
     public required string Name { get; init; }
     public required string Value { get; init; }

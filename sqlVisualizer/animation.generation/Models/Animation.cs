@@ -3,7 +3,7 @@ using visualizer.service.Contracts;
 
 namespace animationGeneration.Models;
 
-public class Animation(IReadOnlyList<Action> steps, SQLKeyword keyword, 
+internal class Animation(IReadOnlyList<Action> steps, SQLKeyword keyword, 
     List<DisplayTable> fromTables, List<DisplayTable> toTables) : IAnimation
 {
     private int _currentStepIndex;

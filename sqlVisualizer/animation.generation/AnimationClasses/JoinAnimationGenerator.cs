@@ -7,7 +7,7 @@ using commonDataModels.Models;
 
 namespace animationGeneration.AnimationClasses;
 
-public static class JoinAnimationGenerator
+internal static class JoinAnimationGenerator
 {
     private static TableVisualModifier tvm = new();
 

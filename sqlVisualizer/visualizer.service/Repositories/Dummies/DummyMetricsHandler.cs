@@ -3,7 +3,7 @@ using visualizer.service.Models;
 
 namespace visualizer.service.Repositories.Dummies;
 
-public class DummyMetricsHandler : IMetricsHandler
+internal class DummyMetricsHandler : IMetricsHandler
 {
     public void IncrementAction(string sessionId, ActionType actionType)
     { }

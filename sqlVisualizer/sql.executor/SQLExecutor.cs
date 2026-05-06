@@ -6,7 +6,7 @@ using sql.executor.Models;
 
 namespace sql.executor;
 
-public class SQLExecutor(ICurrentDatabaseContext databaseContext) : ISQLExecutor
+internal class SQLExecutor(ICurrentDatabaseContext databaseContext) : ISQLExecutor
 {
     public Task<ISimpleTable> Execute(string sqlQuery)
     {

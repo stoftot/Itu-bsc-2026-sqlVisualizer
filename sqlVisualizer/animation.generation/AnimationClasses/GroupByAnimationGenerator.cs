@@ -5,7 +5,7 @@ using commonDataModels;
 
 namespace animationGeneration.AnimationClasses;
 
-public static class GroupByAnimationGenerator
+internal static class GroupByAnimationGenerator
 {
     private static TableVisualModifier tvm = new();
     public static List<Action> Generate(DisplayTable fromTable, List<DisplayTable> toTables,

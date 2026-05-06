@@ -5,7 +5,7 @@ using commonDataModels;
 
 namespace animationGeneration.AnimationClasses;
 
-public static class OrderByAnimationGenerator
+internal static class OrderByAnimationGenerator
 {
     private static readonly TableVisualModifier tvm = new();
 

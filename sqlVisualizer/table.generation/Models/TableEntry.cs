@@ -1,6 +1,6 @@
 ﻿namespace tableGeneration.Models;
 
-public class TableEntry
+internal class TableEntry
 {
     public required List<TableValue> Values { get; set; }
 

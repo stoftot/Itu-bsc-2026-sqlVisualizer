@@ -10,7 +10,7 @@ public interface IUserRepository
     List<string> GetUserDatabaseNames(string sessionId);
 }
 
-public class UserRepository(string connectionString) : IUserRepository
+internal class UserRepository(string connectionString) : IUserRepository
 {
     
     public void SaveUserQuery(string sessionId, string databaseName, string query)

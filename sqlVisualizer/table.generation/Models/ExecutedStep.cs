@@ -2,7 +2,7 @@
 
 namespace tableGeneration.Models;
 
-public class ExecutedStep : ISqlExecutedStep
+internal class ExecutedStep : ISqlExecutedStep
 {
     public required List<Table> FromTables { get; set; }
     public required List<Table> ToTables { get; set; }

@@ -2,7 +2,7 @@
 
 namespace sql.executor.Models;
 
-public class Table(IList<string> columnNames, IList<IList<object?>> rows, string name = "()", IReadOnlyList<string>? columnTypes = null) : IDatabaseTable
+internal class Table(IList<string> columnNames, IList<IList<object?>> rows, string name = "()", IReadOnlyList<string>? columnTypes = null) : IDatabaseTable
 {
     public IList<string> ColumnNames() => columnNames;
     public IList<IList<object?>> Rows() => rows;

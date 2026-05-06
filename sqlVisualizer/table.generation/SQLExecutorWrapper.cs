@@ -6,7 +6,7 @@ using tableGeneration.Models;
 
 namespace tableGeneration;
 
-public class SQLExecutorWrapper(ISQLExecutor executor)
+internal class SQLExecutorWrapper(ISQLExecutor executor)
 {
     public async Task<Table> Execute(IEnumerable<SQLDecompositionComponent> sqlDecompositionComponents)
     {

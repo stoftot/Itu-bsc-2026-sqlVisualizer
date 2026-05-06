@@ -3,7 +3,7 @@ using visualizer.service.Contracts;
 
 namespace animationGeneration.Models;
 
-public class DisplayTableTableCell : DisplayableBase, IDisplayTableCell
+internal class DisplayTableTableCell : DisplayableBase, IDisplayTableCell
 {
     public required string Value { get; init; }
     public object? RawValue { get; init; }

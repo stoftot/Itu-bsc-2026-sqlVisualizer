@@ -3,7 +3,7 @@ using animationGeneration.Models;
 
 namespace animationGeneration.AnimationClasses;
 
-public static class LimitAnimationGenerator
+internal static class LimitAnimationGenerator
 {
     private static TableVisualModifier tvm = new();
 

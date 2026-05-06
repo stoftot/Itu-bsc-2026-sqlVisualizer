@@ -3,7 +3,7 @@
 namespace animationGeneration.Models;
 
 public record Order(string ColumnName, bool IsAscending);
-public class WindowFunction
+internal class WindowFunction
 {
     public required string SQL { get; init; }
     public required string Function { get; init; }

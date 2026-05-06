@@ -2,7 +2,7 @@ using System.Text;
 
 namespace inputParsing;
 
-public class AliasReplacer
+internal class AliasReplacer
 {
     public string ReplaceAliases(string sql)
     {

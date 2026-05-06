@@ -4,7 +4,7 @@ using commonDataModels;
 
 namespace animationGeneration.AnimationClasses;
 
-public static class WhereAnimationGenerator
+internal static class WhereAnimationGenerator
 {
     private static TableVisualModifier tvm = new();
 

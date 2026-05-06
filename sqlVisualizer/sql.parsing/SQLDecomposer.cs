@@ -39,7 +39,7 @@ namespace inputParsing;
 ///             The original query text is preserved character-for-character in
 ///             each clause, so no information is lost.
 /// </summary>
-public class SQLDecomposer()
+internal class SQLDecomposer()
 {
     public List<SQLDecomposedComponent>? Decompose(string sql)
     {

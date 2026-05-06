@@ -6,7 +6,7 @@ using visualizer.service.Exceptions;
 
 namespace inputParsing;
 
-public class SQLInputValidator(ISQLExecutor sqlExecutor) : ISQLInputValidator
+internal class SQLInputValidator(ISQLExecutor sqlExecutor) : ISQLInputValidator
 {
     // json_serialize_sql() is a pure parse function — no tables needed.
     private const string InMemoryConnectionString = "DataSource=:memory:";

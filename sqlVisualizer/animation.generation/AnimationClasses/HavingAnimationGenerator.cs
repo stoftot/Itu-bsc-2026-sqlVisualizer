@@ -2,7 +2,7 @@
 
 namespace animationGeneration.AnimationClasses;
 
-public static class HavingAnimationGenerator
+internal static class HavingAnimationGenerator
 {
     private static TableVisualModifier tvm = new();
 

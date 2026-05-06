@@ -3,7 +3,7 @@ using animationGeneration.Models;
 
 namespace animationGeneration;
 
-public class TableVisualModifier
+internal class TableVisualModifier
 {
     public Action GenerateToggleHighlightRows(IReadOnlyList<DisplayTableRow> entries)
     {

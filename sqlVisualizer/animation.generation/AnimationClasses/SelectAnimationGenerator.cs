@@ -6,7 +6,7 @@ using commonDataModels.Models;
 
 namespace animationGeneration.AnimationClasses;
 
-public static class SelectAnimationGenerator
+internal static class SelectAnimationGenerator
 {
     private static TableVisualModifier tvm = new();
 

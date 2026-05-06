@@ -3,7 +3,7 @@ using visualizer.service.Contracts;
 
 namespace animationGeneration.Models;
 
-public class DisplayTableRow : DisplayableBase, IDisplayTableRow
+internal class DisplayTableRow : DisplayableBase, IDisplayTableRow
 {
     public required List<DisplayTableTableCell> Cells { get; init; }
 

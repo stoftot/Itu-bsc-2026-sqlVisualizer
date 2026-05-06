@@ -23,7 +23,7 @@ public interface IMetricsHandler
     IEnumerable<ActionCountDto> GetAnimationViewPercentages();
 }
 
-public class MetricsHandler : IMetricsHandler
+internal class MetricsHandler : IMetricsHandler
 {
     private readonly string _connectionString;
     private readonly ConcurrentDictionary<string, SessionTimingState> _sessions = new();

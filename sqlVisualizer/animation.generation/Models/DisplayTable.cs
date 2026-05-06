@@ -3,7 +3,7 @@ using visualizer.service.Contracts;
 
 namespace animationGeneration.Models;
 
-public class DisplayTable : IDisplayTable
+internal class DisplayTable : IDisplayTable
 {
     public DisplayTableRow this[int row] => Rows[row];
 
@@ -143,7 +143,7 @@ public class DisplayTable : IDisplayTable
     public IEnumerable<IDisplayTableRow> VisibleRows() => Rows.Where(r => r.IsVisible);
 }
 
-public class DisplayTableGenerator : IDisplayTableGenerator
+internal class DisplayTableGenerator : IDisplayTableGenerator
 {
     public IDisplayTable Generate(ISimpleTable table)
         => new DisplayTable

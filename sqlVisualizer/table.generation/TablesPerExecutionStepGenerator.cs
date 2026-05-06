@@ -5,7 +5,7 @@ using tableGeneration.Models;
 
 namespace tableGeneration;
 
-public class TablesPerExecutionStepGenerator(SQLExecutorWrapper executorWrapper, ISQLParser parser)
+internal class TablesPerExecutionStepGenerator(SQLExecutorWrapper executorWrapper, ISQLParser parser)
     : ITablesPerExecutionStepGenerator
 {
     private static TableOriginColumnsGenerator tocg = new();

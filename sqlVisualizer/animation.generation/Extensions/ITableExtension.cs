@@ -3,7 +3,7 @@ using animationGeneration.Models;
 
 namespace animationGeneration.Extensions;
 
-public static class ITableExtension
+internal static class ITableExtension
 {
     public static List<DisplayTable> ToDisplay(this IReadOnlyList<ITable> tables)
         => tables.Select(t => new DisplayTable

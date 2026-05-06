@@ -2,7 +2,7 @@
 
 namespace animationGeneration.Models;
 
-public class DisplayAggregation : IDisplayAggregation
+internal class DisplayAggregation : IDisplayAggregation
 {
     public required string Name { get; init; }
     public required string Value { get; init; }

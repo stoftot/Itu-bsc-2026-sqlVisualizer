@@ -2,7 +2,7 @@
 
 namespace animationGeneration.Models;
 
-public class DisplayableBase
+internal class DisplayableBase
 {
     private string HighlightColor { get; set; }
     private string PreviousHighlightColor { get; set; }

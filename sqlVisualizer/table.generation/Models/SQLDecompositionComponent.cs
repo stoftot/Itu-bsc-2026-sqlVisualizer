@@ -3,7 +3,7 @@ using commonDataModels.Models;
 
 namespace tableGeneration.Models;
 
-public class SQLDecompositionComponent(SQLKeyword keyword, string clause) : ISQLComponent
+internal class SQLDecompositionComponent(SQLKeyword keyword, string clause) : ISQLComponent
 {
     public SQLKeyword Keyword { get; } = keyword;
     public string Clause { get; } = clause;

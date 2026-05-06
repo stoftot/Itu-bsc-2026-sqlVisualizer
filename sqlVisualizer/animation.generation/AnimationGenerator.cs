@@ -7,7 +7,7 @@ using visualizer.service.Contracts;
 
 namespace animationGeneration;
 
-public class AnimationGenerator(ITablesPerExecutionStepGenerator generator) : IAnimationGenerator
+internal class AnimationGenerator(ITablesPerExecutionStepGenerator generator) : IAnimationGenerator
 {
     private static TableVisualModifier tvm = new();
     
