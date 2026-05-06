@@ -148,13 +148,13 @@ public class DisplayTableGenerator : IDisplayTableGenerator
     public IDisplayTable Generate(ISimpleTable table)
         => new DisplayTable
         {
-            Name = table.Name(),
+            Name = "",
             ColumnNames = table.ColumnNames().ToList(),
             Rows = table.Rows().Select(row => new DisplayTableRow
             {
                 Cells = row.Select(value => new DisplayTableTableCell
                 {
-                    Value = value.ToString() ?? "NULL",
+                    Value = value?.ToString() ?? "NULL",
                     RawValue = value
                 }).ToList()
             }).ToList()

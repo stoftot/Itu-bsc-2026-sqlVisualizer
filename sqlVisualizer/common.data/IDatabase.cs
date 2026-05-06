@@ -3,5 +3,5 @@
 public interface IDatabase
 {
     public string Name();
-    public IList<ISimpleTable> Tables();
+    public IReadOnlyList<IDatabaseTable> Tables();
 }

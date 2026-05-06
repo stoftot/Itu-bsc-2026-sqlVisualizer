@@ -2,8 +2,9 @@
 using System.Text.RegularExpressions;
 using commonDataModels;
 using commonDataModels.Models;
+using tableGeneration.Models;
 
-namespace tableGeneration.Models;
+namespace tableGeneration;
 
 public class SQLExecutorWrapper(ISQLExecutor executor)
 {
@@ -63,7 +64,6 @@ public class SQLExecutorWrapper(ISQLExecutor executor)
 
         return new Table
         {
-            Name = simpleTable.Name(),
             ColumnNames = simpleTable.ColumnNames().ToList(),
             Entries = simpleTable.Rows().Select(row =>
                 new TableEntry
@@ -76,18 +76,6 @@ public class SQLExecutorWrapper(ISQLExecutor executor)
                         }).ToList()
                 }).ToList()
         };
-    }
-    
-    public async Task<Table> Execute(SQLDecompositionComponent component)
-    {
-        var table = await Execute([component]);
-
-        if (component.Keyword == SQLKeyword.FROM)
-        {
-            table.Name = component.Clause.Split(' ')[^1];
-        }
-
-        return table;
     }
 
     private string GetWindowFunctionsColumnsToGroupBy(string selectClause)

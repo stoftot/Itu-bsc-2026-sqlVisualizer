@@ -13,7 +13,6 @@ public class QueryIllustrationViewBase : ComponentBase, IDisposable
     [Parameter] public required string Query { get; init; }
     [Inject] public required HomeState HomeState { get; init; }
     [Inject] private MetricsConfig MetricsConfig { get; init; } = null!;
-    [Inject] public required VisualisationsGenerator VisualisationsGenerator { get; init; }
     [Inject] public required IMetricsHandler MetricsHandler { get; init; }
     [Inject] public required IAnimationGenerator AnimationGenerator { get; init; }
     

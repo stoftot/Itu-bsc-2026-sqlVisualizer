@@ -1,31 +1,50 @@
 ﻿using System.Data.Common;
+using commonDataModels;
+using commonDataModels.Models;
 using DuckDB.NET.Data;
+using sql.executor.Models;
 
 namespace sql.executor;
 
-public class SQLExecutor
+public class SQLExecutor(ICurrentDatabaseContext databaseContext) : ISQLExecutor
 {
-    private readonly ICurrentDatabaseContext _databaseContext;
-
-    public SQLExecutor(ICurrentDatabaseContext databaseContext)
+    public Task<ISimpleTable> Execute(string sqlQuery)
     {
-        _databaseContext = databaseContext;
+        return ExecutePrivate(sqlQuery);
     }
 
-    // Backward-compatible constructor used by existing tests.
-    public SQLExecutor(DuckDBConnection connection)
+    public async Task<IDatabase> GetDatabase(string? connectionString = null)
     {
-        _databaseContext = new CurrentDatabaseContext
+        var tables = await ExecutePrivate("SHOW TABLES", connectionString);
+        var databaseTables = new List<Table>();
+        
+        foreach (var tableName in tables.Rows().Select(r => r[0]?.ToString()))
         {
-            ActiveConnectionString = connection.ConnectionString
-        };
-    }
+            if (tableName == null)
+                throw new ArgumentException("unable to fetch table name when trying to read tables in database");
+            
+            var st = await ExecutePrivate("SELECT * FROM " + '"' + tableName + '"', connectionString);
+            
+            var columnTypes = await ExecutePrivate($"""
+                                            SELECT data_type
+                                            FROM information_schema.columns
+                                            WHERE table_name = '{tableName}'
+                                            ORDER BY ordinal_position
+                                            """, connectionString);
+            databaseTables.Add(new Table(st.ColumnNames(), st.Rows(), 
+                tableName,
+                columnTypes.Rows().Select(r => r[0]!.ToString()).ToList()!
+                ));
+        }
 
-    public async Task<Table> Execute(string sql, string? connectionString = null)
+        return new Database("standard", databaseTables);
+    }
+    
+    private async Task<ISimpleTable> ExecutePrivate(string sql, string? connectionString = null)
     {
-        var resolvedConnectionString = connectionString ?? _databaseContext.ActiveConnectionString;
+        var resolvedConnectionString = connectionString ?? databaseContext.ActiveConnectionString;
         await using var temporaryConnection = new DuckDBConnection(resolvedConnectionString);
-        var entries = new List<TableEntry>();
+        var rows = new List<IList<object?>>();
         await temporaryConnection.OpenAsync();
         await using var command = new DuckDBCommand(sql, temporaryConnection);
         await using var reader = await command.ExecuteReaderAsync();
@@ -46,44 +65,16 @@ public class SQLExecutor
 
         while (await reader.ReadAsync())
         {
-            var row = new List<TableValue>();
+            var row = new List<object?>();
             for (var i = 0; i < reader.FieldCount; i++)
             {
                 var rawValue = reader.IsDBNull(i) ? null : reader.GetValue(i);
-                row.Add(new TableValue
-                {
-                    RawValue = rawValue,
-                    Value = rawValue?.ToString() ?? "NULL"
-                });
+                row.Add(rawValue);
             }
 
-            entries.Add(new TableEntry { Values = row });
+            rows.Add(row);
         }
 
-        return new Table {ColumnNames = columnNames, Entries = entries };
-    }
-    
-    public async Task<Database> GetDatabase(string? connectionString = null)
-    {
-        var database = new Database()
-            { Name = "Standard", Tables = [] };
-        var tables = await Execute("SHOW TABLES", connectionString);
-
-        foreach (var tableName in tables.Entries.Select(table => table.Values[0].Value))
-        {
-            var table = await Execute("SELECT * FROM " + '"' + tableName + '"', connectionString);
-            table.Name = tableName;
-            
-            var columnTypes = await Execute($"""
-                                            SELECT data_type
-                                            FROM information_schema.columns
-                                            WHERE table_name = '{tableName}'
-                                            ORDER BY ordinal_position
-                                            """, connectionString);
-            table.ColumnTypes = columnTypes.Entries.Select(e => e.Values[0].Value).ToList();
-            database.Tables.Add(table);
-        }
-
-        return database;
+        return new Table(columnNames, rows);
     }
 }
