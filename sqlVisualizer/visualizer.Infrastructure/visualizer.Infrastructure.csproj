@@ -14,4 +14,13 @@
         <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.15.0" />
         <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.15.0" />
     </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\animation.generation\animation.generation.csproj" />
+      <ProjectReference Include="..\common.data\common.data.csproj" />
+      <ProjectReference Include="..\sql.executor\sql.executor.csproj" />
+      <ProjectReference Include="..\sql.parsing\sql.parsing.csproj" />
+      <ProjectReference Include="..\table.generation\table.generation.csproj" />
+      <ProjectReference Include="..\visualizer.service\visualizer.service.csproj" />
+    </ItemGroup>
 </Project>

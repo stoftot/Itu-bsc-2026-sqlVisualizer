@@ -24,6 +24,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\common.data\common.data.csproj" />
+      <ProjectReference Include="..\visualizer.Infrastructure\visualizer.Infrastructure.csproj" />
       <ProjectReference Include="..\visualizer.service\visualizer.service.csproj" />
     </ItemGroup>
 

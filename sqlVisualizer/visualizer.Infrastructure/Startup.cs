@@ -3,13 +3,20 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using sql.executor;
 
 namespace visualizer.Infrastructure;
 
-public class Startup
+public static class Startup
 {
     public static void ConfigureExternalServices(IServiceCollection services, IConfiguration config)
     {
+        commonDataModels.ConfigureService.Configure(services);
+        sql.executor.ConfigureService.Configure(services);
+        inputParsing.ConfigureService.Configure(services);
+        tableGeneration.ConfigureService.Configure(services);
+        animationGeneration.ConfigureService.Configure(services);
+        visualizer.service.ConfigureService.Configure(services);
     }
 
     public static void ConfigurePipeline(WebApplication app)
