@@ -1,0 +1,552 @@
+using animationGeneration.Contracts;
+using animationGeneration.Extensions;
+using animationGeneration.Models;
+using commonDataModels;
+using commonDataModels.Models;
+
+namespace animationGeneration.AnimationClasses;
+
+internal static class SelectAnimationGenerator
+{
+    private static TableVisualModifier tvm = new();
+
+    /// <summary>
+    /// Splits a SQL clause into individual columns by splitting on top-level commas
+    /// (commas not inside parentheses).
+    /// </summary>
+    /// <param name="clause">The SQL clause to split</param>
+    /// <returns>A list of column expressions, trimmed</returns>
+    private static List<string> SplitClauseIntoColumns(string clause)
+    {
+        var columns = new List<string>();
+        var currentColumn = new System.Text.StringBuilder();
+        int parenDepth = 0;
+
+        foreach (char c in clause)
+        {
+            if (c == '(')
+            {
+                parenDepth++;
+                currentColumn.Append(c);
+            }
+            else if (c == ')')
+            {
+                parenDepth--;
+                currentColumn.Append(c);
+            }
+            else if (c == ',' && parenDepth == 0)
+            {
+                columns.Add(currentColumn.ToString().Trim());
+                currentColumn.Clear();
+            }
+            else
+            {
+                currentColumn.Append(c);
+            }
+        }
+
+        // Add the last column
+        if (currentColumn.Length > 0)
+        {
+            columns.Add(currentColumn.ToString().Trim());
+        }
+        
+        return columns;
+    }
+
+    public static List<Action> Generate(List<DisplayTable> fromTables, DisplayTable toTable,
+        ISQLComponent sql)
+    {
+        var steps = new List<Action>();
+        
+        if (sql.Clause().Trim().Equals("*"))
+        {
+            var step = tvm.CombineActions([
+                tvm.ToggleHighlightTables(fromTables),
+                tvm.ToggleHighlightTable(toTable)
+            ]);
+            
+            return [step, step];
+        }
+
+        steps.Add(tvm.HideTableCellBased(toTable));
+        
+        var columns = SplitClauseIntoColumns(sql.Clause());
+
+        var toColumnIndex = 0;
+        foreach (var column in columns)
+        {
+            // Handel window functions
+            if (column.ToLower().Contains(" over "))
+            {
+                HandleWindowFunction(fromTables[0], toTable, column, toColumnIndex, steps);
+                toColumnIndex++;
+                continue;
+            }
+            
+            if (column.Contains('('))
+            {
+                HandleAggregateColumn(fromTables, toTable, column, toColumnIndex, steps);
+                toColumnIndex++;
+                continue;
+            }
+            
+            if (fromTables.Count == 1)
+            {
+                Action FromAnimationGenerator(int i) => tvm.ToggleHighlightColumn(fromTables[0], i);
+
+                toColumnIndex += HandleNormalSelect(fromTables, toTable, column, toColumnIndex, steps, FromAnimationGenerator);
+            }
+            else
+            {
+                Action FromAnimationGenerator(int i) =>
+                    fromTables.Select(table => tvm.ToggleHighlightCell(table, 0, i))
+                        .ToList()
+                        .ToOneAction();
+
+                toColumnIndex += HandleNormalSelect(fromTables, toTable, column, toColumnIndex, steps, FromAnimationGenerator);
+            }
+        }
+
+        return steps;
+    }
+
+    private static void HandleAggregateColumn(List<DisplayTable> fromTables, DisplayTable toTable,
+        string column, int toColumnIndex, List<Action> steps)
+    {
+        var parts = column.Split('(', 2);
+
+        if (!Enum.TryParse(parts[0].Trim().ToUpperInvariant(), out SQLAggregateFunctionsKeyword keyword))
+            throw new ArgumentException($"the aggregate function \"{parts[0].Trim()}\" is not supported");
+
+        var columnParameters = parts[1].Split(")")[0].Trim();
+        switch (keyword)
+        {
+            case SQLAggregateFunctionsKeyword.COUNT:
+                HandleCountAggregate(fromTables, toTable, columnParameters, toColumnIndex, steps);
+                break;
+            case SQLAggregateFunctionsKeyword.SUM:
+            case SQLAggregateFunctionsKeyword.AVG:
+                HandleSumAndAvgAggregate(fromTables, toTable, columnParameters, toColumnIndex, steps);
+                break;
+            case SQLAggregateFunctionsKeyword.MIN:
+            case SQLAggregateFunctionsKeyword.MAX:
+                HandleMinAndMaxAggregate(fromTables, toTable, columnParameters, toColumnIndex, steps);
+                break;
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
+    }
+
+    private static void HandleCountAggregate(List<DisplayTable> fromTables, DisplayTable toTable,
+        string parameter, int toColumnIndex, List<Action> steps)
+    {
+        if (string.IsNullOrEmpty(parameter))
+        {
+            int i = 0;
+            foreach (var table in fromTables)
+            {
+                steps.Add(tvm.CombineActions(
+                [
+                    tvm.ToggleHighlightColumn(table, 0),
+                    tvm.ToggleVisibleCell(toTable, i, toColumnIndex),
+                    tvm.ToggleHighlightCell(toTable, i, toColumnIndex)
+                ]));
+
+                steps.Add(tvm.CombineActions(
+                [
+                    tvm.ToggleHighlightColumn(table, 0),
+                    tvm.ToggleHighlightCell(toTable, i++, toColumnIndex)
+                ]));
+            }
+        }
+        else
+        {
+            //TODO: right now only supports count on specific columns
+            HandleAggregateSpecificColumns(fromTables, toTable, [parameter], toColumnIndex, steps);
+        }
+    }
+
+    private static void HandleSumAndAvgAggregate(List<DisplayTable> fromTables, DisplayTable toTable,
+        string parameter, int toColumnIndex, List<Action> steps)
+    {
+        HandleAggregateSpecificColumns(fromTables, toTable, UtilRegex.ExtractReferencedColumns(parameter), toColumnIndex, steps);
+    }
+    
+    private static void HandleMinAndMaxAggregate(List<DisplayTable> fromTables, DisplayTable toTable,
+        string parameter, int toColumnIndex, List<Action> steps)
+    {
+        HandleAggregateSpecificColumns(fromTables, toTable, UtilRegex.ExtractReferencedColumns(parameter), toColumnIndex, steps);
+    }
+
+    private static void HandleAggregateSpecificColumns(List<DisplayTable> fromTables, DisplayTable toTable,
+        IEnumerable<string> columnNames, int toColumnIndex, List<Action> steps)
+    {
+        var fromColumnIndexes = fromTables[0].IndexOfColumns(columnNames).ToList();
+
+        int i = 0;
+        foreach (var table in fromTables)
+        {
+            steps.Add(tvm.CombineActions(
+            [
+                tvm.GenerateToggleHighlightColumns(table, fromColumnIndexes),
+                tvm.ToggleVisibleCell(toTable, i, toColumnIndex),
+                tvm.ToggleHighlightCell(toTable, i, toColumnIndex)
+            ]));
+
+            steps.Add(tvm.CombineActions(
+            [
+                tvm.GenerateToggleHighlightColumns(table, fromColumnIndexes),
+                tvm.ToggleHighlightCell(toTable, i++, toColumnIndex)
+            ]));
+        }
+    }
+    
+    private static int HandleNormalSelect(List<DisplayTable> fromTables, DisplayTable toTable,
+        string column, int columnIndex, List<Action> steps,
+        Func<int, Action> generateFromAnimation)
+    {
+        var fromIndex = fromTables[0].IndexOfColumn(column);
+        if (fromIndex == -1)
+        {
+            var fromIndexes = fromTables[0].IndexOfOriginTableColumns(column);
+            var fromAnimations = fromIndexes.Select(generateFromAnimation).ToList();
+            var numberOfColumns = fromIndexes.Count;
+            var visibleStep = new List<Action>();
+            var HighLightStep = new List<Action>();
+            
+            for (int i = 0; i < numberOfColumns; i++)
+            {
+                visibleStep.Add(tvm.ToggleVisibleColumn(toTable, columnIndex+i));
+                HighLightStep.Add(tvm.ToggleHighlightColumn(toTable, columnIndex+i));
+            }
+            
+            steps.Add(tvm.CombineActions(
+            [
+                fromAnimations,
+                visibleStep,
+                HighLightStep
+            ]));
+            
+            steps.Add(tvm.CombineActions(
+            [
+                fromAnimations,
+                HighLightStep
+            ]));
+            return numberOfColumns;
+        }
+
+        var fromAnimation = generateFromAnimation(fromIndex);
+        steps.Add(tvm.CombineActions(
+        [
+            fromAnimation,
+            tvm.ToggleVisibleColumn(toTable, columnIndex),
+            tvm.ToggleHighlightColumn(toTable, columnIndex)
+        ]));
+
+        steps.Add(tvm.CombineActions(
+        [
+            fromAnimation,
+            tvm.ToggleHighlightColumn(toTable, columnIndex)
+        ]));
+
+        return 1;
+    }
+
+    private static void HandleWindowFunction(DisplayTable fromTable, DisplayTable toTable,
+        string column, int columnIndex, List<Action> steps)
+    {
+        WindowFunction windowFunction = WindowFunction.FromString(column);
+        
+        switch (windowFunction.Function.ToLower())
+        {
+            case "avg":
+            case "max":
+            case "min":
+            case "sum":
+            case "count":
+                HandleAggregateWindowFunction(fromTable, toTable, windowFunction, columnIndex, steps);
+                break;
+            case "rank":
+            case "row_number":
+            case "dense_rank":
+            case "ntile":
+                HandleRankingWindowFunction(fromTable, toTable, windowFunction, columnIndex, steps);
+                break;
+            case "lag":
+            case "lead":
+            case "first_value":
+            case "last_value":
+            case "nth_value":
+                HandleValueWindowFunction(fromTable, toTable, windowFunction, columnIndex, steps);
+                break;
+            default:
+                throw new NotImplementedException($"the window function \"{windowFunction.Function}\" is not supported");
+        }
+    }
+    
+    private static void HandleAggregateWindowFunction(DisplayTable fromTable, DisplayTable toTable, WindowFunction windowFunction, 
+        int columnIndex, List<Action> steps)
+    {
+        var fromTableWithRowIndex = fromTable.DeepClone().AppendRowIndex();
+
+        if (windowFunction.Orders.Count > 0)
+        {
+            var orders = windowFunction.Orders;
+            orders.Reverse();
+            foreach (var order in orders)
+                fromTableWithRowIndex = fromTableWithRowIndex.OrderBy(order.ColumnName, order.IsAscending);
+        }
+
+        List<List<int>> sourcePartitions = [];
+        int rowIndexColumnIndex = fromTableWithRowIndex.IndexOfColumn(DisplayTable.RowIndexColumnName);
+
+        if (windowFunction.PartitionNames.Count > 0)
+        {
+            List<int> partitionIndices = windowFunction.PartitionNames
+                .Select(p => fromTableWithRowIndex.IndexOfColumn(p)).ToList();
+            sourcePartitions = fromTableWithRowIndex.Rows
+                .GroupBy(e => string.Join(", ", partitionIndices.Select(i => e[i].Value)))
+                .OrderBy(g => g.Key)
+                .Select(g => g.Select(e => int.Parse(e[rowIndexColumnIndex].Value)).ToList())
+                .ToList();
+        }
+        else
+        {
+            sourcePartitions = [fromTableWithRowIndex.Rows.Select(e => int.Parse(e[rowIndexColumnIndex].Value)).ToList()];
+        }
+
+        int resultTableRowIndex = 0;
+        List<List<int>> resultPartitions = sourcePartitions.Select(partition => partition.Select(_ => resultTableRowIndex++).ToList()).ToList();
+        
+
+        // Generating Animation
+        var indexOfArgument = fromTable.IndexOfColumn(windowFunction.Argument);
+        if (indexOfArgument == -1) indexOfArgument = 0; // Handles the case where the argument is *
+        
+        for (int i = 0; i < sourcePartitions.Count; i++)
+        {
+            var sourcePartition = sourcePartitions[i];
+            var resultPartition = resultPartitions[i];
+
+            // First, highlight all rows in this partition in the source table
+            var partitionRowActions = sourcePartition
+                .Select(rowIdx => tvm.ToggleHighlightRow(fromTable[rowIdx]))
+                .ToList();
+            steps.Add(tvm.CombineActions(partitionRowActions));
+
+            for (int j = 0; j < sourcePartition.Count; j++)
+            {
+                int sourceRowIndex = sourcePartition[j];
+                int resultRowIndex = resultPartition[j];
+                steps.Add(tvm.CombineActions(
+                [
+                    tvm.ChangeHighlightColourCell(fromTable, sourceRowIndex, indexOfArgument, UtilColor.SecondaryHighlightColor),
+                    tvm.ToggleHighlightCell(fromTable, sourceRowIndex, indexOfArgument),
+                    tvm.ToggleVisibleCell(toTable, resultRowIndex, columnIndex),
+                    tvm.ToggleHighlightCell(toTable, resultRowIndex, columnIndex)
+                ]));
+            }
+            
+            // Unhighlight
+            var unhighlightSourceCells = sourcePartition
+                .Select(rowIdx => tvm.ToggleHighlightCell(fromTable, rowIdx, indexOfArgument))
+                .ToList();
+            
+            var unhighlightResultCells = resultPartition
+                .Select(rowIdx => tvm.ToggleHighlightCell(toTable, rowIdx, columnIndex))
+                .ToList();
+
+            var unhighlightActions = partitionRowActions.Concat(unhighlightSourceCells).Concat(unhighlightResultCells).ToList();
+            
+            steps.Add(tvm.CombineActions(unhighlightActions));
+        }
+    }
+    
+    private static void HandleRankingWindowFunction(DisplayTable fromTable, DisplayTable toTable, WindowFunction windowFunction,
+        int columnIndex, List<Action> steps)
+    {
+        var fromTableWithRowIndex = fromTable.DeepClone().AppendRowIndex();
+
+        if (windowFunction.Orders.Count > 0)
+        {
+            var orders = windowFunction.Orders;
+            orders.Reverse();
+            foreach (var order in orders)
+                fromTableWithRowIndex = fromTableWithRowIndex.OrderBy(order.ColumnName, order.IsAscending);
+        }
+
+        List<List<int>> sourcePartitions = [];
+        int rowIndexColumnIndex = fromTableWithRowIndex.IndexOfColumn(DisplayTable.RowIndexColumnName);
+
+        if (windowFunction.PartitionNames.Count > 0)
+        {
+            List<int> partitionIndices = windowFunction.PartitionNames
+                .Select(p => fromTableWithRowIndex.IndexOfColumn(p)).ToList();
+            sourcePartitions = fromTableWithRowIndex.Rows
+                .GroupBy(e => string.Join(", ", partitionIndices.Select(i => e[i].Value)))
+                .OrderBy(g => g.Key)
+                .Select(g => g.Select(e => int.Parse(e[rowIndexColumnIndex].Value)).ToList())
+                .ToList();
+        }
+        else
+        {
+            sourcePartitions = [fromTableWithRowIndex.Rows.Select(e => int.Parse(e[rowIndexColumnIndex].Value)).ToList()];
+        }
+
+        int resultTableRowIndex = 0;
+        List<List<int>> resultPartitions = sourcePartitions.Select(partition => partition.Select(_ => resultTableRowIndex++).ToList()).ToList();
+
+        List<int> orderColumnIndices = windowFunction.Orders
+            .Select(o => fromTable.IndexOfColumn(o.ColumnName))
+            .ToList();
+
+        // Generating Animation
+        for (int i = 0; i < sourcePartitions.Count; i++)
+        {
+            var sourcePartition = sourcePartitions[i];
+            var resultPartition = resultPartitions[i];
+
+            // First, highlight all rows in this partition in the source table
+            var partitionRowActions = sourcePartition
+                .Select(rowIdx => tvm.ToggleHighlightRow(fromTable[rowIdx]))
+                .ToList();
+            steps.Add(tvm.CombineActions(partitionRowActions));
+
+            for (int j = 0; j < sourcePartition.Count; j++)
+            {
+                int sourceRowIndex = sourcePartition[j];
+                int resultRowIndex = resultPartition[j];
+
+                tvm.ChangeHighlightColourCells(fromTable, sourceRowIndex, orderColumnIndices, UtilColor.SecondaryHighlightColor);
+                var sourceHighlightActions = orderColumnIndices
+                    .Select(colIdx => tvm.ToggleHighlightCell(fromTable, sourceRowIndex, colIdx))
+                    .ToList();
+
+                steps.Add(tvm.CombineActions(
+                [
+                    sourceHighlightActions,
+                    [
+                        tvm.ToggleVisibleCell(toTable, resultRowIndex, columnIndex),
+                        tvm.ToggleHighlightCell(toTable, resultRowIndex, columnIndex)
+                    ]
+                ]));
+            }
+
+            var unhighlightSourceCells = sourcePartition
+                .SelectMany(rowIdx => orderColumnIndices
+                    .Select(colIdx => tvm.ToggleHighlightCell(fromTable, rowIdx, colIdx)))
+                .ToList();
+
+            var unhighlightResultCells = resultPartition
+                .Select(rowIdx => tvm.ToggleHighlightCell(toTable, rowIdx, columnIndex))
+                .ToList();
+
+            steps.Add(tvm.CombineActions(
+                partitionRowActions.Concat(unhighlightSourceCells).Concat(unhighlightResultCells)));
+        }
+    }
+
+    private static void HandleValueWindowFunction(DisplayTable fromTable, DisplayTable toTable, WindowFunction windowFunction,
+        int columnIndex, List<Action> steps)
+    {
+        var fromTableWithRowIndex = fromTable.DeepClone().AppendRowIndex();
+
+        if (windowFunction.Orders.Count > 0)
+        {
+            var orders = windowFunction.Orders;
+            orders.Reverse();
+            foreach (var order in orders)
+                fromTableWithRowIndex = fromTableWithRowIndex.OrderBy(order.ColumnName, order.IsAscending);
+        }
+
+        List<List<int>> sourcePartitions = [];
+        int rowIndexColumnIndex = fromTableWithRowIndex.IndexOfColumn(DisplayTable.RowIndexColumnName);
+
+        if (windowFunction.PartitionNames.Count > 0)
+        {
+            List<int> partitionIndices = windowFunction.PartitionNames
+                .Select(p => fromTableWithRowIndex.IndexOfColumn(p)).ToList();
+            sourcePartitions = fromTableWithRowIndex.Rows
+                .GroupBy(e => string.Join(", ", partitionIndices.Select(i => e[i].Value)))
+                .OrderBy(g => g.Key)
+                .Select(g => g.Select(e => int.Parse(e[rowIndexColumnIndex].Value)).ToList())
+                .ToList();
+        }
+        else
+        {
+            sourcePartitions = [fromTableWithRowIndex.Rows.Select(e => int.Parse(e[rowIndexColumnIndex].Value)).ToList()];
+        }
+
+        int resultTableRowIndex = 0;
+        List<List<int>> resultPartitions = sourcePartitions.Select(partition => partition.Select(_ => resultTableRowIndex++).ToList()).ToList();
+
+        int argColumnIndex = fromTable.IndexOfColumn(windowFunction.Argument);
+        int extraArg = ParseExtraArg(windowFunction.Extra);
+
+        // Generating Animation
+        for (int i = 0; i < sourcePartitions.Count; i++)
+        {
+            var sourcePartition = sourcePartitions[i];
+            var resultPartition = resultPartitions[i];
+
+            var partitionRowActions = sourcePartition
+                .Select(rowIdx => tvm.ToggleHighlightRow(fromTable[rowIdx]))
+                .ToList();
+            steps.Add(tvm.CombineActions(partitionRowActions));
+
+            // Track which source cells have been highlighted (to avoid double-toggling for
+            // functions where every result row maps to the same source, e.g. FIRST_VALUE)
+            var highlightedSourceRows = new HashSet<int>();
+
+            for (int j = 0; j < sourcePartition.Count; j++)
+            {
+                int resultRowIndex = resultPartition[j];
+                int? srcRowIndex = GetValueFunctionSourceRow(windowFunction.Function.ToLower(), sourcePartition, j, extraArg);
+
+                var revealStep = new List<Action>();
+
+                if (srcRowIndex.HasValue && highlightedSourceRows.Add(srcRowIndex.Value))
+                {
+                    revealStep.Add(tvm.ChangeHighlightColourCell(fromTable, srcRowIndex.Value, argColumnIndex, UtilColor.SecondaryHighlightColor));
+                    revealStep.Add(tvm.ToggleHighlightCell(fromTable, srcRowIndex.Value, argColumnIndex));
+                }
+
+                revealStep.Add(tvm.ToggleVisibleCell(toTable, resultRowIndex, columnIndex));
+                revealStep.Add(tvm.ToggleHighlightCell(toTable, resultRowIndex, columnIndex));
+                steps.Add(tvm.CombineActions(revealStep));
+            }
+
+            var unhighlightSourceCells = highlightedSourceRows
+                .Select(rowIdx => tvm.ToggleHighlightCell(fromTable, rowIdx, argColumnIndex))
+                .ToList();
+
+            var unhighlightResultCells = resultPartition
+                .Select(rowIdx => tvm.ToggleHighlightCell(toTable, rowIdx, columnIndex))
+                .ToList();
+
+            steps.Add(tvm.CombineActions(
+                partitionRowActions.Concat(unhighlightSourceCells).Concat(unhighlightResultCells)));
+        }
+    }
+
+    private static int? GetValueFunctionSourceRow(string function, List<int> sourcePartition, int j, int extraArg)
+    {
+        return function switch
+        {
+            "first_value" => sourcePartition[0],
+            "last_value" => sourcePartition[^1],
+            "lag" => j - extraArg >= 0 ? sourcePartition[j - extraArg] : null,
+            "lead" => j + extraArg < sourcePartition.Count ? sourcePartition[j + extraArg] : null,
+            "nth_value" => extraArg - 1 < sourcePartition.Count ? sourcePartition[extraArg - 1] : null,
+            _ => throw new NotImplementedException($"Value function {function} not supported")
+        };
+    }
+
+    private static int ParseExtraArg(string extra, int defaultValue = 1)
+    {
+        if (string.IsNullOrEmpty(extra)) return defaultValue;
+        var firstPart = extra.Split(',')[0].Trim();
+        return int.TryParse(firstPart, out int result) ? result : defaultValue;
+    }
+}

@@ -1,4 +1,4 @@
-﻿@using visualizer.Models
+﻿@using commonDataModels.Models
 @rendermode InteractiveServer
 
 <div class="toolbar">
@@ -50,14 +50,14 @@
                 {
                     <button class="stepper__step stepper__step--selected" @onclick="async () => await SelectStep(index)"
                             disabled="@HomeState.IsViewingTable">
-                        @HomeState.Steps[index].Component.Keyword.ToSQLString()
+                        @HomeState.Steps[index].Keyword().ToSQLString()
                     </button>
                 }
                 else
                 {
                     <button class="stepper__step" @onclick="async () => await SelectStep(index)"
                             disabled="@HomeState.IsViewingTable">
-                        @HomeState.Steps[index].Component.Keyword.ToSQLString()
+                        @HomeState.Steps[index].Keyword().ToSQLString()
                     </button>
                 }
             }

@@ -4,11 +4,11 @@
         <TargetFramework>net8.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
+        <DisableTransitiveProjectReferences>true</DisableTransitiveProjectReferences>
     </PropertyGroup>
 
     <ItemGroup>
       <PackageReference Include="BlazorMonaco" Version="3.4.0" />
-      <PackageReference Include="DuckDB.NET.Data.Full" Version="1.4.4" />
       <PackageReference Include="MudBlazor" Version="9.0.0" />
       <PackageReference Include="OpenTelemetry.Exporter.Prometheus.AspNetCore" Version="1.15.0-beta.1" />
       <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.15.0" />
@@ -20,6 +20,12 @@
       <Folder Include="data\" />
       <Folder Include="data\*\" />
       <Folder Include="wwwroot\Images\HowToUse\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\common.data\common.data.csproj" />
+      <ProjectReference Include="..\visualizer.Infrastructure\visualizer.Infrastructure.csproj" />
+      <ProjectReference Include="..\visualizer.service\visualizer.service.csproj" />
     </ItemGroup>
 
 </Project>

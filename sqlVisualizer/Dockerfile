@@ -2,24 +2,39 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 
 WORKDIR /app
 
-COPY ./visualizer/*.csproj ./visualizer/
+COPY ["sqlVisualizer.sln", "./"]
+COPY ["visualizer/visualizer.csproj", "visualizer/"]
+COPY ["visualizer.Infrastructure/visualizer.Infrastructure.csproj", "visualizer.Infrastructure/"]
+COPY ["visualizer.service/visualizer.service.csproj", "visualizer.service/"]
+COPY ["common.data/common.data.csproj", "common.data/"]
+COPY ["sql.executor/sql.executor.csproj", "sql.executor/"]
+COPY ["sql.parsing/sql.parsing.csproj", "sql.parsing/"]
+COPY ["table.generation/table.generation.csproj", "table.generation/"]
+COPY ["animation.generation/animation.generation.csproj", "animation.generation/"]
 
-WORKDIR /app/visualizer
+RUN dotnet restore "visualizer/visualizer.csproj" --no-cache
 
-RUN dotnet restore --no-cache
+COPY ["visualizer/", "visualizer/"]
+COPY ["visualizer.Infrastructure/", "visualizer.Infrastructure/"]
+COPY ["visualizer.service/", "visualizer.service/"]
+COPY ["common.data/", "common.data/"]
+COPY ["sql.executor/", "sql.executor/"]
+COPY ["sql.parsing/", "sql.parsing/"]
+COPY ["table.generation/", "table.generation/"]
+COPY ["animation.generation/", "animation.generation/"]
 
-COPY ./visualizer/ ./
+RUN dotnet publish "visualizer/visualizer.csproj" -c Release -o /out
 
-RUN dotnet publish -c Release -o /out
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
 
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 
+ENV ASPNETCORE_URLS=http://+:8080
 
 WORKDIR /app/visualizer
 
 COPY --from=build /out ./
 
-RUN mkdir -p ./data
+RUN mkdir -p /app/visualizer/data
 
-EXPOSE 80
+EXPOSE 8080
 
 ENTRYPOINT ["dotnet", "visualizer.dll"]

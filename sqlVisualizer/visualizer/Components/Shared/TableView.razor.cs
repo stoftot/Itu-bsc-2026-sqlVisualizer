@@ -1,12 +1,11 @@
 ﻿using Microsoft.AspNetCore.Components;
-using Microsoft.JSInterop;
-using visualizer.Models;
+using visualizer.service.Contracts;
 
 namespace visualizer.Components.Shared;
 
 public class TableViewBase : ComponentBase
 {
-    [Parameter] public required Table? Table { get; init; }
+    [Parameter] public required IDisplayTable? Table { get; init; }
 
-    protected bool ShowAggregation => Table != null && Table.Aggregations.Count != 0;
+    protected bool ShowAggregation => Table != null && Table.Aggregations().Count != 0;
 }

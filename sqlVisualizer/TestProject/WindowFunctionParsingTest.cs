@@ -1,6 +1,4 @@
-﻿using visualizer.Models;
-
-namespace TestProject1;
+﻿namespace TestProject1;
 
 public class WindowFunctionParsingTest
 {
