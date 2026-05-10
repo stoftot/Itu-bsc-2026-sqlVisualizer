@@ -30,8 +30,8 @@ internal static class WhereAnimationGenerator
             var fromEntry = fromTable[i];
             var highlightSource = tvm.CombineActions(
                 [
-                    tvm.GenerateToggleHighlightRow(fromEntry),
-                    tvm.GenerateToggleHighlightCells(fromTable, i, columnsInClauseIndexes)
+                    tvm.ToggleHighlightRow(fromEntry),
+                    tvm.ToggleHighlightCells(fromTable, i, columnsInClauseIndexes)
                 ]);
 
             var matchingResult = remainingResultRows.FirstOrDefault(r =>
@@ -42,13 +42,13 @@ internal static class WhereAnimationGenerator
             {
                 steps.Add(tvm.CombineActions([
                     highlightSource,
-                    tvm.GenerateToggleHighlightRow(matchingResult),
-                    tvm.GenerateToggleVisibleCellsInRow(matchingResult)
+                    tvm.ToggleHighlightRow(matchingResult),
+                    tvm.ToggleVisibleCellsInRow(matchingResult)
                 ]));
 
                 steps.Add(tvm.CombineActions([
                     highlightSource,
-                    tvm.GenerateToggleHighlightRow(matchingResult),
+                    tvm.ToggleHighlightRow(matchingResult),
                 ]));
 
                 remainingResultRows.Remove(matchingResult);

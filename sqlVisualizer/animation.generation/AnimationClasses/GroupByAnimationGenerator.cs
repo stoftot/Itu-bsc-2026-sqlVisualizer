@@ -40,9 +40,9 @@ internal static class GroupByAnimationGenerator
             
             fromAnimations.AddRange(
             [
-                tvm.GenerateToggleHighlightRow(currRow),
+                tvm.ToggleHighlightRow(currRow),
                 tvm.ChangeHighlightColourCells(fromTable, row, groupByIndexes, UtilColor.SecondaryHighlightColor),
-                tvm.GenerateToggleHighlightCells(fromTable, row, groupByIndexes)
+                tvm.ToggleHighlightCells(fromTable, row, groupByIndexes)
             ]);
 
             var fromValues = currRow.ValuesAsImmutableArray(groupByIndexes);
@@ -59,15 +59,15 @@ internal static class GroupByAnimationGenerator
             steps.Add(tvm.CombineActions(fromAnimations,
             [
                 tvm.ChangeHighlightColourCells(toTable, indexOfToRow, groupByIndexes, UtilColor.SecondaryHighlightColor),
-                tvm.GenerateToggleVisibleCellsInRow(toTable[indexOfToRow]),
-                tvm.GenerateToggleHighlightRow(toTable[indexOfToRow]),
-                tvm.GenerateToggleHighlightCells(toTable, indexOfToRow, groupByIndexes)
+                tvm.ToggleVisibleCellsInRow(toTable[indexOfToRow]),
+                tvm.ToggleHighlightRow(toTable[indexOfToRow]),
+                tvm.ToggleHighlightCells(toTable, indexOfToRow, groupByIndexes)
             ]));
 
             steps.Add(tvm.CombineActions(fromAnimations,
             [
-                tvm.GenerateToggleHighlightRow(toTable[indexOfToRow]),
-                tvm.GenerateToggleHighlightCells(toTable, indexOfToRow, groupByIndexes)
+                tvm.ToggleHighlightRow(toTable[indexOfToRow]),
+                tvm.ToggleHighlightCells(toTable, indexOfToRow, groupByIndexes)
             ]));
         }
 

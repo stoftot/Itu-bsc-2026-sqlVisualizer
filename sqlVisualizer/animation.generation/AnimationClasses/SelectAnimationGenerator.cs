@@ -62,8 +62,8 @@ internal static class SelectAnimationGenerator
         if (sql.Clause().Trim().Equals("*"))
         {
             var step = tvm.CombineActions([
-                tvm.GenerateToggleHighlightTables(fromTables),
-                tvm.GenerateToggleHighlightTable(toTable)
+                tvm.ToggleHighlightTables(fromTables),
+                tvm.ToggleHighlightTable(toTable)
             ]);
             
             return [step, step];
@@ -93,14 +93,14 @@ internal static class SelectAnimationGenerator
             
             if (fromTables.Count == 1)
             {
-                Action FromAnimationGenerator(int i) => tvm.GenerateToggleHighlightColumn(fromTables[0], i);
+                Action FromAnimationGenerator(int i) => tvm.ToggleHighlightColumn(fromTables[0], i);
 
                 toColumnIndex += HandleNormalSelect(fromTables, toTable, column, toColumnIndex, steps, FromAnimationGenerator);
             }
             else
             {
                 Action FromAnimationGenerator(int i) =>
-                    fromTables.Select(table => tvm.GenerateToggleHighlightCell(table, 0, i))
+                    fromTables.Select(table => tvm.ToggleHighlightCell(table, 0, i))
                         .ToList()
                         .ToOneAction();
 
@@ -148,15 +148,15 @@ internal static class SelectAnimationGenerator
             {
                 steps.Add(tvm.CombineActions(
                 [
-                    tvm.GenerateToggleHighlightColumn(table, 0),
-                    tvm.GenerateToggleVisibleCell(toTable, i, toColumnIndex),
-                    tvm.GenerateToggleHighlightCell(toTable, i, toColumnIndex)
+                    tvm.ToggleHighlightColumn(table, 0),
+                    tvm.ToggleVisibleCell(toTable, i, toColumnIndex),
+                    tvm.ToggleHighlightCell(toTable, i, toColumnIndex)
                 ]));
 
                 steps.Add(tvm.CombineActions(
                 [
-                    tvm.GenerateToggleHighlightColumn(table, 0),
-                    tvm.GenerateToggleHighlightCell(toTable, i++, toColumnIndex)
+                    tvm.ToggleHighlightColumn(table, 0),
+                    tvm.ToggleHighlightCell(toTable, i++, toColumnIndex)
                 ]));
             }
         }
@@ -190,14 +190,14 @@ internal static class SelectAnimationGenerator
             steps.Add(tvm.CombineActions(
             [
                 tvm.GenerateToggleHighlightColumns(table, fromColumnIndexes),
-                tvm.GenerateToggleVisibleCell(toTable, i, toColumnIndex),
-                tvm.GenerateToggleHighlightCell(toTable, i, toColumnIndex)
+                tvm.ToggleVisibleCell(toTable, i, toColumnIndex),
+                tvm.ToggleHighlightCell(toTable, i, toColumnIndex)
             ]));
 
             steps.Add(tvm.CombineActions(
             [
                 tvm.GenerateToggleHighlightColumns(table, fromColumnIndexes),
-                tvm.GenerateToggleHighlightCell(toTable, i++, toColumnIndex)
+                tvm.ToggleHighlightCell(toTable, i++, toColumnIndex)
             ]));
         }
     }
@@ -217,8 +217,8 @@ internal static class SelectAnimationGenerator
             
             for (int i = 0; i < numberOfColumns; i++)
             {
-                visibleStep.Add(tvm.GenerateToggleVisibleColumn(toTable, columnIndex+i));
-                HighLightStep.Add(tvm.GenerateToggleHighlightColumn(toTable, columnIndex+i));
+                visibleStep.Add(tvm.ToggleVisibleColumn(toTable, columnIndex+i));
+                HighLightStep.Add(tvm.ToggleHighlightColumn(toTable, columnIndex+i));
             }
             
             steps.Add(tvm.CombineActions(
@@ -240,14 +240,14 @@ internal static class SelectAnimationGenerator
         steps.Add(tvm.CombineActions(
         [
             fromAnimation,
-            tvm.GenerateToggleVisibleColumn(toTable, columnIndex),
-            tvm.GenerateToggleHighlightColumn(toTable, columnIndex)
+            tvm.ToggleVisibleColumn(toTable, columnIndex),
+            tvm.ToggleHighlightColumn(toTable, columnIndex)
         ]));
 
         steps.Add(tvm.CombineActions(
         [
             fromAnimation,
-            tvm.GenerateToggleHighlightColumn(toTable, columnIndex)
+            tvm.ToggleHighlightColumn(toTable, columnIndex)
         ]));
 
         return 1;
@@ -331,7 +331,7 @@ internal static class SelectAnimationGenerator
 
             // First, highlight all rows in this partition in the source table
             var partitionRowActions = sourcePartition
-                .Select(rowIdx => tvm.GenerateToggleHighlightRow(fromTable[rowIdx]))
+                .Select(rowIdx => tvm.ToggleHighlightRow(fromTable[rowIdx]))
                 .ToList();
             steps.Add(tvm.CombineActions(partitionRowActions));
 
@@ -342,19 +342,19 @@ internal static class SelectAnimationGenerator
                 steps.Add(tvm.CombineActions(
                 [
                     tvm.ChangeHighlightColourCell(fromTable, sourceRowIndex, indexOfArgument, UtilColor.SecondaryHighlightColor),
-                    tvm.GenerateToggleHighlightCell(fromTable, sourceRowIndex, indexOfArgument),
-                    tvm.GenerateToggleVisibleCell(toTable, resultRowIndex, columnIndex),
-                    tvm.GenerateToggleHighlightCell(toTable, resultRowIndex, columnIndex)
+                    tvm.ToggleHighlightCell(fromTable, sourceRowIndex, indexOfArgument),
+                    tvm.ToggleVisibleCell(toTable, resultRowIndex, columnIndex),
+                    tvm.ToggleHighlightCell(toTable, resultRowIndex, columnIndex)
                 ]));
             }
             
             // Unhighlight
             var unhighlightSourceCells = sourcePartition
-                .Select(rowIdx => tvm.GenerateToggleHighlightCell(fromTable, rowIdx, indexOfArgument))
+                .Select(rowIdx => tvm.ToggleHighlightCell(fromTable, rowIdx, indexOfArgument))
                 .ToList();
             
             var unhighlightResultCells = resultPartition
-                .Select(rowIdx => tvm.GenerateToggleHighlightCell(toTable, rowIdx, columnIndex))
+                .Select(rowIdx => tvm.ToggleHighlightCell(toTable, rowIdx, columnIndex))
                 .ToList();
 
             var unhighlightActions = partitionRowActions.Concat(unhighlightSourceCells).Concat(unhighlightResultCells).ToList();
@@ -409,7 +409,7 @@ internal static class SelectAnimationGenerator
 
             // First, highlight all rows in this partition in the source table
             var partitionRowActions = sourcePartition
-                .Select(rowIdx => tvm.GenerateToggleHighlightRow(fromTable[rowIdx]))
+                .Select(rowIdx => tvm.ToggleHighlightRow(fromTable[rowIdx]))
                 .ToList();
             steps.Add(tvm.CombineActions(partitionRowActions));
 
@@ -420,26 +420,26 @@ internal static class SelectAnimationGenerator
 
                 tvm.ChangeHighlightColourCells(fromTable, sourceRowIndex, orderColumnIndices, UtilColor.SecondaryHighlightColor);
                 var sourceHighlightActions = orderColumnIndices
-                    .Select(colIdx => tvm.GenerateToggleHighlightCell(fromTable, sourceRowIndex, colIdx))
+                    .Select(colIdx => tvm.ToggleHighlightCell(fromTable, sourceRowIndex, colIdx))
                     .ToList();
 
                 steps.Add(tvm.CombineActions(
                 [
                     sourceHighlightActions,
                     [
-                        tvm.GenerateToggleVisibleCell(toTable, resultRowIndex, columnIndex),
-                        tvm.GenerateToggleHighlightCell(toTable, resultRowIndex, columnIndex)
+                        tvm.ToggleVisibleCell(toTable, resultRowIndex, columnIndex),
+                        tvm.ToggleHighlightCell(toTable, resultRowIndex, columnIndex)
                     ]
                 ]));
             }
 
             var unhighlightSourceCells = sourcePartition
                 .SelectMany(rowIdx => orderColumnIndices
-                    .Select(colIdx => tvm.GenerateToggleHighlightCell(fromTable, rowIdx, colIdx)))
+                    .Select(colIdx => tvm.ToggleHighlightCell(fromTable, rowIdx, colIdx)))
                 .ToList();
 
             var unhighlightResultCells = resultPartition
-                .Select(rowIdx => tvm.GenerateToggleHighlightCell(toTable, rowIdx, columnIndex))
+                .Select(rowIdx => tvm.ToggleHighlightCell(toTable, rowIdx, columnIndex))
                 .ToList();
 
             steps.Add(tvm.CombineActions(
@@ -491,7 +491,7 @@ internal static class SelectAnimationGenerator
             var resultPartition = resultPartitions[i];
 
             var partitionRowActions = sourcePartition
-                .Select(rowIdx => tvm.GenerateToggleHighlightRow(fromTable[rowIdx]))
+                .Select(rowIdx => tvm.ToggleHighlightRow(fromTable[rowIdx]))
                 .ToList();
             steps.Add(tvm.CombineActions(partitionRowActions));
 
@@ -509,20 +509,20 @@ internal static class SelectAnimationGenerator
                 if (srcRowIndex.HasValue && highlightedSourceRows.Add(srcRowIndex.Value))
                 {
                     revealStep.Add(tvm.ChangeHighlightColourCell(fromTable, srcRowIndex.Value, argColumnIndex, UtilColor.SecondaryHighlightColor));
-                    revealStep.Add(tvm.GenerateToggleHighlightCell(fromTable, srcRowIndex.Value, argColumnIndex));
+                    revealStep.Add(tvm.ToggleHighlightCell(fromTable, srcRowIndex.Value, argColumnIndex));
                 }
 
-                revealStep.Add(tvm.GenerateToggleVisibleCell(toTable, resultRowIndex, columnIndex));
-                revealStep.Add(tvm.GenerateToggleHighlightCell(toTable, resultRowIndex, columnIndex));
+                revealStep.Add(tvm.ToggleVisibleCell(toTable, resultRowIndex, columnIndex));
+                revealStep.Add(tvm.ToggleHighlightCell(toTable, resultRowIndex, columnIndex));
                 steps.Add(tvm.CombineActions(revealStep));
             }
 
             var unhighlightSourceCells = highlightedSourceRows
-                .Select(rowIdx => tvm.GenerateToggleHighlightCell(fromTable, rowIdx, argColumnIndex))
+                .Select(rowIdx => tvm.ToggleHighlightCell(fromTable, rowIdx, argColumnIndex))
                 .ToList();
 
             var unhighlightResultCells = resultPartition
-                .Select(rowIdx => tvm.GenerateToggleHighlightCell(toTable, rowIdx, columnIndex))
+                .Select(rowIdx => tvm.ToggleHighlightCell(toTable, rowIdx, columnIndex))
                 .ToList();
 
             steps.Add(tvm.CombineActions(

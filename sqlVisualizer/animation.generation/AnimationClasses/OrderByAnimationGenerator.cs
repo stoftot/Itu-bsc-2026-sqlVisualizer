@@ -62,8 +62,8 @@ internal static class OrderByAnimationGenerator
     {
         return tvm.CombineActions(
         [
-            tvm.GenerateToggleHighlightRow(fromTable, rowIndex),
-            tvm.GenerateToggleHighlightCells(fromTable, rowIndex, orderByColumnIndexes),
+            tvm.ToggleHighlightRow(fromTable, rowIndex),
+            tvm.ToggleHighlightCells(fromTable, rowIndex, orderByColumnIndexes),
             tvm.ChangeHighlightColourCells(fromTable, rowIndex, orderByColumnIndexes, UtilColor.SecondaryHighlightColor)
         ]);
     }
@@ -73,8 +73,8 @@ internal static class OrderByAnimationGenerator
     {
         return tvm.CombineActions(
         [
-            tvm.GenerateToggleHighlightRow(fromTable, rowIndex),
-            tvm.GenerateToggleHighlightCells(fromTable, rowIndex, orderByColumnIndexes),
+            tvm.ToggleHighlightRow(fromTable, rowIndex),
+            tvm.ToggleHighlightCells(fromTable, rowIndex, orderByColumnIndexes),
         ]);
     }
 

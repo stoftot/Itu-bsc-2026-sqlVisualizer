@@ -5,7 +5,7 @@ namespace animationGeneration;
 
 internal class TableVisualModifier
 {
-    public Action GenerateToggleHighlightRows(IReadOnlyList<DisplayTableRow> entries)
+    public Action ToggleHighlightRows(IReadOnlyList<DisplayTableRow> entries)
     {
         //capture the list, so when its changed it doesn't apply to all functions
         var snapshot = entries.ToList();
@@ -15,24 +15,24 @@ internal class TableVisualModifier
         };
     }
 
-    public Action GenerateToggleHighlightRow(DisplayTableRow row)
+    public Action ToggleHighlightRow(DisplayTableRow row)
     {
         return row.ToggleHighlight;
     }
 
-    public Action GenerateToggleHighlightRow(DisplayTable table, int row)
+    public Action ToggleHighlightRow(DisplayTable table, int row)
     {
         return table[row].ToggleHighlight;
     }
 
-    public Action GenerateToggleHighlightCells(DisplayTable table, int row, ICollection<int> column)
+    public Action ToggleHighlightCells(DisplayTable table, int row, ICollection<int> column)
     {
         return column
-            .Select(i => GenerateToggleHighlightCell(table, row, i))
+            .Select(i => ToggleHighlightCell(table, row, i))
             .ToOneAction();
     }
 
-    public Action GenerateToggleHighlightCell(DisplayTable table, int row, int column)
+    public Action ToggleHighlightCell(DisplayTable table, int row, int column)
     {
         return table[row][column].ToggleHighlight;
     }
@@ -69,7 +69,7 @@ internal class TableVisualModifier
     public Action SwitchToPreviousHighlightColorRow(DisplayTable table, int row)
         =>  table[row].SetHighlightColorPrevious;
 
-    public Action GenerateToggleHighlightColumn(DisplayTable table, int index)
+    public Action ToggleHighlightColumn(DisplayTable table, int index)
     {
         return () =>
         {
@@ -81,9 +81,9 @@ internal class TableVisualModifier
     }
 
     public Action GenerateToggleHighlightColumns(DisplayTable table, List<int> indexes)
-        => indexes.Select(i => GenerateToggleHighlightColumn(table, i)).ToOneAction();
+        => indexes.Select(i => ToggleHighlightColumn(table, i)).ToOneAction();
 
-    public Action GenerateToggleVisibleColumn(DisplayTable table, int index)
+    public Action ToggleVisibleColumn(DisplayTable table, int index)
     {
         return () =>
         {
@@ -94,7 +94,7 @@ internal class TableVisualModifier
         };
     }
 
-    public Action GenerateToggleVisibleCellsInRow(DisplayTableRow row)
+    public Action ToggleVisibleCellsInRow(DisplayTableRow row)
     {
         var hide = new List<Action>();
         foreach (var cell in row.Cells)
@@ -105,7 +105,7 @@ internal class TableVisualModifier
         return hide.ToOneAction();
     }
 
-    public Action GenerateToggleVisibleCell(DisplayTable table, int row, int column)
+    public Action ToggleVisibleCell(DisplayTable table, int row, int column)
     {
         return table[row][column].ToggleVisible;
     }
@@ -114,18 +114,18 @@ internal class TableVisualModifier
     {
         var hide = new List<Action>();
         for (int i = 0; i < table.ColumnNames.Count; i++)
-            hide.Add(GenerateToggleVisibleColumn(table, i));
+            hide.Add(ToggleVisibleColumn(table, i));
         return hide.ToOneAction();
     }
 
     public Action HideTablesCellBased(List<DisplayTable> tables) =>
         tables.Select(HideTableCellBased).ToOneAction();
 
-    public Action GenerateToggleHighlightTable(DisplayTable table)
-        => table.Rows.Select(GenerateToggleHighlightRow).ToOneAction();
+    public Action ToggleHighlightTable(DisplayTable table)
+        => table.Rows.Select(ToggleHighlightRow).ToOneAction();
 
-    public Action GenerateToggleHighlightTables(List<DisplayTable> tables)
-        => tables.Select(GenerateToggleHighlightTable).ToOneAction();
+    public Action ToggleHighlightTables(List<DisplayTable> tables)
+        => tables.Select(ToggleHighlightTable).ToOneAction();
 
     public Action ToggleHighlightAggregations(DisplayTable table) =>
         table.Aggregations

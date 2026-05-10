@@ -19,7 +19,7 @@ internal static class LimitAnimationGenerator
         for (int i = 0; i < fromTable.Rows.Count && i < limitCount; i++)
         {
             var fromEntry = fromTable[i];
-            var highlightSource = tvm.GenerateToggleHighlightRow(fromEntry);
+            var highlightSource = tvm.ToggleHighlightRow(fromEntry);
 
             var matchingResult = toTable.Rows.FirstOrDefault(r =>
                 r.Cells.Select(v => v.Value)
@@ -29,13 +29,13 @@ internal static class LimitAnimationGenerator
             {
                 steps.Add(tvm.CombineActions([
                     highlightSource,
-                    tvm.GenerateToggleHighlightRow(matchingResult),
-                    tvm.GenerateToggleVisibleCellsInRow(matchingResult)
+                    tvm.ToggleHighlightRow(matchingResult),
+                    tvm.ToggleVisibleCellsInRow(matchingResult)
                 ]));
 
                 steps.Add(tvm.CombineActions([
                     highlightSource,
-                    tvm.GenerateToggleHighlightRow(matchingResult)
+                    tvm.ToggleHighlightRow(matchingResult)
                 ]));
             }
         }

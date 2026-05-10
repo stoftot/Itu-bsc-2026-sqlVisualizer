@@ -22,8 +22,8 @@ internal static class HavingAnimationGenerator
             {
                 var step = new List<Action>()
                 {
-                    tvm.GenerateToggleHighlightTable(fromTable),
-                    tvm.GenerateToggleHighlightTable(toTables[toTableIndex])
+                    tvm.ToggleHighlightTable(fromTable),
+                    tvm.ToggleHighlightTable(toTables[toTableIndex])
                 };
 
                 steps.Add(tvm.CombineActions(
