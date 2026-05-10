@@ -7,3 +7,4 @@ sqlVisualizer/visualizer/metrics.db
 sqlVisualizer/visualizer/user.db
 /sqlVisualizer/visualizer/data
 /.claude
+.codex*
