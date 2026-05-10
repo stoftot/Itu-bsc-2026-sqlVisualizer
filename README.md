@@ -73,13 +73,13 @@ Install:
 
 ```bash
 git clone https://github.com/stoftot/Itu-bsc-2026-sqlVisualizer.git
-cd Itu-bsc-2026-sqlVisualizer
 ```
 
 
 ## Run locally
 
 ```bash
+cd Itu-bsc-2026-sqlVisualizer/sqlVisualizer/visualizer
 dotnet run
 ```
 
@@ -95,6 +95,7 @@ http://localhost:8080
 ## Build image
 
 ```bash
+cd Itu-bsc-2026-sqlVisualizer/sqlVisualizer
 docker build -t sql-visualizer .
 ```
 
