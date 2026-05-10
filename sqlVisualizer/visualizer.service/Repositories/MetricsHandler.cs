@@ -5,21 +5,79 @@ using visualizer.service.Models;
 
 namespace visualizer.service.Repositories;
 
+/// <summary>
+/// Records and reads user interaction metrics for queries, steps, and animation playback.
+/// </summary>
 public interface IMetricsHandler
 {
+    /// <summary>
+    /// Increments a button or action counter for a session.
+    /// </summary>
     void IncrementAction(string sessionId, ActionType actionType);
+
+    /// <summary>
+    /// Records a query execution event.
+    /// </summary>
     void RecordQuery(string sessionId, string query);
+
+    /// <summary>
+    /// Prints recorded queries for debugging or local inspection.
+    /// </summary>
     void PrintQueries(string sessionId);
+
+    /// <summary>
+    /// Prints action counters for debugging or local inspection.
+    /// </summary>
     void PrintActions(string sessionId);
+
+    /// <summary>
+    /// Marks entry into a SQL step for time tracking.
+    /// </summary>
     void EnterStep(string sessionId, SQLKeyword step);
+
+    /// <summary>
+    /// Starts timing the animation portion of the current step.
+    /// </summary>
     void StartAnimation(string sessionId);
+
+    /// <summary>
+    /// Stops timing the animation portion of the current step.
+    /// </summary>
     void StopAnimation(string sessionId);
+
+    /// <summary>
+    /// Prints per-step timing aggregates for a session.
+    /// </summary>
     void PrintSessionTimings(string sessionId);
+
+    /// <summary>
+    /// Gets aggregated button and action counts across sessions.
+    /// </summary>
     IEnumerable<ActionCountDto> GetActionCounts();
+
+    /// <summary>
+    /// Gets aggregated viewing and animation time per SQL step.
+    /// </summary>
     IEnumerable<StepTimeDto> GetTimeSpentByStep();
+
+    /// <summary>
+    /// Records a user action together with the SQL keyword active at the time.
+    /// </summary>
     void RecordActionKeyword(string sessionId, ActionType actionType, string sqlKeyword);
+
+    /// <summary>
+    /// Gets action counts grouped by SQL keyword.
+    /// </summary>
     List<ActionKeywordMetric> GetActionKeywordMetrics();
+
+    /// <summary>
+    /// Records how much of an animation was viewed for a SQL keyword.
+    /// </summary>
     void RecordAnimationViewPercentage(string sessionId, SQLKeyword keyword, double percentage);
+
+    /// <summary>
+    /// Gets average animation completion percentages grouped by SQL keyword.
+    /// </summary>
     IEnumerable<ActionCountDto> GetAnimationViewPercentages();
 }
 

@@ -1,12 +1,30 @@
-﻿using DuckDB.NET.Data;
+using DuckDB.NET.Data;
 
 namespace visualizer.service.Repositories;
 
+/// <summary>
+/// Persists per-session editor state and uploaded database names.
+/// </summary>
 public interface IUserRepository
 {
+    /// <summary>
+    /// Saves the current query for a session and database combination.
+    /// </summary>
     void SaveUserQuery(string sessionId, string databaseName, string query);
+
+    /// <summary>
+    /// Gets the last saved query for a session and database combination.
+    /// </summary>
     string? GetUserQuery(string sessionId, string databaseName);
+
+    /// <summary>
+    /// Saves the name of a user-uploaded database for a session.
+    /// </summary>
     void SaveUserDatabaseName(string sessionId, string databaseName);
+
+    /// <summary>
+    /// Gets the uploaded database names associated with a session.
+    /// </summary>
     List<string> GetUserDatabaseNames(string sessionId);
 }
 
