@@ -4,6 +4,8 @@ namespace tableGeneration.Models;
 
 internal class Table : ITable
 {
+    public TableRow this[int row] => Rows[row];
+
     /// <summary>
     /// A table is only given a name if is fetched with a single from clause,
     /// otherwise it is considered a result table and has an empty string as name.
@@ -18,7 +20,7 @@ internal class Table : ITable
     public List<string> ColumnsOriginalTableNames { get; private init; } = [];
     
     public required List<string> ColumnNames { get; init; }
-    public required List<TableEntry> Entries { get; init; }
+    public required List<TableRow> Rows { get; init; }
 
     public List<Aggregation> Aggregations { get; set; } = [];
     public Table DeepClone()
@@ -28,8 +30,8 @@ internal class Table : ITable
             Name = Name,
             ColumnNames = ColumnNames.ToList(),
             ColumnsOriginalTableNames = ColumnsOriginalTableNames.ToList(),
-            Entries = Entries
-                .Select(e => e.DeepClone())
+            Rows = Rows
+                .Select(row => row.DeepClone())
                 .ToList()
         };
     }
@@ -88,7 +90,7 @@ internal class Table : ITable
             {
                 indexes.Add(IndexOfColumn(column));
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 if (!ignoreColumnsNotFound)
                     throw;
@@ -101,7 +103,7 @@ internal class Table : ITable
     string ITable.Name() => Name;
     List<string> ITable.ColumnsOriginalTableNames() => ColumnsOriginalTableNames;
     List<string> ITable.ColumnNames() => ColumnNames;
-    public IReadOnlyList<IReadOnlyList<ITableCell>> Data() => Entries.Select(e => e.Values).ToList();
+    public IReadOnlyList<IReadOnlyList<ITableCell>> Data() => Rows.Select(row => row.Cells).ToList();
     IReadOnlyList<IAggregation> ITable.Aggregations() => Aggregations;
 }
 

@@ -65,11 +65,11 @@ internal class SQLExecutorWrapper(ISQLExecutor executor)
         return new Table
         {
             ColumnNames = simpleTable.ColumnNames().ToList(),
-            Entries = simpleTable.Rows().Select(row =>
-                new TableEntry
+            Rows = simpleTable.Rows().Select(row =>
+                new TableRow
                 {
-                    Values = row.Select(rawValue =>
-                        new TableValue
+                    Cells = row.Select(rawValue =>
+                        new TableCell
                         {
                             Value = rawValue?.ToString() ?? "NULL",
                             RawValue = rawValue

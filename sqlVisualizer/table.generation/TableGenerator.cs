@@ -56,7 +56,7 @@ internal class TableGenerator(SQLExecutorWrapper sqlExecutor, TableOriginColumns
     private void GenerateFromTablesHaving(List<Table> fromTables, SQLDecompositionComponent currStep,
         List<SQLDecompositionComponent> currSteps)
     {
-        if(fromTables[0].Entries.Count == 0) return;
+        if (fromTables[0].Rows.Count == 0) return;
         
         //normalize so count(*) is treated as count()
         var clause = Regex.Replace(currStep.Clause, @"\b[^ ]+?\((?:|\*)\)", "COUNT()");
@@ -77,23 +77,23 @@ internal class TableGenerator(SQLExecutorWrapper sqlExecutor, TableOriginColumns
         temp.Add(selectStatement);
         var aggregationResults = sqlExecutor.Execute(temp).Result;
 
-        if (fromTables.Count != aggregationResults.Entries.Count)
+        if (fromTables.Count != aggregationResults.Rows.Count)
             throw new ArgumentException("The number of aggregation results must match the number of grouped tables(\n" +
-                                        $"aggregations: {aggregationResults.Entries.Count}\n" +
+                                        $"aggregations: {aggregationResults.Rows.Count}\n" +
                                         $"grouped by tables: {fromTables.Count}\n)");
 
         //Add aggregationResults to the respective group by tables
         for (int i = 0; i < fromTables.Count; i++)
         {
             var fromTable = fromTables[i];
-            var aggregationResult = aggregationResults.Entries[i];
+            var aggregationResult = aggregationResults[i];
 
-            foreach (var (name, tableValue) in aggregationResults.ColumnNames.Zip(aggregationResult.Values))
+            foreach (var (name, tableCell) in aggregationResults.ColumnNames.Zip(aggregationResult.Cells))
             {
                 fromTable.Aggregations.Add(new Aggregation()
                 {
                     Name = name,
-                    Value = tableValue.Value
+                    Value = tableCell.Value
                 });
             }
         }
@@ -152,7 +152,7 @@ internal class TableGenerator(SQLExecutorWrapper sqlExecutor, TableOriginColumns
                 var table = new Table
                 {
                     ColumnNames = [],
-                    Entries = []
+                    Rows = []
                 };
                 table.ColumnNames.AddRange(fromTables[0].ColumnNames);
                 table.ColumnNames.AddRange(fromTables[1].ColumnNames);
@@ -165,7 +165,7 @@ internal class TableGenerator(SQLExecutorWrapper sqlExecutor, TableOriginColumns
                 var table = new Table
                 {
                     ColumnNames = fromTables[0].ColumnNames.ToList(),
-                    Entries = []
+                    Rows = []
                 };
                 // table.ColumnsOriginalTableNames.AddRange(fromTables[0].ColumnsOriginalTableNames);
                 toTables.Add(table);
@@ -191,13 +191,13 @@ internal class TableGenerator(SQLExecutorWrapper sqlExecutor, TableOriginColumns
 
         var groupByIndexes = tabel.IndexOfColumns(columnNamesToGroupBy).ToList();
 
-        var groupedTables = tabel.Entries
-            .GroupBy(e => new CompositeKey(groupByIndexes.Select(i => e.Values[i].RawValue)))
+        var groupedTables = tabel.Rows
+            .GroupBy(row => new CompositeKey(groupByIndexes.Select(i => row[i].RawValue)))
             .OrderBy(g => g.Key, CompositeKeyComparer.Instance)
             .Select(g => new Table
             {
                 ColumnNames = tabel.ColumnNames.ToList(),
-                Entries = g.ToList()
+                Rows = g.ToList()
             })
             .ToList();
 
@@ -225,12 +225,12 @@ internal class TableGenerator(SQLExecutorWrapper sqlExecutor, TableOriginColumns
         var temp = currSteps.ToList();
         temp.Add(selectStatement);
         var aggregationResults = sqlExecutor.Execute(temp).Result;
-        if (aggregationResults.Entries.Count == 0)
+        if (aggregationResults.Rows.Count == 0)
         {
             var table = new Table
             {
                 ColumnNames = fromTables[0].ColumnNames.ToList(), 
-                Entries = []
+                Rows = []
             };
             table.ColumnsOriginalTableNames.AddRange(fromTables[0].ColumnsOriginalTableNames);
             toTables.Add(table);
@@ -242,9 +242,9 @@ internal class TableGenerator(SQLExecutorWrapper sqlExecutor, TableOriginColumns
         var startOfAggregation = fromTables[0].ColumnsOriginalTableNames.IndexOf("()");
         foreach (var fromTable in fromTables)
         {
-            var aggregationValues = aggregationResults.Entries[aggregationIndex].Values
-                .Select(v => v.Value);
-            // var fromValues = fromTable.Entries[0].Values.GetRange(startOfAggregation, fromTable.Entries[0].Values.Count - startOfAggregation);
+            var aggregationValues = aggregationResults[aggregationIndex].Cells
+                .Select(cell => cell.Value);
+            // var fromValues = fromTable.Rows[0].Cells.GetRange(startOfAggregation, fromTable.Rows[0].Cells.Count - startOfAggregation);
             if (fromTable.Aggregations.Count == 0) throw new ArgumentException("Aggregations cannot be empty");
             var fromValues = fromTable.Aggregations
                 .Select(a => a.Value);
@@ -253,7 +253,7 @@ internal class TableGenerator(SQLExecutorWrapper sqlExecutor, TableOriginColumns
             {
                 toTables.Add(fromTable.DeepClone());
                 aggregationIndex++;
-                if (aggregationIndex >= aggregationResults.Entries.Count) break;
+                if (aggregationIndex >= aggregationResults.Rows.Count) break;
             }
         }
     }
@@ -264,9 +264,9 @@ internal class TableGenerator(SQLExecutorWrapper sqlExecutor, TableOriginColumns
         var joiningTable = fromTables[1];
         var newResultTable = CreateEmptyResultTable(resultTable);
         
-        foreach (var source in sourceTable.Entries)
+        foreach (var source in sourceTable.Rows)
         {
-            AddMatchesForSource(source, joiningTable.Entries, resultTable, newResultTable);
+            AddMatchesForSource(source, joiningTable.Rows, resultTable, newResultTable);
         }
 
         toTables.Add(newResultTable);
@@ -278,24 +278,24 @@ internal class TableGenerator(SQLExecutorWrapper sqlExecutor, TableOriginColumns
         var joiningTable = fromTables[1];
         var newResultTable = CreateEmptyResultTable(resultTable);
 
-        var nullJoiningValues = CreateNullValues(joiningTable.Entries[0].Values.Count);
+        var nullJoiningCells = CreateNullCells(joiningTable[0].Cells.Count);
         
-        var numberOfEntriesToGenerate = resultTable.Entries.Count;
-        foreach (var source in sourceTable.Entries)
+        var numberOfEntriesToGenerate = resultTable.Rows.Count;
+        foreach (var source in sourceTable.Rows)
         {
-            var foundMatch = AddMatchesForSource(source, joiningTable.Entries, resultTable, newResultTable);
+            var foundMatch = AddMatchesForSource(source, joiningTable.Rows, resultTable, newResultTable);
             if (foundMatch) continue;
 
-            var sourceWithNullForJoiningColumns = AppendValues(source, nullJoiningValues);
+            var sourceWithNullForJoiningColumns = AppendCells(source, nullJoiningCells);
             
             RemoveExpectedEntry(resultTable, sourceWithNullForJoiningColumns);
             
-            newResultTable.Entries.Add(sourceWithNullForJoiningColumns);
+            newResultTable.Rows.Add(sourceWithNullForJoiningColumns);
         }
         
-        if (newResultTable.Entries.Count != numberOfEntriesToGenerate)
+        if (newResultTable.Rows.Count != numberOfEntriesToGenerate)
             throw new ArgumentException($"Didn't generate all the required entries, missing :" +
-                                        $"{numberOfEntriesToGenerate-newResultTable.Entries.Count}");
+                                        $"{numberOfEntriesToGenerate-newResultTable.Rows.Count}");
         
         toTables.Add(newResultTable);
     }
@@ -306,23 +306,23 @@ internal class TableGenerator(SQLExecutorWrapper sqlExecutor, TableOriginColumns
         var joiningTable = fromTables[1];
         var newResultTable = CreateEmptyResultTable(resultTable);
 
-        var nullSourceValues = CreateNullValues(sourceTable.Entries.First().Values.Count);
+        var nullSourceCells = CreateNullCells(sourceTable[0].Cells.Count);
         
-        var numberOfEntriesToGenerate = resultTable.Entries.Count;
-        foreach (var joining in joiningTable.Entries)
+        var numberOfEntriesToGenerate = resultTable.Rows.Count;
+        foreach (var joining in joiningTable.Rows)
         {
-            var foundMatch = AddMatchesForJoining(joining, sourceTable.Entries, resultTable, newResultTable);
+            var foundMatch = AddMatchesForJoining(joining, sourceTable.Rows, resultTable, newResultTable);
             if (foundMatch) continue;
 
-            var joiningWithNullForSourceColumns = PrependValues(joining, nullSourceValues);
+            var joiningWithNullForSourceColumns = PrependCells(joining, nullSourceCells);
             
             RemoveExpectedEntry(resultTable, joiningWithNullForSourceColumns);
             
-            newResultTable.Entries.Add(joiningWithNullForSourceColumns);
+            newResultTable.Rows.Add(joiningWithNullForSourceColumns);
         }
-        if (newResultTable.Entries.Count != numberOfEntriesToGenerate)
+        if (newResultTable.Rows.Count != numberOfEntriesToGenerate)
             throw new ArgumentException($"Didn't generate all the required entries, missing :" +
-                                        $"{numberOfEntriesToGenerate-newResultTable.Entries.Count}");
+                                        $"{numberOfEntriesToGenerate-newResultTable.Rows.Count}");
         
         toTables.Add(newResultTable);
     }
@@ -333,40 +333,40 @@ internal class TableGenerator(SQLExecutorWrapper sqlExecutor, TableOriginColumns
         var joiningTable = fromTables[1];
         var newResultTable = CreateEmptyResultTable(resultTable);
         
-        var nullJoiningValues = CreateNullValues(joiningTable.Entries.First().Values.Count);
-        var nullSourceValues = CreateNullValues(sourceTable.Entries.First().Values.Count);
+        var nullJoiningCells = CreateNullCells(joiningTable[0].Cells.Count);
+        var nullSourceCells = CreateNullCells(sourceTable[0].Cells.Count);
 
-        var matchedJoiningEntries = new HashSet<TableEntry>();
-        var numberOfEntriesToGenerate = resultTable.Entries.Count;
+        var matchedJoiningRows = new HashSet<TableRow>();
+        var numberOfEntriesToGenerate = resultTable.Rows.Count;
         
-        foreach (var source in sourceTable.Entries)
+        foreach (var source in sourceTable.Rows)
         {
             var foundMatch = AddMatchesForSource(
-                source, joiningTable.Entries, resultTable, newResultTable, matchedJoiningEntries);
+                source, joiningTable.Rows, resultTable, newResultTable, matchedJoiningRows);
             if (foundMatch) continue;
 
-            var sourceWithNullForJoiningColumns = AppendValues(source, nullJoiningValues);
+            var sourceWithNullForJoiningColumns = AppendCells(source, nullJoiningCells);
             
             RemoveExpectedEntry(resultTable, sourceWithNullForJoiningColumns);
             
-            newResultTable.Entries.Add(sourceWithNullForJoiningColumns);
+            newResultTable.Rows.Add(sourceWithNullForJoiningColumns);
         }
 
-        foreach (var joining in joiningTable.Entries.Where(j => !matchedJoiningEntries.Contains(j)))
+        foreach (var joining in joiningTable.Rows.Where(row => !matchedJoiningRows.Contains(row)))
         {
-            var foundMatch = AddMatchesForJoining(joining, sourceTable.Entries, resultTable, newResultTable);
+            var foundMatch = AddMatchesForJoining(joining, sourceTable.Rows, resultTable, newResultTable);
             if (foundMatch) continue;
 
-            var joiningWithNullForSourceColumns = PrependValues(joining, nullSourceValues);
+            var joiningWithNullForSourceColumns = PrependCells(joining, nullSourceCells);
             
             RemoveExpectedEntry(resultTable, joiningWithNullForSourceColumns);
             
-            newResultTable.Entries.Add(joiningWithNullForSourceColumns);
+            newResultTable.Rows.Add(joiningWithNullForSourceColumns);
         }
         
-        if (resultTable.Entries.Count != 0)
+        if (resultTable.Rows.Count != 0)
             throw new ArgumentException($"Didn't generate all the required entries, missing :" +
-                                        $"{numberOfEntriesToGenerate-newResultTable.Entries.Count}");
+                                        $"{numberOfEntriesToGenerate-newResultTable.Rows.Count}");
         
         toTables.Add(newResultTable);
     }
@@ -374,14 +374,14 @@ internal class TableGenerator(SQLExecutorWrapper sqlExecutor, TableOriginColumns
     private static Table CreateEmptyResultTable(Table resultTable)
     {
         var newResultTable = resultTable.DeepClone();
-        newResultTable.Entries.Clear();
+        newResultTable.Rows.Clear();
         return newResultTable;
     }
 
-    private static List<TableValue> CreateNullValues(int count)
+    private static List<TableCell> CreateNullCells(int count)
     {
         return Enumerable.Range(0, count)
-            .Select(_ => new TableValue
+            .Select(_ => new TableCell
             {
                 Value = "NULL",
                 RawValue = null
@@ -389,72 +389,72 @@ internal class TableGenerator(SQLExecutorWrapper sqlExecutor, TableOriginColumns
             .ToList();
     }
 
-    private static TableEntry AppendValues(TableEntry entry, IEnumerable<TableValue> valuesToAppend)
+    private static TableRow AppendCells(TableRow row, IEnumerable<TableCell> cellsToAppend)
     {
-        var copy = entry.DeepClone();
-        copy.Values.AddRange(valuesToAppend.Select(value => value.DeepClone()));
+        var copy = row.DeepClone();
+        copy.Cells.AddRange(cellsToAppend.Select(cell => cell.DeepClone()));
         return copy;
     }
 
-    private static TableEntry PrependValues(TableEntry entry, IEnumerable<TableValue> valuesToPrepend)
+    private static TableRow PrependCells(TableRow row, IEnumerable<TableCell> cellsToPrepend)
     {
-        var copy = entry.DeepClone();
-        copy.Values.InsertRange(0, valuesToPrepend.Select(value => value.DeepClone()));
+        var copy = row.DeepClone();
+        copy.Cells.InsertRange(0, cellsToPrepend.Select(cell => cell.DeepClone()));
         return copy;
     }
 
-    private static void RemoveExpectedEntry(Table resultTable, TableEntry expectedEntry)
+    private static void RemoveExpectedEntry(Table resultTable, TableRow expectedRow)
     {
-        var result = resultTable.Entries.FirstOrDefault(entry => entry.Equals(expectedEntry));
+        var result = resultTable.Rows.FirstOrDefault(row => row.Equals(expectedRow));
         if (result == null)
             throw new ArgumentException("Supposed to find null entry, but didn't");
 
-        resultTable.Entries.Remove(result);
+        resultTable.Rows.Remove(result);
     }
 
     private static bool AddMatchesForSource(
-        TableEntry source,
-        IEnumerable<TableEntry> joiningEntries,
+        TableRow source,
+        IEnumerable<TableRow> joiningRows,
         Table remainingResults,
         Table outputTable,
-        HashSet<TableEntry>? matchedJoiningEntries = null)
+        HashSet<TableRow>? matchedJoiningRows = null)
     {
         var foundMatch = false;
 
-        foreach (var joining in joiningEntries)
+        foreach (var joining in joiningRows)
         {
-            var result = remainingResults.Entries.FirstOrDefault(r =>
+            var result = remainingResults.Rows.FirstOrDefault(r =>
                 source.AreJoinEquivalentToResult(joining, r));
 
             if (result == null) continue;
 
             foundMatch = true;
-            outputTable.Entries.Add(result);
-            remainingResults.Entries.Remove(result);
-            matchedJoiningEntries?.Add(joining);
+            outputTable.Rows.Add(result);
+            remainingResults.Rows.Remove(result);
+            matchedJoiningRows?.Add(joining);
         }
 
         return foundMatch;
     }
 
     private static bool AddMatchesForJoining(
-        TableEntry joining,
-        IEnumerable<TableEntry> sourceEntries,
+        TableRow joining,
+        IEnumerable<TableRow> sourceRows,
         Table remainingResults,
         Table outputTable)
     {
         var foundMatch = false;
 
-        foreach (var source in sourceEntries)
+        foreach (var source in sourceRows)
         {
-            var result = remainingResults.Entries.FirstOrDefault(r =>
+            var result = remainingResults.Rows.FirstOrDefault(r =>
                 source.AreJoinEquivalentToResult(joining, r));
 
             if (result == null) continue;
 
             foundMatch = true;
-            outputTable.Entries.Add(result);
-            remainingResults.Entries.Remove(result);
+            outputTable.Rows.Add(result);
+            remainingResults.Rows.Remove(result);
         }
 
         return foundMatch;
@@ -507,7 +507,7 @@ internal class TableGenerator(SQLExecutorWrapper sqlExecutor, TableOriginColumns
 
         private static int CompareValue(object? left, object? right)
         {
-            return TableValue.CompareRawValues(left, right);
+            return TableCell.CompareRawValues(left, right);
         }
     }
 }

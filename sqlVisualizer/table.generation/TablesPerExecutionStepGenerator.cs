@@ -78,7 +78,7 @@ internal class TablesPerExecutionStepGenerator(SQLExecutorWrapper executorWrappe
         foreach (var table in tables)
         {
             var numberOfColumnsInTables = table.ColumnNames.Count;
-            var correct = table.Entries.TrueForAll(e => e.Values.Count == numberOfColumnsInTables);
+            var correct = table.Rows.TrueForAll(row => row.Cells.Count == numberOfColumnsInTables);
             if (!correct)
                 throw new Exception("table contains incorrect number of entries" +
                                     $"\nStatment: \"{component}\"");

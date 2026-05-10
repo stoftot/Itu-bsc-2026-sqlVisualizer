@@ -1,20 +1,20 @@
-﻿using animationGeneration.Contracts;
+using animationGeneration.Contracts;
 
 namespace tableGeneration.Models;
 
-internal class TableValue : ITableCell
+internal class TableCell : ITableCell
 {
     public required string Value  { get; set; }
     public object? RawValue { get; set; }
 
-    public TableValue DeepClone()
+    public TableCell DeepClone()
     {
-        return (TableValue)this.MemberwiseClone();
+        return (TableCell)this.MemberwiseClone();
     }
 
     public override bool Equals(object? obj)
     {
-        var compare = obj as TableValue;
+        var compare = obj as TableCell;
         return compare is not null && string.Equals(Value, compare.Value);
     }
 
